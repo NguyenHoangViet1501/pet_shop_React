@@ -196,22 +196,21 @@ const ProductsPage = () => {
             </div>
 
             {totalPages > 0 && (
-              <nav aria-label="Pagination" className="mt-4 d-flex justify-content-center">
-                <ul className="pagination">
-                  <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
-                    <button className="page-link" onClick={prev} disabled={currentPage === 1}>
-                      <i className="fa-solid fa-less-than fa-xs"></i>
-                    </button>
+              <nav className="mt-3">
+                <ul className="pagination justify-content-center align-items-center" style={{ minHeight: 40 }}>
+                  <li className={`page-item${currentPage === 1 ? ' disabled' : ''}`}
+                      style={{ display: 'flex', alignItems: 'center' }}>
+                    <button className="page-link d-flex align-items-center justify-content-center" style={{ height: 40 }} onClick={prev} disabled={currentPage === 1}>&laquo;</button>
                   </li>
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                    <li key={p} className={`page-item ${p === currentPage ? 'active' : ''}`}>
-                      <button className="page-link" onClick={() => goTo(p)}>{p}</button>
+                  {Array.from({ length: totalPages }, (_, idx) => idx + 1).map((p) => (
+                    <li key={p} className={`page-item${currentPage === p ? ' active' : ''}`}
+                        style={{ display: 'flex', alignItems: 'center' }}>
+                      <button className="page-link d-flex align-items-center justify-content-center" style={{ height: 40 }} onClick={() => goTo(p)}>{p}</button>
                     </li>
                   ))}
-                  <li className={`page-item ${currentPage >= totalPages ? 'disabled' : ''}`}>
-                    <button className="page-link" onClick={next} disabled={currentPage >= totalPages}>
-                      <i className="fa-solid fa-greater-than fa-xs"></i>
-                    </button>
+                  <li className={`page-item${currentPage === totalPages ? ' disabled' : ''}`}
+                      style={{ display: 'flex', alignItems: 'center' }}>
+                    <button className="page-link d-flex align-items-center justify-content-center" style={{ height: 40 }} onClick={next} disabled={currentPage === totalPages}>&raquo;</button>
                   </li>
                 </ul>
               </nav>

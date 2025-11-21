@@ -20,8 +20,31 @@ const ServicesPage = () => {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const formRef = useRef(null);
+  const servicesRef = useRef(null);
   const { user, token } = useAuth();
   const { showToast } = useToast();
+
+  const [services, setServices] = useState([]);
+  const [loadingServices, setLoadingServices] = useState(true);
+  const [servicesError, setServicesError] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      setLoadingServices(true);
+      setServicesError('');
+      try {
+        const list = await servicesAPI.getActiveServices();
+        if (!cancelled && Array.isArray(list)) setServices(list);
+      } catch (e) {
+        if (!cancelled) setServicesError('Không tải được dịch vụ.');
+      } finally {
+        if (!cancelled) setLoadingServices(false);
+      }
+    };
+    load();
+    return () => { cancelled = true; };
+  }, []);
 
   // 🟢 Auto chọn dịch vụ khi được navigate từ HomePage
   useEffect(() => {
@@ -119,28 +142,6 @@ const ServicesPage = () => {
     }
   };
 
-  const [services, setServices] = useState([]);
-  const [loadingServices, setLoadingServices] = useState(true);
-  const [servicesError, setServicesError] = useState('');
-
-  useEffect(() => {
-    let cancelled = false;
-    const load = async () => {
-      setLoadingServices(true);
-      setServicesError('');
-      try {
-        const list = await servicesAPI.getActiveServices();
-        if (!cancelled && Array.isArray(list)) setServices(list);
-      } catch (e) {
-        if (!cancelled) setServicesError('Không tải được dịch vụ.');
-      } finally {
-        if (!cancelled) setLoadingServices(false);
-      }
-    };
-    load();
-    return () => { cancelled = true; };
-  }, []);
-
   const handleBookFromCard = (serviceKey) => {
     if (routerLocation.pathname === '/') {
       navigate('/services', { state: { key: serviceKey } });
@@ -162,7 +163,125 @@ const ServicesPage = () => {
           </p>
         </div>
 
-        <h3 className="text-center mb-3">Dịch vụ của chúng tôi</h3>
+        {/* Mô tả chi tiết các dịch vụ */}
+        <div className="mb-5">
+          <div className="row mb-5 align-items-center">
+            <div className="col-md-6">
+              <img
+                src="https://images.unsplash.com/photo-1544568100-847a948585b9?w=600&h=400&fit=crop"
+                className="img-fluid rounded shadow"
+                alt="Tắm cho thú cưng"
+              />
+            </div>
+            <div className="col-md-6">
+              <h4 className="mb-3" style={{ color: '#2c3e50', fontWeight: '600' }}>Tắm và Vệ sinh</h4>
+              <p style={{ lineHeight: '1.6', fontSize: '1.1rem' }}>
+                Trải nghiệm tắm thư giãn với sản phẩm organic, massage chuyên sâu. Bao gồm vệ sinh tai, cắt móng và chăm sóc da lông toàn diện.
+                Thú cưng của bạn sẽ luôn sạch sẽ, thơm tho và hạnh phúc!
+              </p>
+              <button
+                className="btn btn-primary mt-3"
+                onClick={() => servicesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+              >
+                Đặt lịch ngay
+              </button>
+            </div>
+          </div>
+
+          <div className="row mb-5 align-items-center">
+            <div className="col-md-6 order-md-2">
+              <img
+                src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=600&h=400&fit=crop"
+                className="img-fluid rounded shadow"
+                alt="Cắt tỉa lông"
+              />
+            </div>
+            <div className="col-md-6 order-md-1">
+              <h4 className="mb-3" style={{ color: '#2c3e50', fontWeight: '600' }}>Cắt tỉa lông</h4>
+              <p style={{ lineHeight: '1.6', fontSize: '1.1rem' }}>
+                Thiết kế kiểu dáng thời trang theo giống loài. Chuyên viên chuyên nghiệp sử dụng dụng cụ cao cấp, đảm bảo an toàn tuyệt đối.
+                Biến thú cưng của bạn thành ngôi sao phong cách!
+              </p>
+              <button
+                className="btn btn-primary mt-3"
+                onClick={() => servicesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+              >
+                Đặt lịch ngay
+              </button>
+            </div>
+          </div>
+
+          <div className="row mb-5 align-items-center">
+            <div className="col-md-6">
+              <img
+                src="https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=600&h=400&fit=crop"
+                className="img-fluid rounded shadow"
+                alt="Tiêm phòng"
+              />
+            </div>
+            <div className="col-md-6">
+              <h4 className="mb-3" style={{ color: '#2c3e50', fontWeight: '600' }}>Tiêm phòng</h4>
+              <p style={{ lineHeight: '1.6', fontSize: '1.1rem' }}>
+                Vaccine chất lượng cao, tư vấn bởi bác sĩ chuyên khoa. Bảo vệ tối đa khỏi bệnh tật, theo lịch khuyến cáo quốc tế.
+                Sức khỏe thú cưng là ưu tiên hàng đầu của chúng tôi!
+              </p>
+              <button
+                className="btn btn-primary mt-3"
+                onClick={() => servicesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+              >
+                Đặt lịch ngay
+              </button>
+            </div>
+          </div>
+
+          <div className="row mb-5 align-items-center">
+            <div className="col-md-6 order-md-2">
+              <img
+                src="https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=600&h=400&fit=crop"
+                className="img-fluid rounded shadow"
+                alt="Khám bệnh"
+              />
+            </div>
+            <div className="col-md-6 order-md-1">
+              <h4 className="mb-3" style={{ color: '#2c3e50', fontWeight: '600' }}>Khám bệnh định kỳ</h4>
+              <p style={{ lineHeight: '1.6', fontSize: '1.1rem' }}>
+                Phát hiện sớm bệnh tật qua kiểm tra toàn diện. Tư vấn dinh dưỡng, chăm sóc chuyên sâu. Siêu âm, xét nghiệm máu,
+                đảm bảo thú cưng luôn khỏe mạnh và hạnh phúc!
+              </p>
+              <button
+                className="btn btn-primary mt-3"
+                onClick={() => servicesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+              >
+                Đặt lịch ngay
+              </button>
+            </div>
+          </div>
+
+          <div className="row mb-5 align-items-center">
+            <div className="col-md-6">
+              <img
+                src="https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=600&h=400&fit=crop"
+                className="img-fluid rounded shadow"
+                alt="Lưu trú"
+              />
+            </div>
+            <div className="col-md-6">
+              <h4 className="mb-3" style={{ color: '#2c3e50', fontWeight: '600' }}>Dịch vụ lưu trú</h4>
+              <p style={{ lineHeight: '1.6', fontSize: '1.1rem' }}>
+                Không gian thoải mái, chăm sóc 24/7 chuyên nghiệp. Ăn uống đầy đủ, vui chơi, theo dõi sức khỏe liên tục.
+                Khu riêng cho chó và mèo, vệ sinh tuyệt đối. Thú cưng như ở nhà!
+              </p>
+              <button
+                className="btn btn-primary mt-3"
+                onClick={() => servicesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+              >
+                Đặt lịch ngay
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <h3 ref={servicesRef} className="text-center mb-3">Dịch vụ của chúng tôi</h3>
         <p className="text-center text-muted mb-4 mx-auto" style={{ maxWidth: 760 }}>
           Lựa chọn từ danh sách dịch vụ chuyên nghiệp, được thiết kế toàn diện cho nhu cầu của thú cưng.
         </p>
