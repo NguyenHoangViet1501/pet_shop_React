@@ -1,19 +1,50 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { products } from '../data/products';
 import ProductCard from '../components/product/ProductCard';
 import ServicesGrid from '../components/services/ServicesGrid';
-import { servicesAPI } from '../api';
+import { servicesAPI, productsApi } from '../api';
 
 const HomePage = () => {
   const navigate = useNavigate();
-  // Pick up to 4 products for the featured section
-  const featuredProducts = (products.filter(p => p.featured).slice(0, 4).length ? products.filter(p => p.featured).slice(0, 4) : products.slice(0, 4));
+  
+  const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
+  const [productsError, setProductsError] = useState('');
 
   const [services, setServices] = useState([]);
   const [loadingServices, setLoadingServices] = useState(true);
   const [servicesError, setServicesError] = useState('');
 
+  // Lấy sản phẩm nổi bật
+  useEffect(() => {
+    let cancelled = false;
+    const loadFeaturedProducts = async () => {
+      setLoadingProducts(true);
+      setProductsError('');
+      try {
+        const response = await productsApi.getFeaturedProducts(4);
+        if (!cancelled) {
+          if (response.success && response.result) {
+            const productList = response.result.content || response.result;
+            setFeaturedProducts(Array.isArray(productList) ? productList : []);
+          } else {
+            setFeaturedProducts([]);
+          }
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setProductsError('Không tải được sản phẩm nổi bật.');
+          setFeaturedProducts([]);
+        }
+      } finally {
+        if (!cancelled) setLoadingProducts(false);
+      }
+    };
+    loadFeaturedProducts();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Lấy dịch vụ
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
@@ -87,11 +118,27 @@ const HomePage = () => {
           </div>
           <Link to="/products" className="text-decoration-none">Xem tất cả sản phẩm <i class="fa-solid fa-arrow-right"></i></Link>
         </div>
-        <div className="row">
-          {featuredProducts.slice(0, 4).map(product => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
+        {loadingProducts && (
+          <div className="text-center py-4">
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+            <p className="mt-3 text-muted">Đang tải sản phẩm nổi bật...</p>
+          </div>
+        )}
+        {!loadingProducts && productsError && (
+          <div className="alert alert-danger">{productsError}</div>
+        )}
+        {!loadingProducts && !productsError && featuredProducts.length === 0 && (
+          <div className="text-center text-muted py-4">Chưa có sản phẩm nổi bật.</div>
+        )}
+        {!loadingProducts && !productsError && featuredProducts.length > 0 && (
+          <div className="row">
+            {featuredProducts.map(product => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Services teaser */}

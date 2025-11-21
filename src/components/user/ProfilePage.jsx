@@ -400,7 +400,7 @@ const ProfilePage = () => {
             )}
 
             {activeTab === 'change-password' && (
-              <ChangePasswordTab showToast={showToast} />
+              <ChangePasswordTab showToast={showToast} userId={user?.id} token={token} />
             )}
           </div>
         </div>
