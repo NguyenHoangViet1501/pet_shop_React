@@ -104,6 +104,7 @@ const RegisterPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const { register } = useAuth();
   const { showToast } = useToast();
@@ -286,7 +287,7 @@ const RegisterPage = () => {
                   <div className="row">
                     <div className="col-md-6 mb-3 position-relative">
                       <label className="form-label">Mật khẩu</label>
-                      <input 
+                      <input
                         type={showPassword ? 'text' : 'password'}
                         className={`form-control pe-5 ${errors.password ? 'is-invalid' : ''}`}
                         name="password"
@@ -300,8 +301,7 @@ const RegisterPage = () => {
                         style={{
                           position: 'absolute',
                           right: errors.password ? '45px' : '25px',
-                          top: errors.password ? '50%' : '69%',
-                          transform: 'translateY(-50%)',
+                          top: '33px',
                           cursor: 'pointer',
                           color: '#6c757d',
                           fontSize: '1.25rem',
@@ -314,16 +314,30 @@ const RegisterPage = () => {
                         <div className="invalid-feedback">{errors.password}</div>
                       )}
                     </div>
-                    <div className="col-md-6 mb-3">
+                    <div className="col-md-6 mb-3 position-relative">
                       <label className="form-label">Xác nhận mật khẩu</label>
-                      <input 
-                        type="password" 
-                        className={`form-control ${errors.confirmPassword ? 'is-invalid' : ''}`}
+                      <input
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        className={`form-control pe-5 ${errors.confirmPassword ? 'is-invalid' : ''}`}
                         name="confirmPassword"
                         value={formData.confirmPassword}
                         onChange={handleInputChange}
                         required
                       />
+                      <span
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        style={{
+                          position: 'absolute',
+                          right: errors.confirmPassword ? '45px' : '25px',
+                          top: '33px',
+                          cursor: 'pointer',
+                          color: '#6c757d',
+                          fontSize: '1.25rem',
+                          zIndex: 2
+                        }}
+                      >
+                        {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                      </span>
                       {errors.confirmPassword && (
                         <div className="invalid-feedback">{errors.confirmPassword}</div>
                       )}

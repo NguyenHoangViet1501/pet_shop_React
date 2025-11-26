@@ -17,5 +17,22 @@ export const addressAPI = {
       method: 'GET',
       token
     });
+  },
+
+  // Cập nhật địa chỉ
+  updateAddress: async (addressData, token) => {
+    return await apiFetch('/v1/address/update', {
+      method: 'POST',
+      body: addressData,
+      token
+    });
+  },
+
+  // Xóa địa chỉ
+  deleteAddress: async (addressId, token) => {
+    return await apiFetch(`/v1/address/delete/${addressId}`, {
+      method: 'DELETE',
+      token
+    });
   }
 };

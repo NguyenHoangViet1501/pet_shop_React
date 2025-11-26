@@ -14,5 +14,12 @@ export const userAPI = {
       body: userData,
       token
     });
+  },
+  changePasswordUser: async (userId, passwordData, token) => {
+    return await apiFetch(`/v1/users/changePassword/${userId}`, {
+      method: 'PUT',
+      body: passwordData,
+      token
+    });
   }
 };

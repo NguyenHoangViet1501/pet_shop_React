@@ -45,10 +45,16 @@ const LoginPage = () => {
     // Password validation
     if (!formData.password) {
       newErrors.password = 'Vui lòng nhập mật khẩu';
-    } else if (formData.password.length < 8) {
-      newErrors.password = 'Mật khẩu phải có ít nhất 8 ký tự';
-    } else if (!/(?=.*[a-zA-Z])(?=.*\d)/.test(formData.password)) {
-    newErrors.password = 'Mật khẩu phải chứa cả chữ và số';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Mật khẩu phải có ít nhất 6 ký tự';
+    } else {
+      const hasLowerCase = /[a-z]/.test(formData.password);
+      const hasUpperCase = /[A-Z]/.test(formData.password);
+      const hasDigit = /\d/.test(formData.password);
+      const hasSpecialChar = /[@$!%*?&#]/.test(formData.password);
+      if (!hasLowerCase || !hasUpperCase || !hasDigit || !hasSpecialChar) {
+        newErrors.password = 'Mật khẩu phải chứa ít nhất 1 chữ thường, 1 chữ hoa, 1 chữ số và 1 ký tự đặc biệt (@$!%*?&#)';
+      }
     }
 
     setErrors(newErrors);
@@ -126,7 +132,7 @@ const LoginPage = () => {
                         style={{
                           position: 'absolute',
                           right: errors.password ? '40px' : '10px',
-                          top: errors.password? '29%' : '45%',
+                          top: errors.password? '21%' : '45%',
                           transform: 'translateY(-50%)',
                           cursor: 'pointer',
                           color: '#6c757d'

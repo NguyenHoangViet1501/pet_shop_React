@@ -88,57 +88,63 @@ const AppointmentsPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {items.map((appointment, idx) => (
-                    <tr key={appointment.id}>
-                      <td>{(currentPage - 1) * PAGE_SIZE + idx + 1}</td>
-                      <td>{appointment.serviceName || appointment.service || ''}</td>
-                      <td>{appointment.namePet || appointment.petName || ''}
-                          {appointment.speciePet ? ` (${appointment.speciePet})` : ''}
-                      </td>
-                      <td>
-                        {appointment.appoinmentStart
-                          ? new Date(appointment.appoinmentStart).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' })
-                          : ''}
-                      </td>
-                      <td>
-                        {appointment.appoinmentEnd
-                          ? new Date(appointment.appoinmentEnd).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' })
-                          : ''}
-                      </td>
-                      <td>{appointment.notes || ''}</td>
-                      <td>
-                        <span
-                          className={
-                            appointment.status === 'SCHEDULED'
-                              ? 'badge bg-warning'
-                              : appointment.status === 'COMPLETED'
-                              ? 'badge bg-primary'
-                              : appointment.status === 'CANCELED'
-                              ? 'badge bg-danger'
-                              : 'badge bg-secondary'
-                          }
-                        >
-                          {appointment.status === 'SCHEDULED'
-                            ? 'Đã đặt'
-                            : appointment.status === 'COMPLETED'
-                            ? 'Hoàn thành'
-                            : appointment.status === 'CANCELED'
-                            ? 'Đã hủy'
-                            : appointment.status}
-                        </span>
-                      </td>
-                      <td>
-                        {appointment.status === 'SCHEDULED' ? (
-                          <>
-                            <button className="btn btn-sm btn-outline-primary me-1" onClick={() => openEdit(appointment)}>Sửa</button>
-                            <button className="btn btn-sm btn-outline-danger" onClick={() => handleCancel(appointment.id)}>Hủy</button>
-                          </>
-                        ) : (
-                          <button className="btn btn-sm btn-outline-primary">Đánh giá</button>
-                        )}
-                      </td>
+                  {items.length === 0 ? (
+                    <tr>
+                      <td colSpan="8" className="text-center py-4">Bạn chưa có lịch hẹn nào</td>
                     </tr>
-                  ))}
+                  ) : (
+                    items.map((appointment, idx) => (
+                      <tr key={appointment.id}>
+                        <td>{(currentPage - 1) * PAGE_SIZE + idx + 1}</td>
+                        <td>{appointment.serviceName || appointment.service || ''}</td>
+                        <td>{appointment.namePet || appointment.petName || ''}
+                            {appointment.speciePet ? ` (${appointment.speciePet})` : ''}
+                        </td>
+                        <td>
+                          {appointment.appoinmentStart
+                            ? new Date(appointment.appoinmentStart).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' })
+                            : ''}
+                        </td>
+                        <td>
+                          {appointment.appoinmentEnd
+                            ? new Date(appointment.appoinmentEnd).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' })
+                            : ''}
+                        </td>
+                        <td>{appointment.notes || ''}</td>
+                        <td>
+                          <span
+                            className={
+                              appointment.status === 'SCHEDULED'
+                                ? 'badge bg-warning'
+                                : appointment.status === 'COMPLETED'
+                                ? 'badge bg-primary'
+                                : appointment.status === 'CANCELED'
+                                ? 'badge bg-danger'
+                                : 'badge bg-secondary'
+                            }
+                          >
+                            {appointment.status === 'SCHEDULED'
+                              ? 'Đã đặt'
+                              : appointment.status === 'COMPLETED'
+                              ? 'Hoàn thành'
+                              : appointment.status === 'CANCELED'
+                              ? 'Đã hủy'
+                              : appointment.status}
+                          </span>
+                        </td>
+                        <td>
+                          {appointment.status === 'SCHEDULED' ? (
+                            <>
+                              <button className="btn btn-sm btn-outline-primary me-1" onClick={() => openEdit(appointment)}>Sửa</button>
+                              <button className="btn btn-sm btn-outline-danger" onClick={() => handleCancel(appointment.id)}>Hủy</button>
+                            </>
+                          ) : (
+                            <button className="btn btn-sm btn-outline-primary">Đánh giá</button>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
               {/* Pagination controls */}

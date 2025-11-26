@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { Link, useLocation } from 'react-router-dom';
 import AddressFormModal from './AddressFormModal';
+import AddressEditModal from './AddressEditModal';
 import ChangePasswordTab from './ChangePasswordTab';
 import { userAPI } from '../../api/user';
 import { addressAPI } from '../../api/address';
@@ -27,6 +28,8 @@ const ProfilePage = () => {
   const [addresses, setAddresses] = useState([]);
   const [loadingAddresses, setLoadingAddresses] = useState(false);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingAddress, setEditingAddress] = useState(null);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
 
@@ -69,6 +72,8 @@ const ProfilePage = () => {
           ward: addr.ward,
           isDefault: addr.isDefault === "1"
         }));
+        // Sort to put default address first
+        mappedAddresses.sort((a, b) => b.isDefault - a.isDefault);
         setAddresses(mappedAddresses);
         setTotalPages(response.totalPages || 1);
         setCurrentPage(page);
@@ -171,8 +176,18 @@ const ProfilePage = () => {
     setIsAddressModalOpen(true);
   };
 
+  const openEditAddressModal = (addr) => {
+    setEditingAddress(addr);
+    setIsEditModalOpen(true);
+  };
+
   const handleAddressSaved = async (data) => {
     // Refresh addresses from API after adding new address
+    await fetchAddresses(currentPage);
+  };
+
+  const handleAddressEdited = async (data) => {
+    // Refresh addresses from API after editing address
     await fetchAddresses(currentPage);
   };
 
@@ -182,14 +197,62 @@ const ProfilePage = () => {
     }
   };
 
-  const handleDeleteAddress = (id) => {
-    setAddresses((prev) => prev.filter((a) => a.id !== id));
-    showToast('Đã xóa địa chỉ.', 'info');
+  const handleDeleteAddress = async (id) => {
+    const addr = addresses.find(a => a.id === id);
+    if (!addr) return;
+
+    try {
+      const addressData = {
+        id: addr.id,
+        contactName: addr.fullName,
+        phone: addr.phone,
+        detailAddress: addr.addressLine,
+        city: addr.city,
+        state: addr.district,
+        ward: addr.ward,
+        isDefault: addr.isDefault ? "1" : "0",
+        isDeleted: "1"
+      };
+      const response = await addressAPI.updateAddress(addressData, token);
+      if (response && !response.success) {
+        showToast(response.message || 'Không thể xóa địa chỉ này.', 'error');
+        return;
+      }
+      setAddresses((prev) => prev.filter((a) => a.id !== id));
+      showToast('Đã xóa địa chỉ.', 'success');
+    } catch (error) {
+      showToast(error.message || 'Có lỗi xảy ra khi xóa địa chỉ.', 'error');
+      console.error('Error deleting address:', error);
+    }
   };
 
-  const handleMakeDefault = (id) => {
-    setAddresses((prev) => prev.map((a) => ({ ...a, isDefault: a.id === id })));
-    showToast('Đã đặt địa chỉ mặc định.', 'success');
+  const handleMakeDefault = async (id) => {
+    const addr = addresses.find(a => a.id === id);
+    if (!addr) return;
+
+    try {
+      const addressData = {
+        id: addr.id,
+        contactName: addr.fullName,
+        phone: addr.phone,
+        detailAddress: addr.addressLine,
+        city: addr.city,
+        state: addr.district,
+        ward: addr.ward,
+        isDefault: "1",
+        isDeleted: "0"
+      };
+      const response = await addressAPI.updateAddress(addressData, token);
+      if (response && !response.success) {
+        showToast(response.message || 'Không thể đặt địa chỉ mặc định.', 'error');
+        return;
+      }
+      await fetchAddresses(currentPage);
+      showToast('Đã đặt địa chỉ mặc định.', 'success');
+    } catch (error) {
+      showToast(error.message || 'Có lỗi xảy ra khi đặt địa chỉ mặc định.', 'error');
+      console.error('Error setting default address:', error);
+    }
   };
 
 
@@ -266,30 +329,35 @@ const ProfilePage = () => {
                     </div>
 
                     <div id="addressesList">
-                      {addresses.map((addr) => (
-                        <div className="card mb-3 shadow-sm" key={addr.id}>
-                          <div className="card-body">
-                            <div className="d-flex justify-content-between">
-                              <div>
-                                <div className="fw-semibold">
-                                  {addr.label} {addr.isDefault && <span className="badge bg-success ms-2">Mặc định</span>}
+                      {addresses.length === 0 ? (
+                        <div className="text-center py-4">Bạn chưa có địa chỉ nào</div>
+                      ) : (
+                        addresses.map((addr) => (
+                          <div className="card mb-3 shadow-sm" key={addr.id}>
+                            <div className="card-body">
+                              <div className="d-flex justify-content-between">
+                                <div>
+                                  <div className="fw-semibold">
+                                    {addr.label} {addr.isDefault && <span className="badge bg-success ms-2">Mặc định</span>}
+                                  </div>
+                                  <div className="text-muted small"><span className="fw-bold fs-6 text-dark">{addr.fullName}</span> | {addr.phone}</div>
+                                  <div className="mt-2">{addr.addressLine}</div>
+                                  <div className="text-muted">
+                                    {addr.ward ? `${addr.ward}, ` : ''}{addr.district}, {addr.city}
+                                  </div>
                                 </div>
-                                <div className="text-muted small"><span className="fw-bold fs-6 text-dark">{addr.fullName}</span> | {addr.phone}</div>
-                                <div className="mt-2">{addr.addressLine}</div>
-                                <div className="text-muted">
-                                  {addr.ward ? `${addr.ward}, ` : ''}{addr.district}, {addr.city}
+                                <div className="text-nowrap">
+                                  <button className="btn btn-outline-secondary btn-sm me-2" onClick={() => openEditAddressModal(addr)}>Sửa</button>
+                                  {!addr.isDefault && (
+                                    <button className="btn btn-outline-primary btn-sm me-2" onClick={() => handleMakeDefault(addr.id)}>Đặt mặc định</button>
+                                  )}
+                                  <button className="btn btn-outline-danger btn-sm" onClick={() => handleDeleteAddress(addr.id)}>Xóa</button>
                                 </div>
-                              </div>
-                              <div className="text-nowrap">
-                                {!addr.isDefault && (
-                                  <button className="btn btn-outline-primary btn-sm me-2" onClick={() => handleMakeDefault(addr.id)}>Đặt mặc định</button>
-                                )}
-                                <button className="btn btn-outline-danger btn-sm" onClick={() => handleDeleteAddress(addr.id)}>Xóa</button>
                               </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        ))
+                      )}
                     </div>
 
                     {/* Pagination */}
@@ -332,7 +400,7 @@ const ProfilePage = () => {
             )}
 
             {activeTab === 'change-password' && (
-              <ChangePasswordTab showToast={showToast} />
+              <ChangePasswordTab showToast={showToast} userId={user?.id} token={token} />
             )}
           </div>
         </div>
@@ -342,6 +410,13 @@ const ProfilePage = () => {
         isOpen={isAddressModalOpen}
         onClose={() => setIsAddressModalOpen(false)}
         onSave={handleAddressSaved}
+      />
+
+      <AddressEditModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onSave={handleAddressEdited}
+        address={editingAddress}
       />
     </div>
   );
