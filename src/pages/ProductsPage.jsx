@@ -1,84 +1,49 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import ProductCard from '../components/product/ProductCard';
-import { categoriesApi, productsApi } from '../api';
+import { useCategoriesQuery } from '../hooks/useCategoriesQuery';
+import { useProductsQuery } from '../hooks/useProductsQuery';
 
 const ProductsPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
-  const [categories, setCategories] = useState([]);
-  const [products, setProducts] = useState([]);
-  const [totalPages, setTotalPages] = useState(0);
-  const [totalElements, setTotalElements] = useState(0);
-  const [loading, setLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
   const [sortBy, setSortBy] = useState('');
   const pageSize = 6;
 
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await categoriesApi.getCategories();
-        
-        if (response.success && response.result) {
-          // Kiểm tra nếu result có thuộc tính content (phân trang)
-          const categoryList = response.result.content || response.result;
-          
-          // Đảm bảo categoryList là mảng
-          if (Array.isArray(categoryList)) {
-            setCategories(categoryList);
-          } else {
-            setCategories([]);
-          }
-        } else {
-          setCategories([]);
-        }
-      } catch (error) {
-        console.error('Error fetching categories:', error);
-        setCategories([]);
-      }
-    };
-    fetchCategories();
-  }, []);
+  // Categories query
+  const {
+    data: categoriesData,
+    isLoading: categoriesLoading,
+    isError: categoriesError,
+  } = useCategoriesQuery();
 
-  // Fetch products từ API
-  useEffect(() => {
-    const fetchProducts = async () => {
-      setLoading(true);
-      try {
-        const params = {
-          pageNumber: currentPage,
-          size: pageSize,
-          ...(selectedCategory && { categoryId: selectedCategory }),
-          ...(minPrice && { minPrice }),
-          ...(maxPrice && { maxPrice }),
-          ...(sortBy && { sort: sortBy }),
-        };
-        
-        const response = await productsApi.getProducts(params);
-        
-        if (response.success && response.result) {
-          const data = response.result;
-          setProducts(data.content || []);
-          setTotalPages(data.totalPages || 0);
-          setTotalElements(data.totalElements || 0);
-        } else {
-          setProducts([]);
-          setTotalPages(0);
-          setTotalElements(0);
-        }
-      } catch (error) {
-        console.error('Error fetching products:', error);
-        setProducts([]);
-        setTotalPages(0);
-        setTotalElements(0);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchProducts();
-  }, [currentPage, pageSize, selectedCategory, minPrice, maxPrice, sortBy]);
+  // Products query
+  const {
+    data: productsData,
+    isLoading: productsLoading,
+    isError: productsError,
+  } = useProductsQuery({
+    pageNumber: currentPage,
+    size: pageSize,
+    ...(selectedCategory && { categoryId: selectedCategory }),
+    ...(minPrice && { minPrice }),
+    ...(maxPrice && { maxPrice }),
+    ...(sortBy && { sort: sortBy }),
+  });
+
+  const categories = Array.isArray(categoriesData?.result?.content)
+    ? categoriesData.result.content
+    : Array.isArray(categoriesData?.result)
+    ? categoriesData.result
+    : [];
+
+  const products = productsData?.result?.content || [];
+  const totalPages = productsData?.result?.totalPages || 0;
+  const totalElements = productsData?.result?.totalElements || 0;
+  const loading = productsLoading || categoriesLoading;
+
+  // ...existing code...
 
   const goTo = (page) => {
     const p = Math.min(Math.max(totalPages, 1), Math.max(1, page));
@@ -97,45 +62,48 @@ const ProductsPage = () => {
       <div className="container page-content">
         <h1 className="mb-4">Sản phẩm</h1>
         <p className="text-muted mb-4">Tìm sản phẩm hoàn hảo cho thú cưng yêu quý của bạn</p>
-        
         <div className="row">
           <div className="col-lg-3 mb-4">
             <div className="sidebar">
               <h5>Lọc sản phẩm</h5>
               <div className="mb-3">
                 <label className="form-label">Danh mục</label>
-                <select 
+                <select
                   className="form-select"
                   value={selectedCategory}
                   onChange={(e) => {
                     setSelectedCategory(e.target.value);
                     setCurrentPage(1);
                   }}
+                  disabled={categoriesLoading}
                 >
                   <option value="">Tất cả danh mục</option>
-                  {Array.isArray(categories) && categories.map(category => (
+                  {categories.map((category) => (
                     <option key={category.id} value={category.id}>
                       {category.name}
                     </option>
                   ))}
                 </select>
+                {categoriesError && (
+                  <div className="text-danger small mt-1">Lỗi tải danh mục</div>
+                )}
               </div>
               <div className="mb-3">
                 <label className="form-label">Khoảng giá</label>
                 <div className="row">
                   <div className="col-6">
-                    <input 
-                      type="number" 
-                      className="form-control" 
+                    <input
+                      type="number"
+                      className="form-control"
                       placeholder="Từ"
                       value={minPrice}
                       onChange={(e) => setMinPrice(e.target.value)}
                     />
                   </div>
                   <div className="col-6">
-                    <input 
-                      type="number" 
-                      className="form-control" 
+                    <input
+                      type="number"
+                      className="form-control"
                       placeholder="Đến"
                       value={maxPrice}
                       onChange={(e) => setMaxPrice(e.target.value)}
@@ -143,9 +111,10 @@ const ProductsPage = () => {
                   </div>
                 </div>
               </div>
-              <button 
+              <button
                 className="btn btn-primary w-100"
                 onClick={() => setCurrentPage(1)}
+                disabled={productsLoading}
               >
                 Lọc
               </button>
@@ -154,20 +123,23 @@ const ProductsPage = () => {
           <div className="col-lg-9">
             <div className="d-flex justify-content-between align-items-center mb-4">
               <span className="text-muted">
-                {loading ? (
+                {productsLoading ? (
                   'Đang tải...'
+                ) : productsError ? (
+                  'Lỗi tải sản phẩm'
                 ) : (
                   `Hiển thị ${products.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-${Math.min(currentPage * pageSize, totalElements)} trong ${totalElements} sản phẩm`
                 )}
               </span>
-              <select 
-                className="form-select" 
-                style={{width: 'auto'}}
+              <select
+                className="form-select"
+                style={{ width: 'auto' }}
                 value={sortBy}
                 onChange={(e) => {
                   setSortBy(e.target.value);
                   setCurrentPage(1);
                 }}
+                disabled={productsLoading}
               >
                 <option value="">Mặc định</option>
                 <option value="price,asc">Sắp xếp theo giá: Thấp đến cao</option>
@@ -177,24 +149,27 @@ const ProductsPage = () => {
               </select>
             </div>
             <div className="row">
-              {loading ? (
+              {productsLoading ? (
                 <div className="col-12 text-center py-5">
                   <div className="spinner-border text-primary" role="status">
                     <span className="visually-hidden">Loading...</span>
                   </div>
                   <p className="mt-3 text-muted">Đang tải sản phẩm...</p>
                 </div>
+              ) : productsError ? (
+                <div className="col-12 text-center py-5">
+                  <p className="text-danger">Lỗi tải sản phẩm</p>
+                </div>
               ) : products.length === 0 ? (
                 <div className="col-12 text-center py-5">
                   <p className="text-muted">Không tìm thấy sản phẩm nào</p>
                 </div>
               ) : (
-                products.map(product => (
+                products.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))
               )}
             </div>
-
             {totalPages > 0 && (
               <nav aria-label="Pagination" className="mt-4 d-flex justify-content-center">
                 <ul className="pagination">

@@ -2,47 +2,29 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import ProductCard from '../components/product/ProductCard';
 import ServicesGrid from '../components/services/ServicesGrid';
-import { servicesAPI, productsApi } from '../api';
+import { servicesAPI } from '../api';
+import { useFeaturedProductsQuery } from '../hooks/useFeaturedProductsQuery';
 
 const HomePage = () => {
   const navigate = useNavigate();
   
-  const [featuredProducts, setFeaturedProducts] = useState([]);
-  const [loadingProducts, setLoadingProducts] = useState(true);
-  const [productsError, setProductsError] = useState('');
+  const {
+    data: featuredProductsData,
+    isLoading: loadingProducts,
+    isError: productsError,
+  } = useFeaturedProductsQuery(4);
+
+  const featuredProducts = Array.isArray(featuredProductsData?.result?.content)
+    ? featuredProductsData.result.content
+    : Array.isArray(featuredProductsData?.result)
+    ? featuredProductsData.result
+    : [];
 
   const [services, setServices] = useState([]);
   const [loadingServices, setLoadingServices] = useState(true);
   const [servicesError, setServicesError] = useState('');
 
-  // Lấy sản phẩm nổi bật
-  useEffect(() => {
-    let cancelled = false;
-    const loadFeaturedProducts = async () => {
-      setLoadingProducts(true);
-      setProductsError('');
-      try {
-        const response = await productsApi.getFeaturedProducts(4);
-        if (!cancelled) {
-          if (response.success && response.result) {
-            const productList = response.result.content || response.result;
-            setFeaturedProducts(Array.isArray(productList) ? productList : []);
-          } else {
-            setFeaturedProducts([]);
-          }
-        }
-      } catch (e) {
-        if (!cancelled) {
-          setProductsError('Không tải được sản phẩm nổi bật.');
-          setFeaturedProducts([]);
-        }
-      } finally {
-        if (!cancelled) setLoadingProducts(false);
-      }
-    };
-    loadFeaturedProducts();
-    return () => { cancelled = true; };
-  }, []);
+  // ...existing code...
 
   // Lấy dịch vụ
   useEffect(() => {
@@ -126,13 +108,13 @@ const HomePage = () => {
             <p className="mt-3 text-muted">Đang tải sản phẩm nổi bật...</p>
           </div>
         )}
-        {!loadingProducts && productsError && (
-          <div className="alert alert-danger">{productsError}</div>
+        {productsError && !loadingProducts && (
+          <div className="alert alert-danger">Không tải được sản phẩm nổi bật.</div>
         )}
-        {!loadingProducts && !productsError && featuredProducts.length === 0 && (
+        {!productsError && !loadingProducts && featuredProducts.length === 0 && (
           <div className="text-center text-muted py-4">Chưa có sản phẩm nổi bật.</div>
         )}
-        {!loadingProducts && !productsError && featuredProducts.length > 0 && (
+        {!productsError && !loadingProducts && featuredProducts.length > 0 && (
           <div className="row">
             {featuredProducts.map(product => (
               <ProductCard key={product.id} product={product} />
