@@ -16,7 +16,7 @@ export async function apiFetch(
     method = "GET", // Mặc định là GET nếu không truyền gì
     headers = {}, // Header bổ sung
     body, // Dữ liệu gửi lên (nếu có)
-    token, // Token JWT hiện tại (nếu có)
+    token = localStorage.getItem("auth_token"), // Tự động lấy token từ localStorage nếu không truyền
     onTokenRefresh, // Callback để refresh token nếu bị 401
   } = {}
 ) {

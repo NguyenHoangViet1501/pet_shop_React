@@ -1,15 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import ProductCard from '../components/product/ProductCard';
 import { useCategoriesQuery } from '../hooks/useCategoriesQuery';
 import { useProductsQuery } from '../hooks/useProductsQuery';
-
+import { productsApi } from '../api';
+import { useNavigate } from 'react-router-dom';
 const ProductsPage = () => {
+  const [searchParams] = useSearchParams();
+  const searchQuery = searchParams.get('search') || '';
+  const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState('');
-  const [minPrice, setMinPrice] = useState('');
-  const [maxPrice, setMaxPrice] = useState('');
+  
+  // State cho input giá (chưa filter ngay)
+  const [priceRange, setPriceRange] = useState({ min: '', max: '' });
+  
+  // State cho giá trị đã apply (gửi lên API)
+  const [appliedPriceRange, setAppliedPriceRange] = useState({ min: null, max: null });
+
   const [sortBy, setSortBy] = useState('');
   const pageSize = 6;
+
+  // Reset page when search query changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
+  // Hàm xử lý khi bấm nút Lọc
+  const handleApplyFilter = () => {
+    setAppliedPriceRange({
+      min: priceRange.min,
+      max: priceRange.max
+    });
+    setCurrentPage(1);
+  };
 
   // Categories query
   const {
@@ -17,7 +41,6 @@ const ProductsPage = () => {
     isLoading: categoriesLoading,
     isError: categoriesError,
   } = useCategoriesQuery();
-
   // Products query
   const {
     data: productsData,
@@ -27,9 +50,10 @@ const ProductsPage = () => {
     pageNumber: currentPage,
     size: pageSize,
     ...(selectedCategory && { categoryId: selectedCategory }),
-    ...(minPrice && { minPrice }),
-    ...(maxPrice && { maxPrice }),
+    ...(appliedPriceRange.min && { minPrice: appliedPriceRange.min }),
+    ...(appliedPriceRange.max && { maxPrice: appliedPriceRange.max }),
     ...(sortBy && { sort: sortBy }),
+    ...(searchQuery && { search: searchQuery }),
   });
 
   const categories = Array.isArray(categoriesData?.result?.content)
@@ -61,7 +85,12 @@ const ProductsPage = () => {
     <div className="page" id="products">
       <div className="container page-content">
         <h1 className="mb-4">Sản phẩm</h1>
-        <p className="text-muted mb-4">Tìm sản phẩm hoàn hảo cho thú cưng yêu quý của bạn</p>
+        {searchQuery && (
+          <p className="text-muted mb-4">
+            Kết quả tìm kiếm cho: <strong>"{searchQuery}"</strong>
+          </p>
+        )}
+        {!searchQuery && <p className="text-muted mb-4">Tìm sản phẩm hoàn hảo cho thú cưng yêu quý của bạn</p>}
         <div className="row">
           <div className="col-lg-3 mb-4">
             <div className="sidebar">
@@ -96,8 +125,8 @@ const ProductsPage = () => {
                       type="number"
                       className="form-control"
                       placeholder="Từ"
-                      value={minPrice}
-                      onChange={(e) => setMinPrice(e.target.value)}
+                      value={priceRange.min}
+                      onChange={(e) => setPriceRange(prev => ({ ...prev, min: e.target.value }))}
                     />
                   </div>
                   <div className="col-6">
@@ -105,15 +134,15 @@ const ProductsPage = () => {
                       type="number"
                       className="form-control"
                       placeholder="Đến"
-                      value={maxPrice}
-                      onChange={(e) => setMaxPrice(e.target.value)}
+                      value={priceRange.max}
+                      onChange={(e) => setPriceRange(prev => ({ ...prev, max: e.target.value }))}
                     />
                   </div>
                 </div>
               </div>
               <button
                 className="btn btn-primary w-100"
-                onClick={() => setCurrentPage(1)}
+                onClick={handleApplyFilter}
                 disabled={productsLoading}
               >
                 Lọc

@@ -1,15 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { products } from '../../data/products';
+import { productsApi } from '../../api';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
-
-const mockVariants = [
-  { key: 'small', label: 'Nhỏ (20-24 cm)', priceDelta: 0 },
-  { key: 'medium', label: 'Trung (24-28 cm)', priceDelta: 2 },
-  { key: 'large', label: 'Lớn (28-32 cm)', priceDelta: 4 }
-];
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -18,31 +12,84 @@ const ProductDetail = () => {
   const { user } = useAuth();
   const { showToast } = useToast();
 
-  const product = useMemo(() => products.find((p) => String(p.id) === String(id)), [id]);
-
-  const [variant, setVariant] = useState(mockVariants[0].key);
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedVariant, setSelectedVariant] = useState(null);
   const [quantity, setQuantity] = useState(1);
 
-  if (!product) {
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        setLoading(true);
+        const response = await productsApi.getProductById(id);
+        const productData = response.result;
+        setProduct(productData);
+        
+        // Set default variant (first one)
+        if (productData.productVariant && productData.productVariant.length > 0) {
+          setSelectedVariant(productData.productVariant[0]);
+        }
+      } catch (err) {
+        setError('Không thể tải thông tin sản phẩm');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchProduct();
+    }
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="container page-content text-center py-5">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !product) {
     return (
       <div className="container page-content">
         <div className="alert alert-warning d-flex justify-content-between align-items-center">
-          <div>Không tìm thấy sản phẩm.</div>
+          <div>{error || 'Không tìm thấy sản phẩm.'}</div>
           <button className="btn btn-primary btn-sm" onClick={() => navigate('/products')}>Quay lại danh sách</button>
         </div>
       </div>
     );
   }
 
-  const activeVariant = mockVariants.find((v) => v.key === variant) || mockVariants[0];
-  const finalPrice = (product.price + activeVariant.priceDelta) * quantity;
+  // Lấy ảnh primary hoặc ảnh đầu tiên
+  const primaryImage = product.productImage?.find(img => img.isPrimary === 1);
+  const imageUrl = primaryImage?.imageUrl || product.productImage?.[0]?.imageUrl || 'https://via.placeholder.com/500x500?text=No+Image';
+  
+  // Giá hiển thị
+  const currentPrice = selectedVariant ? selectedVariant.price : 0;
+  const formatPrice = (price) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
 
   const handleAddToCart = () => {
     if (!user) {
       showToast('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng', 'warning');
       return;
     }
-    addItem({ ...product, variant, quantity, price: product.price + activeVariant.priceDelta });
+    
+    if (!selectedVariant) {
+      showToast('Sản phẩm này chưa có phiên bản giá', 'error');
+      return;
+    }
+
+    addItem({ 
+      ...product, 
+      variant: selectedVariant, // Lưu cả object variant
+      quantity, 
+      price: currentPrice,
+      image: imageUrl // Lưu ảnh để hiển thị trong giỏ
+    });
     showToast('Đã thêm sản phẩm vào giỏ hàng!', 'success');
   };
 
@@ -50,9 +97,9 @@ const ProductDetail = () => {
     <div className="container page-content">
       <div className="row g-4">
         <div className="col-lg-6">
-          <div className="card">
+          <div className="card border-0 shadow-sm">
             <img
-              src={product.image}
+              src={imageUrl}
               alt={product.name}
               className="card-img-top rounded-4"
               style={{ width: '100%', height: '480px', objectFit: 'cover' }}
@@ -60,42 +107,59 @@ const ProductDetail = () => {
           </div>
         </div>
         <div className="col-lg-6">
-          <div className="fw-semibold mb-2">Danh mục: {product.category}</div>
-          <h2 className="mb-2">{product.name}</h2>
-          <div className="mb-3">{'★'.repeat(Math.floor(product.rating))} <span className="text-muted">({product.rating})</span></div>
-          <div className="h4 text-primary mb-3">${(product.price + activeVariant.priceDelta).toFixed(2)}</div>
-          <div className="mb-3">
-            <div className="fw-semibold mb-1 text-success">Còn hàng</div>
+          <div className="fw-semibold mb-2 text-primary">Danh mục: {product.categoryName}</div>
+          <h2 className="mb-2 fw-bold">{product.name}</h2>
+          
+          <div className="h3 text-danger mb-3 fw-bold">{formatPrice(currentPrice)}</div>
+          
+          <div className="mb-4">
+            <div className="fw-semibold mb-1 text-success">
+              <i className="fas fa-check-circle me-1"></i>Còn hàng
+            </div>
           </div>
-          <div className="mb-3">
-            <div className="fw-semibold mb-1">Mô tả</div>
-            <p className="text-muted mb-0">{product.description}</p>
-          </div>
-
-          <div className="mb-3">
-            <div className="fw-semibold mb-1">Chọn phiên bản</div>
-            <select className="form-select" value={variant} onChange={(e) => setVariant(e.target.value)}>
-              {mockVariants.map((v) => (
-                <option key={v.key} value={v.key}>{v.label} {v.priceDelta ? `+ $${v.priceDelta}` : ''}</option>
-              ))}
-            </select>
+          
+          <div className="mb-4">
+            <div className="fw-bold mb-2">Mô tả sản phẩm</div>
+            <p className="text-muted mb-0" style={{lineHeight: '1.6'}}>{product.description}</p>
           </div>
 
-          <div className="d-flex align-items-center mb-3">
-            <div className="me-3">Số lượng</div>
-            <div className="input-group" style={{ width: 130 }}>
+          {product.productVariant && product.productVariant.length > 0 && (
+            <div className="mb-4">
+              <div className="fw-bold mb-2">Chọn phiên bản</div>
+              <select 
+                className="form-select" 
+                value={selectedVariant?.id || ''} 
+                onChange={(e) => {
+                  const v = product.productVariant.find(pv => String(pv.id) === e.target.value);
+                  setSelectedVariant(v);
+                }}
+              >
+                {product.productVariant.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.sizeName} - {v.colorName} ({formatPrice(v.price)})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <div className="d-flex align-items-center mb-4">
+            <div className="me-3 fw-bold">Số lượng:</div>
+            <div className="input-group" style={{ width: 140 }}>
               <button className="btn btn-outline-secondary" onClick={() => setQuantity((q) => Math.max(1, q - 1))}>−</button>
-              <input className="form-control text-center" value={quantity} onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value || '1', 10)))} />
+              <input className="form-control text-center fw-bold" value={quantity} onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value || '1', 10)))} />
               <button className="btn btn-outline-secondary" onClick={() => setQuantity((q) => q + 1)}>+</button>
             </div>
           </div>
 
-          <div className="d-flex gap-2 mb-4">
-            <button className="btn btn-primary" onClick={handleAddToCart}><i className="fas fa-cart-plus me-1"></i>Thêm vào giỏ</button>
-            <Link className="btn btn-outline-secondary" to="/products">Tiếp tục mua sắm</Link>
+          <div className="d-flex gap-3 mb-4">
+            <button className="btn btn-primary btn-lg px-4" onClick={handleAddToCart}>
+              <i className="fas fa-cart-plus me-2"></i>Thêm vào giỏ
+            </button>
+            <Link className="btn btn-outline-secondary btn-lg px-4" to="/products">
+              Tiếp tục mua sắm
+            </Link>
           </div>
-
-          <div className="text-muted">Tổng tạm tính: <span className="fw-bold">${finalPrice.toFixed(2)}</span></div>
         </div>
       </div>
 
