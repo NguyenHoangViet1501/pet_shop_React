@@ -171,9 +171,9 @@ const ProductsPage = () => {
                 disabled={productsLoading}
               >
                 <option value="">Mặc định</option>
-                <option value="price,asc">Sắp xếp theo giá: Thấp đến cao</option>
-                <option value="price,desc">Sắp xếp theo giá: Cao đến thấp</option>
-                <option value="createdDate,desc">Sản phẩm mới nhất</option>
+                <option value="price,asc">Giá: Thấp đến cao</option>
+                <option value="price,desc">Giá: Cao đến thấp</option>
+                <option value="createdDate,desc">Mới nhất</option>
                 <option value="soldQuantity,desc">Bán chạy nhất</option>
               </select>
             </div>

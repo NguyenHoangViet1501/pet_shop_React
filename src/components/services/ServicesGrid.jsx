@@ -19,7 +19,9 @@ const ServicesGrid = ({ services, onBook, bookLabel = 'Đặt lịch' }) => {
               {s.duration && (
                 <div className="text-muted small mb-2"><i className="fas fa-clock me-1"></i>Thời lượng: {s.duration}</div>
               )}
-              <div className="fw-bold mb-3">${Number(s.price || 0).toFixed(2)}</div>
+              <div className="fw-bold mb-3">
+                {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(s.price || 0))}
+              </div>
               {onBook && (
                 <button className="btn btn-primary" onClick={() => onBook(s.key)}>{bookLabel}</button>
               )}
