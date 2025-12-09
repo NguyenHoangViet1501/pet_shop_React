@@ -31,7 +31,7 @@ const Header = () => {
         setSearchResults([]);
         setShowDropdown(false);
       }
-    }, 300);
+    }, 900);
 
     return () => clearTimeout(delayDebounceFn);
   }, [searchQuery]);
