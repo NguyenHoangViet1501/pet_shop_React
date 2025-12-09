@@ -5,19 +5,19 @@ import Footer from './components/common/Footer';
 import Toast from './components/common/Toast';
 import HomePage from './pages/HomePage';
 import ProductsPage from './pages/ProductsPage';
-import LoginPage from './components/auth/LoginPage';
-import RegisterPage from './components/auth/RegisterPage';
-import CartPage from './components/cart/CartPage';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import CartPage from './pages/CartPage';
 import CheckoutPage from './pages/CheckoutPage';
-import ProfilePage from './components/user/ProfilePage';
-import OrdersPage from './components/user/OrdersPage';
-import AppointmentsPage from './components/user/AppointmentsPage';
-import ServicesPage from './components/services/ServicesPage';
-import AdoptionPage from './components/adoption/AdoptionPage';
-import AdoptionRequestsPage from './components/adoption/AdoptionRequestsPage';
-import ProductDetail from './components/product/ProductDetail';
-import OrderDetail from './components/user/OrderDetail';
-import AdoptionRequestDetail from './components/adoption/AdoptionRequestDetail';
+import ProfilePage from './pages/ProfilePage';
+import OrdersPage from './pages/OrdersPage';
+import AppointmentsPage from './pages/AppointmentsPage';
+import ServicesPage from './pages/ServicesPage';
+import AdoptionPage from './pages/AdoptionPage';
+import AdoptionRequestsPage from './pages/AdoptionRequestsPage';
+import ProductDetailPage from './pages/ProductDetailPage';
+import OrderDetailPage from './pages/OrderDetailPage';
+import AdoptionRequestDetailPage from './pages/AdoptionRequestDetailPage';
 
 function App() {
   return (
@@ -27,19 +27,19 @@ function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/products" element={<ProductsPage />} />
-          <Route path="/products/:id" element={<ProductDetail />} />
+          <Route path="/products/:id" element={<ProductDetailPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/orders" element={<OrdersPage />} />
-          <Route path="/orders/:id" element={<OrderDetail />} />
+          <Route path="/orders/:id" element={<OrderDetailPage />} />
           <Route path="/appointments" element={<AppointmentsPage />} />
           <Route path="/services" element={<ServicesPage />} />
           <Route path="/adoption" element={<AdoptionPage />} />
           <Route path="/adoption-requests" element={<AdoptionRequestsPage />} />
-          <Route path="/adoption-requests/:id" element={<AdoptionRequestDetail />} />
+          <Route path="/adoption-requests/:id" element={<AdoptionRequestDetailPage />} />
         </Routes>
       </main>
       <Footer />

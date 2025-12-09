@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import AppointmentEditModal from './AppointmentEditModal';
+import AppointmentEditModal from '../components/user/AppointmentEditModal';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { servicesAPI } from '../api/services';
@@ -182,3 +182,4 @@ const AppointmentsPage = () => {
 };
 
 export default AppointmentsPage;
+

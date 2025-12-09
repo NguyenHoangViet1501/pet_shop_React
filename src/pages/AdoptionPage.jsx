@@ -215,3 +215,4 @@ const AdoptionPage = () => {
 };
 
 export default AdoptionPage;
+
