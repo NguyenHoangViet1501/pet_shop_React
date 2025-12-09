@@ -1,24 +1,27 @@
-import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import ProductCard from '../components/product/ProductCard';
-import { useCategoriesQuery } from '../hooks/useCategoriesQuery';
-import { useProductsQuery } from '../hooks/useProductsQuery';
-import { productsApi } from '../api';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
+import ProductCard from "../components/product/ProductCard";
+import { useCategoriesQuery } from "../hooks/useCategoriesQuery";
+import { useProductsQuery } from "../hooks/useProductsQuery";
+import { productsApi } from "../api";
+import { useNavigate } from "react-router-dom";
 const ProductsPage = () => {
   const [searchParams] = useSearchParams();
-  const searchQuery = searchParams.get('search') || '';
+  const searchQuery = searchParams.get("search") || "";
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedCategory, setSelectedCategory] = useState('');
-  
-  // State cho input giá (chưa filter ngay)
-  const [priceRange, setPriceRange] = useState({ min: '', max: '' });
-  
-  // State cho giá trị đã apply (gửi lên API)
-  const [appliedPriceRange, setAppliedPriceRange] = useState({ min: null, max: null });
+  const [selectedCategory, setSelectedCategory] = useState("");
 
-  const [sortBy, setSortBy] = useState('');
+  // State cho input giá (chưa filter ngay)
+  const [priceRange, setPriceRange] = useState({ min: "", max: "" });
+
+  // State cho giá trị đã apply (gửi lên API)
+  const [appliedPriceRange, setAppliedPriceRange] = useState({
+    min: null,
+    max: null,
+  });
+
+  const [sortBy, setSortBy] = useState("");
   const pageSize = 6;
 
   // Reset page when search query changes
@@ -30,7 +33,7 @@ const ProductsPage = () => {
   const handleApplyFilter = () => {
     setAppliedPriceRange({
       min: priceRange.min,
-      max: priceRange.max
+      max: priceRange.max,
     });
     setCurrentPage(1);
   };
@@ -42,6 +45,7 @@ const ProductsPage = () => {
     isError: categoriesError,
   } = useCategoriesQuery();
   // Products query
+
   const {
     data: productsData,
     isLoading: productsLoading,
@@ -72,7 +76,7 @@ const ProductsPage = () => {
   const goTo = (page) => {
     const p = Math.min(Math.max(totalPages, 1), Math.max(1, page));
     setCurrentPage(p);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
   const prev = () => {
     if (currentPage > 1) goTo(currentPage - 1);
@@ -90,7 +94,11 @@ const ProductsPage = () => {
             Kết quả tìm kiếm cho: <strong>"{searchQuery}"</strong>
           </p>
         )}
-        {!searchQuery && <p className="text-muted mb-4">Tìm sản phẩm hoàn hảo cho thú cưng yêu quý của bạn</p>}
+        {!searchQuery && (
+          <p className="text-muted mb-4">
+            Tìm sản phẩm hoàn hảo cho thú cưng yêu quý của bạn
+          </p>
+        )}
         <div className="row">
           <div className="col-lg-3 mb-4">
             <div className="sidebar">
@@ -126,7 +134,12 @@ const ProductsPage = () => {
                       className="form-control"
                       placeholder="Từ"
                       value={priceRange.min}
-                      onChange={(e) => setPriceRange(prev => ({ ...prev, min: e.target.value }))}
+                      onChange={(e) =>
+                        setPriceRange((prev) => ({
+                          ...prev,
+                          min: e.target.value,
+                        }))
+                      }
                     />
                   </div>
                   <div className="col-6">
@@ -135,7 +148,12 @@ const ProductsPage = () => {
                       className="form-control"
                       placeholder="Đến"
                       value={priceRange.max}
-                      onChange={(e) => setPriceRange(prev => ({ ...prev, max: e.target.value }))}
+                      onChange={(e) =>
+                        setPriceRange((prev) => ({
+                          ...prev,
+                          max: e.target.value,
+                        }))
+                      }
                     />
                   </div>
                 </div>
@@ -152,17 +170,20 @@ const ProductsPage = () => {
           <div className="col-lg-9">
             <div className="d-flex justify-content-between align-items-center mb-4">
               <span className="text-muted">
-                {productsLoading ? (
-                  'Đang tải...'
-                ) : productsError ? (
-                  'Lỗi tải sản phẩm'
-                ) : (
-                  `Hiển thị ${products.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-${Math.min(currentPage * pageSize, totalElements)} trong ${totalElements} sản phẩm`
-                )}
+                {productsLoading
+                  ? "Đang tải..."
+                  : productsError
+                  ? "Lỗi tải sản phẩm"
+                  : `Hiển thị ${
+                      products.length > 0 ? (currentPage - 1) * pageSize + 1 : 0
+                    }-${Math.min(
+                      currentPage * pageSize,
+                      totalElements
+                    )} trong ${totalElements} sản phẩm`}
               </span>
               <select
                 className="form-select"
-                style={{ width: 'auto' }}
+                style={{ width: "auto" }}
                 value={sortBy}
                 onChange={(e) => {
                   setSortBy(e.target.value);
@@ -171,8 +192,12 @@ const ProductsPage = () => {
                 disabled={productsLoading}
               >
                 <option value="">Mặc định</option>
-                <option value="price,asc">Sắp xếp theo giá: Thấp đến cao</option>
-                <option value="price,desc">Sắp xếp theo giá: Cao đến thấp</option>
+                <option value="price,asc">
+                  Sắp xếp theo giá: Thấp đến cao
+                </option>
+                <option value="price,desc">
+                  Sắp xếp theo giá: Cao đến thấp
+                </option>
                 <option value="createdDate,desc">Sản phẩm mới nhất</option>
                 <option value="soldQuantity,desc">Bán chạy nhất</option>
               </select>
@@ -201,20 +226,58 @@ const ProductsPage = () => {
             </div>
             {totalPages > 0 && (
               <nav className="mt-3">
-                <ul className="pagination justify-content-center align-items-center" style={{ minHeight: 40 }}>
-                  <li className={`page-item${currentPage === 1 ? ' disabled' : ''}`}
-                      style={{ display: 'flex', alignItems: 'center' }}>
-                    <button className="page-link d-flex align-items-center justify-content-center" style={{ height: 40 }} onClick={prev} disabled={currentPage === 1}>&laquo;</button>
+                <ul
+                  className="pagination justify-content-center align-items-center"
+                  style={{ minHeight: 40 }}
+                >
+                  <li
+                    className={`page-item${
+                      currentPage === 1 ? " disabled" : ""
+                    }`}
+                    style={{ display: "flex", alignItems: "center" }}
+                  >
+                    <button
+                      className="page-link d-flex align-items-center justify-content-center"
+                      style={{ height: 40 }}
+                      onClick={prev}
+                      disabled={currentPage === 1}
+                    >
+                      &laquo;
+                    </button>
                   </li>
-                  {Array.from({ length: totalPages }, (_, idx) => idx + 1).map((p) => (
-                    <li key={p} className={`page-item${currentPage === p ? ' active' : ''}`}
-                        style={{ display: 'flex', alignItems: 'center' }}>
-                      <button className="page-link d-flex align-items-center justify-content-center" style={{ height: 40 }} onClick={() => goTo(p)}>{p}</button>
-                    </li>
-                  ))}
-                  <li className={`page-item${currentPage === totalPages ? ' disabled' : ''}`}
-                      style={{ display: 'flex', alignItems: 'center' }}>
-                    <button className="page-link d-flex align-items-center justify-content-center" style={{ height: 40 }} onClick={next} disabled={currentPage === totalPages}>&raquo;</button>
+                  {Array.from({ length: totalPages }, (_, idx) => idx + 1).map(
+                    (p) => (
+                      <li
+                        key={p}
+                        className={`page-item${
+                          currentPage === p ? " active" : ""
+                        }`}
+                        style={{ display: "flex", alignItems: "center" }}
+                      >
+                        <button
+                          className="page-link d-flex align-items-center justify-content-center"
+                          style={{ height: 40 }}
+                          onClick={() => goTo(p)}
+                        >
+                          {p}
+                        </button>
+                      </li>
+                    )
+                  )}
+                  <li
+                    className={`page-item${
+                      currentPage === totalPages ? " disabled" : ""
+                    }`}
+                    style={{ display: "flex", alignItems: "center" }}
+                  >
+                    <button
+                      className="page-link d-flex align-items-center justify-content-center"
+                      style={{ height: 40 }}
+                      onClick={next}
+                      disabled={currentPage === totalPages}
+                    >
+                      &raquo;
+                    </button>
                   </li>
                 </ul>
               </nav>
@@ -227,5 +290,3 @@ const ProductsPage = () => {
 };
 
 export default ProductsPage;
-
-
