@@ -216,7 +216,9 @@ const ProductsPage = () => {
                 </div>
               ) : (
                 products.map((product) => (
-                  <ProductCard key={product.id} product={product} />
+                  <div key={product.id} className="col-lg-4 col-md-6 mb-4">
+                    <ProductCard product={product} />
+                  </div>
                 ))
               )}
             </div>
