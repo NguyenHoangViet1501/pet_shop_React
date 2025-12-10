@@ -1,10 +1,11 @@
+import "./button.css";
 export default function Button({
   children,
   onClick,
   type = "button",
   variant = "primary",
   className = "",
-  disable = false,
+  disabled = false,
 }) {
   return (
     <button

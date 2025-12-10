@@ -8,6 +8,7 @@ import { CartProvider } from "./context/CartContext";
 import { ToastProvider } from "./context/ToastContext";
 import { AppointmentProvider } from "./context/AppointmentContext";
 import "./styles/global.css";
+
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const queryClient = new QueryClient({
