@@ -18,6 +18,7 @@ import AdoptionRequestsPage from "./pages/adoption/AdoptionRequestsPage";
 import ProductDetailPage from "./pages/product/ProductDetailPage";
 import OrderDetailPage from "./pages/order/OrderDetailPage";
 import AdoptionRequestDetailPage from "./pages/adoption/AdoptionRequestDetailPage";
+import HomePageNew from "./pages/home/HomePageNew";
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
       <main style={{ marginTop: "76px" }}>
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/homenew" element={<HomePageNew />} />
           <Route path="/products" element={<ProductsPage />} />
           <Route path="/products/:id" element={<ProductDetailPage />} />
           <Route path="/login" element={<LoginPage />} />
