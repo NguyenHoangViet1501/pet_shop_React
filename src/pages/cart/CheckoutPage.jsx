@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useCart } from "../context/CartContext";
-import { useAuth } from "../context/AuthContext";
-import { useToast } from "../context/ToastContext";
-import { addressAPI } from "../api/address";
+import { useCart } from "../../context/CartContext";
+import { useAuth } from "../../context/AuthContext";
+import { useToast } from "../../context/ToastContext";
+import { addressAPI } from "../../api/address";
 
 const CheckoutPage = () => {
   const [validated, setValidated] = useState(false);

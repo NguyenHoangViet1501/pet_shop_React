@@ -1,29 +1,29 @@
-import React from 'react';
-import { Routes, Route } from 'react-router-dom';
-import Header from './components/common/Header';
-import Footer from './components/common/Footer';
-import Toast from './components/common/Toast';
-import HomePage from './pages/HomePage';
-import ProductsPage from './pages/ProductsPage';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import CartPage from './pages/CartPage';
-import CheckoutPage from './pages/CheckoutPage';
-import ProfilePage from './pages/ProfilePage';
-import OrdersPage from './pages/OrdersPage';
-import AppointmentsPage from './pages/AppointmentsPage';
-import ServicesPage from './pages/ServicesPage';
-import AdoptionPage from './pages/AdoptionPage';
-import AdoptionRequestsPage from './pages/AdoptionRequestsPage';
-import ProductDetailPage from './pages/ProductDetailPage';
-import OrderDetailPage from './pages/OrderDetailPage';
-import AdoptionRequestDetailPage from './pages/AdoptionRequestDetailPage';
+import React from "react";
+import { Routes, Route } from "react-router-dom";
+import Header from "./components/common/Header";
+import Footer from "./components/common/Footer";
+import Toast from "./components/common/Toast";
+import HomePage from "./pages/home/HomePage";
+import ProductsPage from "./pages/product/ProductsPage";
+import LoginPage from "./pages/user/LoginPage";
+import RegisterPage from "./pages/user/RegisterPage";
+import CartPage from "./pages/cart/CartPage";
+import CheckoutPage from "./pages/cart/CheckoutPage";
+import ProfilePage from "./pages/user/ProfilePage";
+import OrdersPage from "./pages/order/OrdersPage";
+import AppointmentsPage from "./pages/appointment/AppointmentsPage";
+import ServicesPage from "./pages/service/ServicesPage";
+import AdoptionPage from "./pages/adoption/AdoptionPage";
+import AdoptionRequestsPage from "./pages/adoption/AdoptionRequestsPage";
+import ProductDetailPage from "./pages/product/ProductDetailPage";
+import OrderDetailPage from "./pages/order/OrderDetailPage";
+import AdoptionRequestDetailPage from "./pages/adoption/AdoptionRequestDetailPage";
 
 function App() {
   return (
     <div className="App">
       <Header />
-      <main style={{ marginTop: '76px' }}>
+      <main style={{ marginTop: "76px" }}>
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/products" element={<ProductsPage />} />
@@ -39,7 +39,10 @@ function App() {
           <Route path="/services" element={<ServicesPage />} />
           <Route path="/adoption" element={<AdoptionPage />} />
           <Route path="/adoption-requests" element={<AdoptionRequestsPage />} />
-          <Route path="/adoption-requests/:id" element={<AdoptionRequestDetailPage />} />
+          <Route
+            path="/adoption-requests/:id"
+            element={<AdoptionRequestDetailPage />}
+          />
         </Routes>
       </main>
       <Footer />
