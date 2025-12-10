@@ -33,9 +33,10 @@
 }
 
 .small-2 {
-  bottom: -120px;
+  bottom: -80px;
   left: 280px;
   width: 200px;
+  z-index: -1;
 }
 
 .bird {
@@ -58,7 +59,7 @@
   position: absolute;
   right: 0;
   bottom: -160px;
-  z-index: 0;
+  z-index: -1;
 }
 
 .medium-bg {
@@ -66,7 +67,7 @@
   position: absolute;
   right: 40px;
   bottom: -120px;
-  z-index: 0;
+  z-index: -1;
 }
 
 /* ========================= */
@@ -82,14 +83,14 @@
   width: 450px;
   right: 160px;
   bottom: -110px;
-  z-index: 2;
+  z-index: -1;
 }
 
 .pet-img.cat {
   width: 450px;
   right: 0px;
   bottom: -110px;
-  z-index: 1;
+  z-index: -1;
 }
 .vetchan {
   position: absolute;

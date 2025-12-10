@@ -44,8 +44,9 @@ const HeroSection = () => {
           <img src={orangeShapeMedium} className="shape medium-bg" alt="" />
 
           {/* Chó + Mèo */}
-          <img src={dog} className="pet-img dog" alt="dog" />
+
           <img src={cat} className="pet-img cat" alt="cat" />
+          <img src={dog} className="pet-img dog" alt="dog" />
         </div>
       </div>
     </section>
