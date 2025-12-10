@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import ProductCard from "../components/product/ProductCard";
-import { useCategoriesQuery } from "../hooks/useCategoriesQuery";
-import { useProductsQuery } from "../hooks/useProductsQuery";
-import { productsApi } from "../api";
+import ProductCard from "../../components/product/ProductCard";
+import { useCategoriesQuery } from "../../hooks/useCategoriesQuery";
+import { useProductsQuery } from "../../hooks/useProductsQuery";
+import { productsApi } from "../../api";
 import { useNavigate } from "react-router-dom";
 const ProductsPage = () => {
   const [searchParams] = useSearchParams();
