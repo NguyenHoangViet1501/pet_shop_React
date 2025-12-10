@@ -185,6 +185,9 @@ const ProductDetail = () => {
                 onChange={(e) => {
                   const v = product.productVariant.find(pv => String(pv.id) === e.target.value);
                   setSelectedVariant(v);
+                  if (v && v.imageUrl && v.imageUrl.length > 0) {
+                    setActiveImage(v.imageUrl[0]);
+                  }
                 }}
               >
                 {product.productVariant.map((v) => (

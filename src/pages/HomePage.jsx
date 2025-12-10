@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import ProductCard from '../components/product/ProductCard';
+import ProductHome from '../components/product/ProductHome';
 import ServicesGrid from '../components/services/ServicesGrid';
 import { servicesAPI } from '../api';
 import { useFeaturedProductsQuery } from '../hooks/useFeaturedProductsQuery';
@@ -12,7 +13,7 @@ const HomePage = () => {
     data: featuredProductsData,
     isLoading: loadingProducts,
     isError: productsError,
-  } = useFeaturedProductsQuery(4);
+  } = useFeaturedProductsQuery(8);
 
   const featuredProducts = Array.isArray(featuredProductsData?.result?.content)
     ? featuredProductsData.result.content
@@ -92,36 +93,18 @@ const HomePage = () => {
       </div>
 
       {/* Featured Products */}
-      <div className="container my-5">
-        <div className="d-flex justify-content-between align-items-center mb-3">
-          <div>
-            <h2 className="mb-1">Sản phẩm nổi bật</h2>
-            <div className="text-muted">Sản phẩm được yêu thích bởi thú cưng và chủ nuôi</div>
+      {loadingProducts ? (
+        <div className="container my-5 text-center py-4">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading...</span>
           </div>
-          <Link to="/products" className="text-decoration-none">Xem tất cả sản phẩm <i class="fa-solid fa-arrow-right"></i></Link>
+          <p className="mt-3 text-muted">Đang tải sản phẩm nổi bật...</p>
         </div>
-        {loadingProducts && (
-          <div className="text-center py-4">
-            <div className="spinner-border text-primary" role="status">
-              <span className="visually-hidden">Loading...</span>
-            </div>
-            <p className="mt-3 text-muted">Đang tải sản phẩm nổi bật...</p>
-          </div>
-        )}
-        {productsError && !loadingProducts && (
-          <div className="alert alert-danger">Không tải được sản phẩm nổi bật.</div>
-        )}
-        {!productsError && !loadingProducts && featuredProducts.length === 0 && (
-          <div className="text-center text-muted py-4">Chưa có sản phẩm nổi bật.</div>
-        )}
-        {!productsError && !loadingProducts && featuredProducts.length > 0 && (
-          <div className="row">
-            {featuredProducts.map(product => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        )}
-      </div>
+      ) : productsError ? (
+        <div className="container my-5 alert alert-danger">Không tải được sản phẩm nổi bật.</div>
+      ) : (
+        <ProductHome title="Sản phẩm nổi bật" products={featuredProducts} />
+      )}
 
       {/* Mô tả chi tiết các dịch vụ */}
       <div className="container my-5">

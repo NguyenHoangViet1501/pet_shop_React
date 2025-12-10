@@ -40,44 +40,45 @@ const ProductCard = ({ product }) => {
   const isOutOfStock = Number(product.stockQuantity) === 0;
 
   return (
-    <div className="col-lg-4 col-md-6 mb-4">
-      <div className="card product-card position-relative h-100">
-        {product.isFeatured === "1" && <div className="featured-badge">Featured</div>}
-        {isOutOfStock && (
-          <div className="position-absolute top-0 end-0 bg-danger text-white px-2 py-1 m-2 rounded small fw-bold" style={{zIndex: 10}}>
-            Hết hàng
+    <div className="card product-card border-0 shadow-sm h-100">
+      {product.isFeatured === "1" && <div className="featured-badge">Featured</div>}
+      {isOutOfStock && (
+        <div className="position-absolute top-0 end-0 bg-danger text-white px-2 py-1 m-2 rounded small fw-bold" style={{zIndex: 10}}>
+          Hết hàng
+        </div>
+      )}
+      <Link to={`/products/${product.id}`} className="text-center p-3">
+        <img 
+          src={imageUrl} 
+          className="card-img-top" 
+          alt={product.name} 
+          style={{ 
+            height: '180px', 
+            objectFit: 'contain',
+            opacity: isOutOfStock ? 0.6 : 1 
+          }} 
+        />
+      </Link>
+      <div className="card-body d-flex flex-column px-3 pb-3 pt-0">
+        <div className="text-muted small mb-1">
+          {product.categoryName}
+        </div>
+        <h6 className="card-title fw-bold mb-2">
+          <Link to={`/products/${product.id}`} className="text-dark text-decoration-none">{product.name}</Link>
+        </h6>
+        
+        <div className="d-flex justify-content-between align-items-center mt-auto">
+          <div className="fw-bold" style={{ color: 'var(--primary-orange)', fontSize: '1.1rem' }}>
+            {formatPrice(price)}
           </div>
-        )}
-        <Link to={`/products/${product.id}`}>
-          <img 
-            src={imageUrl} 
-            className="card-img-top" 
-            alt={product.name} 
-            style={{ 
-              height: '200px', 
-              objectFit: 'cover',
-              opacity: isOutOfStock ? 0.6 : 1 
-            }} 
-          />
-        </Link>
-        <div className="card-body d-flex flex-column">
-          <div className="text-muted small mb-2">
-            {product.categoryName}
-          </div>
-          <h5 className="card-title">
-            <Link to={`/products/${product.id}`} className="text-decoration-none">{product.name}</Link>
-          </h5>
-          <p className="card-text text-muted flex-grow-1 small">{product.shortDescription}</p>
-          <div className="d-flex justify-content-between align-items-center mt-auto">
-            <div className="price fw-bold text-primary">{formatPrice(price)}</div>
-            <button 
-              className="btn btn-primary btn-sm" 
-              onClick={handleAddToCart}
-              disabled={isOutOfStock}
-            >
-              <i className="fas fa-cart-plus"></i> {isOutOfStock ? 'Hết hàng' : 'Thêm vào giỏ'}
-            </button>
-          </div>
+          <button 
+            className="btn btn-primary rounded-circle d-flex align-items-center justify-content-center p-0" 
+            style={{ width: '36px', height: '36px' }}
+            onClick={handleAddToCart}
+            disabled={isOutOfStock}
+          >
+            <i className="fas fa-shopping-cart text-white" style={{ fontSize: '0.9rem' }}></i>
+          </button>
         </div>
       </div>
     </div>
