@@ -1,0 +1,104 @@
+.hero-section-new {
+  padding-bottom: 0 !important;
+  margin-bottom: 0 !important;
+  min-height: unset !important;
+}
+
+.hero-title {
+  font-size: 42px;
+  line-height: 1.3;
+}
+
+.hero-desc {
+  max-width: 90%;
+}
+
+/* ========================= */
+/* SHAPE TRANG TRÍ BÊN TRÁI */
+/* ========================= */
+
+.hero-left {
+  position: relative;
+}
+
+.shape {
+  position: absolute;
+  z-index: 0;
+}
+
+.small-1 {
+  top: -100px;
+  left: 70px;
+  width: 300px;
+}
+
+.small-2 {
+  bottom: -120px;
+  left: 280px;
+  width: 200px;
+}
+
+.bird {
+  top: 40px;
+  left: 600px;
+  width: 120px;
+}
+
+/* ========================= */
+/* BÊN PHẢI - BACKGROUND CAM */
+/* ========================= */
+
+.hero-right {
+  position: relative;
+  height: 450px;
+}
+
+.big-bg {
+  width: 650px;
+  position: absolute;
+  right: 0;
+  bottom: -160px;
+  z-index: 0;
+}
+
+.medium-bg {
+  width: 550px;
+  position: absolute;
+  right: 40px;
+  bottom: -120px;
+  z-index: 0;
+}
+
+/* ========================= */
+/* CHÓ + MÈO */
+/* ========================= */
+
+.pet-img {
+  position: absolute;
+  z-index: 2;
+}
+
+.pet-img.dog {
+  width: 450px;
+  right: 160px;
+  bottom: -110px;
+  z-index: 2;
+}
+
+.pet-img.cat {
+  width: 450px;
+  right: 0px;
+  bottom: -110px;
+  z-index: 1;
+}
+.vetchan {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  inset: 0;              /* phủ kín hero-right */
+  object-fit: cover;     /* pattern trải đều */
+  opacity: 0.15;         /* mờ nhẹ đẹp */
+  z-index: 1;            /* trên nền cam */
+  pointer-events: none; /* không chặn click */
+}
+
