@@ -6,7 +6,6 @@ import React, {
   useCallback,
 } from "react";
 import { apiFetch as baseApiFetch } from "../utils/api";
-import { useToast } from "./ToastContext";
 import { jwtDecode } from "jwt-decode";
 import { authAPI, userAPI } from "../api";
 
@@ -24,10 +23,10 @@ export const useAuth = () => {
 
 // Component cung cấp dữ liệu đăng nhập cho toàn ứng dụng
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);       // Lưu thông tin user (email, name,...)
+  const [user, setUser] = useState(null); // Lưu thông tin user (email, name,...)
   const [loading, setLoading] = useState(false); // Trạng thái loading khi login/register
-  const [token, setToken] = useState(null);      // Token JWT hiện tại
-  const { showToast } = useToast();              // Hiển thị thông báo toast
+  const [token, setToken] = useState(null); // Token JWT hiện tại
+  // Hiển thị thông báo toast
 
   // --- 1️⃣ Khi trang load lên: lấy dữ liệu từ localStorage ---
   useEffect(() => {
@@ -105,23 +104,24 @@ export const AuthProvider = ({ children }) => {
 
   // --- 3️⃣ Hàm logout ---
   const logout = async () => {
-  try {
-    if (token) {
-      // Gửi request logout kèm token hiện tại
-      await authAPI.logout(token);
+    try {
+      if (token) {
+        // Gửi request logout kèm token hiện tại
+        await authAPI.logout(token);
+      }
+    } catch (err) {
+      console.warn(
+        "⚠️ Logout API failed (có thể token đã hết hạn):",
+        err.message
+      );
+    } finally {
+      // Dù API fail vẫn xóa local để tránh bị kẹt
+      setUser(null);
+      setToken(null);
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("auth_user");
     }
-  } catch (err) {
-    console.warn("⚠️ Logout API failed (có thể token đã hết hạn):", err.message);
-  } finally {
-    // Dù API fail vẫn xóa local để tránh bị kẹt
-    setUser(null);
-    setToken(null);
-    localStorage.removeItem("auth_token");
-    localStorage.removeItem("auth_user");
-    showToast("Đăng xuất thành công", "success");
-  }
-};
-
+  };
 
   // --- 4️⃣ Hàm register (giả lập, có thể đổi sang API thật) ---
   const register = async (userData) => {
@@ -177,7 +177,9 @@ export const AuthProvider = ({ children }) => {
         const remaining = exp - now;
         let refreshTime = remaining - leadTimeMs;
 
-        console.log(`🔍 Token remaining time: ${Math.round(remaining / 1000)} seconds`);
+        console.log(
+          `🔍 Token remaining time: ${Math.round(remaining / 1000)} seconds`
+        );
 
         // Nếu còn rất ít thời gian, refresh sớm hơn để an toàn
         if (remaining <= leadTimeMs) {

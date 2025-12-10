@@ -19,7 +19,7 @@ export const productsApi = {
   },
 
   // Lấy sản phẩm nổi bật (isFeatured = 1)
-  getFeaturedProducts: async (size = 4) => {
+  getFeaturedProducts: async (size = 10) => {
     const queryParams = new URLSearchParams();
     queryParams.append("pageNumber", 1);
     queryParams.append("size", size);
