@@ -8,6 +8,72 @@ import { productsApi } from "../../api";
 import "./header.css";
 
 const Headernew = () => {
+  const { user, logout } = useAuth();
+  const { showToast } = useToast();
+  const { getTotalItems } = useCart();
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(async () => {
+      if (searchQuery.trim()) {
+        try {
+          const response = await productsApi.getProducts({
+            search: searchQuery,
+            size: 5,
+          });
+          const products = response?.result?.content || [];
+          setSearchResults(products);
+          // Chỉ hiện dropdown nếu input đang được focus
+          if (document.activeElement === inputRef.current) {
+            setShowDropdown(true);
+          }
+        } catch (error) {
+          setSearchResults([]);
+        }
+      } else {
+        setSearchResults([]);
+        setShowDropdown(false);
+      }
+    }, 900);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery]);
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/products?search=${encodeURIComponent(searchQuery)}`);
+      setShowDropdown(false);
+      inputRef.current?.blur();
+    }
+  };
+  const getProductById = async (id) => {
+    try {
+      const response = await productsApi.getProductById(id);
+      if (response && response.result) {
+        navigate(`/products/${id}`);
+        return response.result;
+      }
+    } catch (error) {
+      console.error("Error fetching product by ID:", error);
+    }
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    showToast("Đăng xuất thành công", "success");
+    navigate("/");
+  };
+
+  const activeStyle = ({ isActive }) => ({
+    color: isActive ? "#f59f00" : undefined,
+    fontWeight: isActive ? 600 : undefined,
+  });
+
   return (
     <header className="site-header">
       {/* THANH TRÊN – THÔNG TIN LIÊN HỆ */}
@@ -25,9 +91,11 @@ const Headernew = () => {
             </span>
           </div>
           <div>
-            <button className="login mt-2">
-              <span>Đăng nhập/Đăng ký</span>{" "}
-            </button>
+            <NavLink to="/login">
+              <button className="login mt-2">
+                <span>Đăng nhập/Đăng ký</span>{" "}
+              </button>
+            </NavLink>
           </div>
         </div>
       </div>
@@ -37,24 +105,29 @@ const Headernew = () => {
         <div className="container">
           <div className="header-main d-flex align-items-center justify-content-between">
             {/* Logo */}
-            <div className="d-flex align-items-center gap-2">
-              <img className="logo-icon" src="/images/logo.png" alt="" />
-            </div>
+            <Link className="" to="/" onClick={() => setSearchQuery("")}>
+              <div className="d-flex align-items-center gap-2">
+                <img className="logo-icon" src="/images/logo.png" alt="" />
+              </div>
+            </Link>
 
             {/* Menu */}
             <nav className="d-none d-md-flex gap-5 main-nav">
-              <a href="/" className="nav-link-item active">
-                Trang chủ
-              </a>
-              <a href="/" className="nav-link-item">
-                Sản phẩm
-              </a>
-              <a href="/" className="nav-link-item">
-                Dịch vụ
-              </a>
-              <a href="/" className="nav-link-item">
-                Nhận nuôi
-              </a>
+              <NavLink className="nav-link-item " to="/">
+                <span href="/" className="">
+                  Trang chủ
+                </span>
+              </NavLink>
+              <NavLink className="nav-link-item" to="/products">
+                <span className="">Sản phẩm</span>
+              </NavLink>
+
+              <NavLink className="nav-link-item" to="/services">
+                <span className="">Dịch vụ</span>
+              </NavLink>
+              <NavLink className="nav-link-item" to="/adoption">
+                <span className>Nhận nuôi</span>
+              </NavLink>
             </nav>
 
             {/* Search + icons */}
