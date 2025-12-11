@@ -19,11 +19,12 @@ import ProductDetailPage from "./pages/product/ProductDetailPage";
 import OrderDetailPage from "./pages/order/OrderDetailPage";
 import AdoptionRequestDetailPage from "./pages/adoption/AdoptionRequestDetailPage";
 import HomePageNew from "./pages/home/HomePageNew";
+import Headernew from "./components/common/Headernew";
 
 function App() {
   return (
     <div className="App">
-      <Header />
+      <Headernew />
       <main style={{ marginTop: "76px" }}>
         <Routes>
           <Route path="/" element={<HomePage />} />
