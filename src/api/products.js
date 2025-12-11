@@ -12,6 +12,8 @@ export const productsApi = {
     if (params.maxPrice) queryParams.append("maxPrice", params.maxPrice);
     if (params.search) queryParams.append("search", params.search);
     if (params.sort) queryParams.append("sort", params.sort);
+    if (params.animal) queryParams.append("animal", params.animal);
+    if (params.brand) queryParams.append("brand", params.brand);
     if (params.isFeatured !== undefined)
       queryParams.append("isFeatured", params.isFeatured);
 

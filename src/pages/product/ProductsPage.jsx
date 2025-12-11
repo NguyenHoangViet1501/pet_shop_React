@@ -3,16 +3,19 @@ import { useSearchParams } from "react-router-dom";
 import ProductCard from "../../components/product/ProductCard";
 import { useCategoriesQuery } from "../../hooks/useCategoriesQuery";
 import { useProductsQuery } from "../../hooks/useProductsQuery";
-import { productsApi } from "../../api";
 import { useNavigate } from "react-router-dom";
+import ProductAnimal from "../../components/product/ProductAnimal";
+import ProductFilter2 from "../../components/product/ProductFilter2";
+
 const ProductsPage = () => {
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get("search") || "";
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedAnimal, setSelectedAnimal] = useState(null);
+  const [selectedBrand, setSelectedBrand] = useState(null);
 
-  // State cho input giá (chưa filter ngay)
   const [priceRange, setPriceRange] = useState({ min: "", max: "" });
 
   // State cho giá trị đã apply (gửi lên API)
@@ -24,17 +27,42 @@ const ProductsPage = () => {
   const [sortBy, setSortBy] = useState("");
   const pageSize = 6;
 
+  const brands = [
+    { id: 'Natural food', name: 'Natural food', count: 28 },
+    { id: 'Pet care', name: 'Pet care', count: 18 },
+    { id: 'Dogs friend', name: 'Dogs friend', count: 16 },
+    { id: 'Pet food', name: 'Pet food', count: 40 },
+    { id: 'Favorite pet', name: 'Favorite pet', count: 28 },
+    { id: 'Green line', name: 'Green line', count: 18 },
+  ];
+
   // Reset page when search query changes
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery]);
 
-  // Hàm xử lý khi bấm nút Lọc
-  const handleApplyFilter = () => {
-    setAppliedPriceRange({
-      min: priceRange.min,
-      max: priceRange.max,
-    });
+  const handleFilterChange = (filters) => {
+    if (filters.categories && filters.categories.length > 0) {
+        setSelectedCategory(filters.categories[filters.categories.length - 1]); 
+    } else {
+        setSelectedCategory(null);
+    }
+
+    // Brands
+    if (filters.brands && filters.brands.length > 0) {
+        setSelectedBrand(filters.brands[filters.brands.length - 1]);
+    } else {
+        setSelectedBrand(null);
+    }
+
+    // Price
+    if (filters.price) {
+        setAppliedPriceRange({
+            min: filters.price.min,
+            max: filters.price.max
+        });
+    }
+    
     setCurrentPage(1);
   };
 
@@ -54,6 +82,8 @@ const ProductsPage = () => {
     pageNumber: currentPage,
     size: pageSize,
     ...(selectedCategory && { categoryId: selectedCategory }),
+    ...(selectedAnimal && selectedAnimal !== 'all' && { animal: selectedAnimal }),
+    ...(selectedBrand && { brand: selectedBrand }),
     ...(appliedPriceRange.min && { minPrice: appliedPriceRange.min }),
     ...(appliedPriceRange.max && { maxPrice: appliedPriceRange.max }),
     ...(sortBy && { sort: sortBy }),
@@ -87,6 +117,7 @@ const ProductsPage = () => {
 
   return (
     <div className="page" id="products">
+      <ProductAnimal selectedAnimal={selectedAnimal} onSelectAnimal={setSelectedAnimal} />
       <div className="container page-content">
         <h1 className="mb-4">Sản phẩm</h1>
         {searchQuery && (
@@ -101,71 +132,11 @@ const ProductsPage = () => {
         )}
         <div className="row">
           <div className="col-lg-3 mb-4">
-            <div className="sidebar">
-              <h5>Lọc sản phẩm</h5>
-              <div className="mb-3">
-                <label className="form-label">Danh mục</label>
-                <select
-                  className="form-select"
-                  value={selectedCategory}
-                  onChange={(e) => {
-                    setSelectedCategory(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  disabled={categoriesLoading}
-                >
-                  <option value="">Tất cả danh mục</option>
-                  {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-                {categoriesError && (
-                  <div className="text-danger small mt-1">Lỗi tải danh mục</div>
-                )}
-              </div>
-              <div className="mb-3">
-                <label className="form-label">Khoảng giá</label>
-                <div className="row">
-                  <div className="col-6">
-                    <input
-                      type="number"
-                      className="form-control"
-                      placeholder="Từ"
-                      value={priceRange.min}
-                      onChange={(e) =>
-                        setPriceRange((prev) => ({
-                          ...prev,
-                          min: e.target.value,
-                        }))
-                      }
-                    />
-                  </div>
-                  <div className="col-6">
-                    <input
-                      type="number"
-                      className="form-control"
-                      placeholder="Đến"
-                      value={priceRange.max}
-                      onChange={(e) =>
-                        setPriceRange((prev) => ({
-                          ...prev,
-                          max: e.target.value,
-                        }))
-                      }
-                    />
-                  </div>
-                </div>
-              </div>
-              <button
-                className="btn btn-primary w-100"
-                onClick={handleApplyFilter}
-                disabled={productsLoading}
-              >
-                Lọc
-              </button>
-            </div>
+            <ProductFilter2 
+                categories={categories}
+                brands={brands}
+                onFilterChange={handleFilterChange}
+            />
           </div>
           <div className="col-lg-9">
             <div className="d-flex justify-content-between align-items-center mb-4">
@@ -223,62 +194,44 @@ const ProductsPage = () => {
               )}
             </div>
             {totalPages > 0 && (
-              <nav className="mt-3">
-                <ul
-                  className="pagination justify-content-center align-items-center"
-                  style={{ minHeight: 40 }}
+              <div className="d-flex justify-content-center mt-4 gap-2">
+                <button
+                  className="btn bg-white border rounded-3 d-flex align-items-center justify-content-center"
+                  style={{ width: 40, height: 40, color: '#6c757d' }}
+                  onClick={prev}
+                  disabled={currentPage === 1}
                 >
-                  <li
-                    className={`page-item${
-                      currentPage === 1 ? " disabled" : ""
-                    }`}
-                    style={{ display: "flex", alignItems: "center" }}
-                  >
+                  <i className="fas fa-chevron-left"></i>
+                </button>
+
+                {Array.from({ length: totalPages }, (_, idx) => idx + 1).map(
+                  (p) => (
                     <button
-                      className="page-link d-flex align-items-center justify-content-center"
-                      style={{ height: 40 }}
-                      onClick={prev}
-                      disabled={currentPage === 1}
+                      key={p}
+                      className={`btn rounded-3 d-flex align-items-center justify-content-center fw-bold`}
+                      style={{
+                        width: 40,
+                        height: 40,
+                        backgroundColor: currentPage === p ? "#ffc107" : "white",
+                        color: currentPage === p ? "white" : "#6c757d",
+                        borderColor: currentPage === p ? "#ffc107" : "#dee2e6",
+                      }}
+                      onClick={() => goTo(p)}
                     >
-                      &laquo;
+                      {p}
                     </button>
-                  </li>
-                  {Array.from({ length: totalPages }, (_, idx) => idx + 1).map(
-                    (p) => (
-                      <li
-                        key={p}
-                        className={`page-item${
-                          currentPage === p ? " active" : ""
-                        }`}
-                        style={{ display: "flex", alignItems: "center" }}
-                      >
-                        <button
-                          className="page-link d-flex align-items-center justify-content-center"
-                          style={{ height: 40 }}
-                          onClick={() => goTo(p)}
-                        >
-                          {p}
-                        </button>
-                      </li>
-                    )
-                  )}
-                  <li
-                    className={`page-item${
-                      currentPage === totalPages ? " disabled" : ""
-                    }`}
-                    style={{ display: "flex", alignItems: "center" }}
-                  >
-                    <button
-                      className="page-link d-flex align-items-center justify-content-center"
-                      style={{ height: 40 }}
-                      onClick={next}
-                      disabled={currentPage === totalPages}
-                    >
-                      &raquo;
-                    </button>
-                  </li>
-                </ul>
-              </nav>
+                  )
+                )}
+
+                <button
+                  className="btn bg-white border rounded-3 d-flex align-items-center justify-content-center"
+                  style={{ width: 40, height: 40, color: '#6c757d' }}
+                  onClick={next}
+                  disabled={currentPage === totalPages}
+                >
+                  <i className="fas fa-chevron-right"></i>
+                </button>
+              </div>
             )}
           </div>
         </div>

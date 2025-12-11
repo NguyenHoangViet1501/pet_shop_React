@@ -18,15 +18,15 @@ const About = () => {
             </p>
           </div>
         </div>
-        <div className="row g-4 mt-4">
+        <div className="row g-4 mt-5">
           <div className="col-md-4">
-            <img src="/images/about1.png" alt="Cam kết chính hãng" className="img-fluid w-100" />
+            <img src="/images/home/about/about1.png" alt="Cam kết chính hãng" className="img-fluid w-100" />
           </div>
           <div className="col-md-4">
-            <img src="/images/about2.png" alt="Giá cả hợp lý" className="img-fluid w-100" />
+            <img src="/images/home/about/about2.png" alt="Giá cả hợp lý" className="img-fluid w-100" />
           </div>
           <div className="col-md-4">
-            <img src="/images/about3.png" alt="Giao nhanh tiện lợi" className="img-fluid w-100" />
+            <img src="/images/home/about/about3.png" alt="Giao nhanh tiện lợi" className="img-fluid w-100" />
           </div>
         </div>
       </div>

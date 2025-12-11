@@ -12,9 +12,9 @@ const Feedback = () => {
   }, []);
 
   const images = [
-    '/images/Gemini_Generated_Image_2c63vq2c63vq2c63.png',
-    '/images/Gemini_Generated_Image_ksrwrksrwrksrwrk.png',
-    '/images/danhgia1.png'
+    '/images/home/brand/Gemini_Generated_Image_2c63vq2c63vq2c63.png',
+    '/images/home/brand/Gemini_Generated_Image_ksrwrksrwrksrwrk.png',
+    '/images/home/feedback/danhgia1.png'
   ];
 
   return (

@@ -3,33 +3,33 @@ import './DetailServiceHome.css';
 
 const services = [
   {
-    img: '/images/service2img/cat1.png',
+    img: '/images/home/service2img/cat1.png',
     title: 'Tắm rửa & chải lông cho thú cưng',
     desc: 'Giúp thú cưng sạch sẽ, thơm tho và phòng tránh các bệnh ngoài da.',
   },
   {
-    img: '/images/service2img/cat2.png',
+    img: '/images/home/service2img/cat2.png',
     title: 'Cắt tỉa tạo kiểu toàn thân',
     desc: 'Tạo kiểu lông đẹp, phù hợp từng giống thú cưng, an toàn và chuyên nghiệp.',
   },
   {
-    img: '/images/service2img/cat3.png',
+    img: '/images/home/service2img/cat3.png',
     title: 'Tiêm phòng định kỳ',
     desc: 'Bảo vệ sức khỏe thú cưng với các mũi tiêm phòng cần thiết.',
   },
   // Thêm 3 dịch vụ mẫu để có thể chuyển slide
   {
-    img: '/images/service2img/cat1.png',
+    img: '/images/home/service2img/cat1.png',
     title: 'Khám sức khỏe tổng quát',
     desc: 'Kiểm tra sức khỏe định kỳ, phát hiện sớm các vấn đề tiềm ẩn.',
   },
   {
-    img: '/images/service2img/cat2.png',
+    img: '/images/home/service2img/cat2.png',
     title: 'Làm sạch tai & móng',
     desc: 'Chăm sóc tai và móng giúp thú cưng luôn khỏe mạnh, sạch sẽ.',
   },
   {
-    img: '/images/service2img/cat3.png',
+    img: '/images/home/service2img/cat3.png',
     title: 'Huấn luyện cơ bản',
     desc: 'Dạy thú cưng các kỹ năng cơ bản, tăng sự gắn kết với chủ.',
   },

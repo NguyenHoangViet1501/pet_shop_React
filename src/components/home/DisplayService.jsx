@@ -7,26 +7,26 @@ const DisplayService = () => (
       <div className="service-visual d-flex align-items-center justify-content-center" style={{ position: 'relative', minWidth: 500, height: 500, flex: '0 0 600px', maxWidth: '700px' }}>
         {/* Nền cam lớn */}
         <img
-          src="/images/service1img/Shape.png"
+          src="/images/home/service1img/Shape.png"
           alt="Background Shape"
           className="bg-shape"
           style={{ position: 'absolute', left: 0, top: 0, width: 520, height: 420, zIndex: 1 }}
         />
         {/* Ảnh mèo */}
         <img
-          src="/images/service1img/cat.png"
+          src="/images/home/service1img/cat.png"
           alt="Cat"
           style={{ position: 'absolute', left: -20, top: 80, width: 300, zIndex: 2 }}
         />
         {/* Ảnh chó */}
         <img
-          src="/images/service1img/dog.png"
+          src="/images/home/service1img/dog.png"
           alt="Dog"
           style={{ position: 'absolute', left: 160, top: -5, width: 370, zIndex: 2 }}
         />
         {/* Vector trang trí, nằm phía sau, không tràn xuống dưới */}
         <img
-          src="/images/service1img/Vector.png"
+          src="/images/home/service1img/Vector.png"
           alt="Vector Decor"
           className="vector-decor"
           style={{ position: 'absolute', left: 0, top: -55, width: 1150, height: 540, zIndex: 0, pointerEvents: 'none', objectFit: 'cover' }}

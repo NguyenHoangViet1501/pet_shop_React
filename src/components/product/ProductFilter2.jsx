@@ -1,0 +1,191 @@
+import React, { useState, useEffect } from 'react';
+import './ProductFilter2.css';
+
+const ProductFilter2 = ({ 
+    categories = [], 
+    brands = [], 
+    minPrice = 0, 
+    maxPrice = 1000000, 
+    onFilterChange 
+}) => {
+    // Mock data if props are empty (matching the image)
+    // const defaultCategories = [
+    //     { id: 1, name: 'Thức ăn', count: 21 },
+    //     { id: 2, name: 'Đồ chơi', count: 28 },
+    //     { id: 3, name: 'Đồ dùng', count: 12 },
+    //     { id: 4, name: 'Food', count: 80 },
+    //     { id: 5, name: 'Toys', count: 90 },
+    //     { id: 6, name: 'Sale', count: 24 },
+    // ];
+
+    const defaultBrands = [
+        { id: 1, name: 'Natural food', count: 28 },
+        { id: 2, name: 'Pet care', count: 18 },
+        { id: 3, name: 'Dogs friend', count: 16 },
+        { id: 4, name: 'Pet food', count: 40 },
+        { id: 5, name: 'Favorite pet', count: 28 },
+        { id: 6, name: 'Green line', count: 18 },
+    ];
+
+    const displayCategories = categories;
+    const displayBrands = brands.length > 0 ? brands : defaultBrands;
+
+    // State
+    const [selectedCats, setSelectedCats] = useState([]);
+    const [selectedBrands, setSelectedBrands] = useState([]);
+    const [priceRange, setPriceRange] = useState({ min: minPrice, max: maxPrice });
+
+    // Handle Category Change
+    const handleCategoryChange = (id) => {
+        // Chỉ cho phép chọn 1 danh mục (nếu chọn lại cái đang chọn thì bỏ chọn)
+        const newSelected = selectedCats.includes(id) ? [] : [id];
+        setSelectedCats(newSelected);
+        
+        if (onFilterChange) {
+            onFilterChange({
+                categories: newSelected,
+                brands: selectedBrands,
+                price: priceRange
+            });
+        }
+    };
+
+    // Handle Brand Change
+    const handleBrandChange = (id) => {
+        // Chỉ cho phép chọn 1 hãng
+        const newSelected = selectedBrands.includes(id) ? [] : [id];
+        setSelectedBrands(newSelected);
+
+        if (onFilterChange) {
+            onFilterChange({
+                categories: selectedCats,
+                brands: newSelected,
+                price: priceRange
+            });
+        }
+    };
+
+    // Handle Price Change
+    const handlePriceChange = (e) => {
+        const value = parseInt(e.target.value);
+        const name = e.target.name;
+        
+        if (name === 'min') {
+            if (value > priceRange.max) return; // Prevent crossing
+            setPriceRange({ ...priceRange, min: value });
+        } else {
+            if (value < priceRange.min) return; // Prevent crossing
+            setPriceRange({ ...priceRange, max: value });
+        }
+    };
+
+    // Calculate percentage for slider track
+    const getPercent = (value) => {
+        return Math.round(((value - minPrice) / (maxPrice - minPrice)) * 100);
+    };
+
+    const minPercent = getPercent(priceRange.min);
+    const maxPercent = getPercent(priceRange.max);
+
+    const handleApply = () => {
+        if (onFilterChange) {
+            onFilterChange({
+                categories: selectedCats,
+                brands: selectedBrands,
+                price: {
+                    min: priceRange.min,
+                    // Nếu max == maxPrice (kéo hết cỡ) thì coi như không giới hạn (null)
+                    max: priceRange.max === maxPrice ? null : priceRange.max
+                }
+            });
+        }
+    };
+
+    const formatCurrency = (value) => {
+        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
+    };
+
+    return (
+        <div className="filter-sidebar">
+            {/* Categories Section */}
+            <div className="filter-section">
+                <h3 className="filter-title">Danh Mục</h3>
+                <ul className="filter-list">
+                    {displayCategories.map(cat => (
+                        <li key={cat.id} className="filter-item" onClick={() => handleCategoryChange(cat.id)}>
+                            <div className="d-flex align-items-center">
+                                <input 
+                                    type="checkbox" 
+                                    className="filter-checkbox"
+                                    checked={selectedCats.includes(cat.id)}
+                                    onChange={() => {}} // Handled by li onClick
+                                />
+                                <span>{cat.name}</span>
+                            </div>
+                            <span className="filter-count">{cat.count}</span>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+
+            {/* Price Section */}
+            <div className="filter-section">
+                <h3 className="filter-title">Giá</h3>
+                <div className="price-slider-container">
+                    <div className="slider-track"></div>
+                    <div 
+                        className="slider-range"
+                        style={{ left: `${minPercent}%`, width: `${maxPercent - minPercent}%` }}
+                    ></div>
+                    <input 
+                        type="range" 
+                        name="min"
+                        min={minPrice}
+                        max={maxPrice}
+                        value={priceRange.min}
+                        onChange={handlePriceChange}
+                        className="range-input"
+                    />
+                    <input 
+                        type="range" 
+                        name="max"
+                        min={minPrice}
+                        max={maxPrice}
+                        value={priceRange.max}
+                        onChange={handlePriceChange}
+                        className="range-input"
+                    />
+                </div>
+                <div className="price-values">
+                    <span>
+                        {formatCurrency(priceRange.min)} - {priceRange.max === maxPrice ? '1.000.000 đ' : formatCurrency(priceRange.max)}
+                    </span>
+                    <button className="btn-apply" onClick={handleApply}>Apply</button>
+                </div>
+            </div>
+
+            {/* Brands Section */}
+            <div className="filter-section">
+                <h3 className="filter-title">Hãng</h3>
+                <ul className="filter-list">
+                    {displayBrands.map(brand => (
+                        <li key={brand.id} className="filter-item" onClick={() => handleBrandChange(brand.id)}>
+                            <div className="d-flex align-items-center">
+                                <input 
+                                    type="checkbox" 
+                                    className="filter-checkbox"
+                                    checked={selectedBrands.includes(brand.id)}
+                                    onChange={() => {}}
+                                />
+                                <span>{brand.name}</span>
+                            </div>
+                            <span className="filter-count">{brand.count}</span>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+        </div>
+    );
+};
+
+export default ProductFilter2;
