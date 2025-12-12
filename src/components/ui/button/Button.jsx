@@ -3,7 +3,7 @@ export default function Button({
   children,
   onClick,
   type = "button",
-  variant = "primary",
+  variant = "primary-custom",
   className = "",
   disabled = false,
   style,
@@ -13,10 +13,11 @@ export default function Button({
       type={type}
       onClick={onClick}
       disabled={disabled}
+      style={style}
       className={`
         btn 
         btn-${variant}
-        ${disabled ? "btn-disabled" : ""}
+        ${disabled ? "btn-disabled-custom" : ""}
         ${className}
       `}
     >
