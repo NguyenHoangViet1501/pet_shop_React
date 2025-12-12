@@ -27,8 +27,8 @@ function App() {
       <Headernew />
       <main style={{ marginTop: "50px", marginBottom: "50px" }}>
         <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/homenew" element={<HomePageNew />} />
+          <Route path="/" element={<HomePageNew />} />
+
           <Route path="/products" element={<ProductsPage />} />
           <Route path="/products/:id" element={<ProductDetailPage />} />
           <Route path="/login" element={<LoginPage />} />
