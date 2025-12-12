@@ -16,6 +16,8 @@ const Headernew = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const inputRef = useRef(null);
+  const [openInfo, setOpenInfo] = useState(false);
+  console.log(openInfo);
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(async () => {
@@ -91,11 +93,71 @@ const Headernew = () => {
             </span>
           </div>
           <div>
-            <NavLink to="/login">
-              <button className="login mt-2">
-                <span>Đăng nhập/Đăng ký</span>{" "}
-              </button>
-            </NavLink>
+            {user ? (
+              <div className="dropdown">
+                <button
+                  className="button-info "
+                  type="button"
+                  onClick={() => setOpenInfo(!openInfo)}
+                >
+                  <span className="">Xin chào, {user.fullName}</span>
+                </button>
+                {openInfo && (
+                  <ul className="dropdown-menu show">
+                    <li>
+                      <Link
+                        className="dropdown-item"
+                        to="/profile"
+                        onClick={() => setOpenInfo(false)}
+                      >
+                        Thông tin cá nhân
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        className="dropdown-item"
+                        to="/orders"
+                        onClick={() => setOpenInfo(false)}
+                      >
+                        Đơn hàng
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        className="dropdown-item"
+                        to="/appointments"
+                        onClick={() => setOpenInfo(false)}
+                      >
+                        Lịch hẹn
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        className="dropdown-item"
+                        to="/adoption-requests"
+                        onClick={() => setOpenInfo(false)}
+                      >
+                        Đơn nhận nuôi
+                      </Link>
+                    </li>
+                    <li>
+                      <hr className="dropdown-divider" />
+                    </li>
+                    <li>
+                      <button className="dropdown-item" onClick={handleLogout}>
+                        Đăng xuất
+                      </button>
+                    </li>
+                  </ul>
+                )}
+              </div>
+            ) : (
+              <NavLink to="/login">
+                <button className="login mt-2">
+                  <span>Đăng nhập/Đăng ký</span>{" "}
+                </button>
+              </NavLink>
+            )}
           </div>
         </div>
       </div>
@@ -118,7 +180,7 @@ const Headernew = () => {
                   Trang chủ
                 </span>
               </NavLink>
-              <NavLink className="nav-link-item" to="/products">
+              <NavLink className="nav-link-item " to="/products">
                 <span className="">Sản phẩm</span>
               </NavLink>
 
@@ -228,15 +290,15 @@ const Headernew = () => {
                 )}
               </div>
 
-              <Link to="/cart">
-                <div>
+              <Link to="/cart" className="shopping-cart-wrapper">
+                <div className="">
                   <button className="shopping-cart">
                     <img
                       className="shopping-cart"
                       src="/images/shopping-cart.png"
                       alt=""
                     />
-                    <span className="">{getTotalItems()}</span>
+                    <span className="cart-badge">{getTotalItems()}</span>
                   </button>
                 </div>
               </Link>
