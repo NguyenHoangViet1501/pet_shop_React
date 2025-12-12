@@ -16,6 +16,8 @@ const Headernew = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const inputRef = useRef(null);
+  const [openInfo, setOpenInfo] = useState(false);
+  console.log(openInfo);
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(async () => {
@@ -38,7 +40,7 @@ const Headernew = () => {
         setSearchResults([]);
         setShowDropdown(false);
       }
-    }, 900);
+    }, 600);
 
     return () => clearTimeout(delayDebounceFn);
   }, [searchQuery]);
@@ -91,11 +93,71 @@ const Headernew = () => {
             </span>
           </div>
           <div>
-            <NavLink to="/login">
-              <button className="login mt-2">
-                <span>Đăng nhập/Đăng ký</span>{" "}
-              </button>
-            </NavLink>
+            {user ? (
+              <div className="dropdown">
+                <button
+                  className="button-info "
+                  type="button"
+                  onClick={() => setOpenInfo(!openInfo)}
+                >
+                  <span className="">Xin chào, {user.fullName}</span>
+                </button>
+                {openInfo && (
+                  <ul className="dropdown-menu show">
+                    <li>
+                      <Link
+                        className="dropdown-item"
+                        to="/profile"
+                        onClick={() => setOpenInfo(false)}
+                      >
+                        Thông tin cá nhân
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        className="dropdown-item"
+                        to="/orders"
+                        onClick={() => setOpenInfo(false)}
+                      >
+                        Đơn hàng
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        className="dropdown-item"
+                        to="/appointments"
+                        onClick={() => setOpenInfo(false)}
+                      >
+                        Lịch hẹn
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        className="dropdown-item"
+                        to="/adoption-requests"
+                        onClick={() => setOpenInfo(false)}
+                      >
+                        Đơn nhận nuôi
+                      </Link>
+                    </li>
+                    <li>
+                      <hr className="dropdown-divider" />
+                    </li>
+                    <li>
+                      <button className="dropdown-item" onClick={handleLogout}>
+                        Đăng xuất
+                      </button>
+                    </li>
+                  </ul>
+                )}
+              </div>
+            ) : (
+              <NavLink to="/login">
+                <button className="login mt-2">
+                  <span>Đăng nhập/Đăng ký</span>{" "}
+                </button>
+              </NavLink>
+            )}
           </div>
         </div>
       </div>
@@ -105,7 +167,7 @@ const Headernew = () => {
         <div className="container">
           <div className="header-main d-flex align-items-center justify-content-between">
             {/* Logo */}
-            <Link className="" to="/homenew" onClick={() => setSearchQuery("")}>
+            <Link className="" to="/" onClick={() => setSearchQuery("")}>
               <div className="d-flex align-items-center gap-2">
                 <img className="logo-icon" src="/images/logo.png" alt="" />
               </div>
@@ -113,12 +175,12 @@ const Headernew = () => {
 
             {/* Menu */}
             <nav className="d-none d-md-flex gap-5 main-nav">
-              <NavLink className="nav-link-item " to="/homenew">
+              <NavLink className="nav-link-item " to="/">
                 <span href="/" className="">
                   Trang chủ
                 </span>
               </NavLink>
-              <NavLink className="nav-link-item" to="/products">
+              <NavLink className="nav-link-item " to="/products">
                 <span className="">Sản phẩm</span>
               </NavLink>
 
@@ -132,29 +194,114 @@ const Headernew = () => {
 
             {/* Search + icons */}
             <div className="d-flex align-items-center gap-3">
-              <div className="search-box d-none d-md-flex align-items-center">
-                <input
-                  type="text"
-                  className="form-control border-0 shadow-0"
-                  placeholder="Tìm kiếm sản phẩm..."
-                />
-                <button className="icon-btn">
-                  <img
-                    className="search-icon"
-                    src="/images/search-icon.png"
-                    alt=""
+              <div
+                className="search-box d-none d-md-flex align-items-center"
+                style={{ position: "relative" }}
+              >
+                <form
+                  onSubmit={handleSearch}
+                  className="d-flex"
+                  style={{ width: "250px" }}
+                >
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    className="form-control border-0 shadow-0"
+                    placeholder="Tìm kiếm sản phẩm..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onFocus={() => searchQuery && setShowDropdown(true)}
+                    onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
                   />
-                </button>
+                  <button className="icon-btn">
+                    <img
+                      className="search-icon"
+                      src="/images/search-icon.png"
+                      alt=""
+                    />
+                  </button>
+                </form>
+
+                {/* ⭐ DROPDOWN nằm ngay dưới form */}
+                {showDropdown && searchResults.length > 0 && (
+                  <div
+                    className="dropdown-menu show w-100"
+                    style={{
+                      position: "absolute",
+                      top: "100%",
+                      left: 0,
+                      zIndex: 2000,
+                      maxHeight: "400px",
+                      overflowY: "auto",
+                      boxShadow: "0 4px 8px rgba(0,0,0,0.15)",
+                      borderRadius: "4px",
+                    }}
+                  >
+                    {searchResults.map((product) => {
+                      const primaryImage = product.productImage?.find(
+                        (img) => img.isPrimary === 1
+                      );
+
+                      const imageUrl =
+                        primaryImage?.imageUrl ||
+                        product.productImage?.[0]?.imageUrl ||
+                        "https://via.placeholder.com/50";
+
+                      const price = product.productVariant?.[0]?.price || 0;
+
+                      return (
+                        <Link
+                          key={product.id}
+                          to={`/products/${product.id}`}
+                          className="dropdown-item d-flex align-items-center p-2 border-bottom"
+                          onClick={() => {
+                            setShowDropdown(false);
+                            setSearchQuery("");
+                          }}
+                        >
+                          <img
+                            src={imageUrl}
+                            alt={product.name}
+                            className="rounded me-2"
+                            style={{
+                              width: "40px",
+                              height: "40px",
+                              objectFit: "cover",
+                            }}
+                          />
+                          <div className="flex-grow-1 overflow-hidden">
+                            <div
+                              className="text-truncate fw-bold"
+                              style={{ fontSize: "0.9rem" }}
+                            >
+                              {product.name}
+                            </div>
+                            <div className="text-danger small">
+                              {new Intl.NumberFormat("vi-VN", {
+                                style: "currency",
+                                currency: "VND",
+                              }).format(price)}
+                            </div>
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
-              <button className="shopping-cart">
-                <img
-                  className="shopping-cart"
-                  src="/images/shopping-cart.png"
-                  alt=""
-                  h
-                />
-              </button>
+              <Link to="/cart" className="shopping-cart-wrapper">
+                <div className="">
+                  <button className="shopping-cart">
+                    <img
+                      className="shopping-cart"
+                      src="/images/shopping-cart.png"
+                      alt=""
+                    />
+                    <span className="cart-badge">{getTotalItems()}</span>
+                  </button>
+                </div>
+              </Link>
             </div>
           </div>
         </div>

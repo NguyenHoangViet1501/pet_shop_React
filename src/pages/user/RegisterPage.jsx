@@ -298,13 +298,28 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="page" id="register">
-      <div className="container page-content">
-        <div className="row justify-content-center">
-          <div className="col-md-8">
-            <div className="card">
-              <div className="card-body p-5">
-                <h2 className="text-center mb-4">Đăng ký tài khoản</h2>
+    <div className="page bg-white py-5" id="register">
+      <div className="container">
+        <div className="row align-items-center">
+          {/* Left Side - Image */}
+          <div className="col-md-7 d-none d-md-block">
+            <img 
+              src="/images/login.png" 
+              alt="Pet Care Shop Register" 
+              className="img-fluid w-100"
+              style={{ objectFit: 'contain', maxHeight: '600px' }}
+            />
+          </div>
+
+          {/* Right Side - Form */}
+          <div className="col-md-5">
+            <div className="text-center mb-4">
+                <h1 className="fw-bold" style={{ color: '#ffc107', fontSize: '3rem' }}>Pet Care Shop</h1>
+            </div>
+
+            <div className="card shadow-sm">
+              <div className="card-body p-4">
+                <h2 className="text-center mb-4">Đăng ký</h2>
                 <form onSubmit={handleSubmit} noValidate>
                   <div className="row">
                     <div className="mb-3">

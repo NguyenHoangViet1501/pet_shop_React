@@ -9,6 +9,7 @@ import bird from "../../assets/svg/bird.svg";
 import dog from "../../assets/svg/dog.svg";
 import cat from "../../assets/svg/cat.svg";
 import vetchan from "../../assets/svg/vetchan.svg";
+import { hover } from "@testing-library/user-event/dist/hover";
 const HeroSection = () => {
   return (
     <section className="hero-section-new container py-5">
