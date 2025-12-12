@@ -18,107 +18,93 @@ const Footer = () => {
   }, []);
 
   return (
-    <footer className="footer  p-0 m-0">
-      <div className="container">
+    <footer className="position-relative py-5" style={{ 
+      backgroundImage: 'url(/images/footer/footer1.png)',
+      backgroundSize: '100% 100%',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat',
+      color: '#212529', 
+      overflow: 'hidden' 
+    }}>
+      {/* Background Images */}
+      <div className="position-absolute top-0 start-0 w-100 h-100" style={{ zIndex: 0, pointerEvents: 'none' }}>
+         <img 
+            src="/images/footer/footer2.png" 
+            alt="background shape" 
+            className="position-absolute bottom-0 end-0" 
+            style={{ maxHeight: '200px', width: 'auto' }} 
+         />
+      </div>
+
+      <div className="container position-relative" style={{ zIndex: 1 }}>
         <div className="row">
+          {/* Brand Column */}
           <div className="col-lg-4 mb-4">
-            <h5 className="text-warning">
-              <i className="fas fa-paw"></i> PawMartHome
+            <h5 className="fw-bold mb-3 d-flex align-items-center" style={{ fontSize: '1.5rem' }}>
+              <i className="fas fa-paw me-2"></i> Pet Care Shop
             </h5>
-            <p>
-              Cửa hàng thú cưng hàng đầu với sản phẩm chất lượng cao và dịch vụ
-              chăm sóc tận tâm.
+            <p className="mb-4 text-muted" style={{ maxWidth: '300px' }}>
+              Cửa hàng thú cưng hàng đầu với sản phẩm chất lượng cao và dịch vụ chăm sóc tận tâm.
             </p>
-            <div>
-              <a href="#" className="text-white me-3">
-                <i className="fab fa-facebook"></i>
+            <div className="d-flex gap-3">
+              <a href="#" className="text-decoration-none">
+                <img src="/images/footer/facebook.png" alt="Facebook" width="30" height="30" />
               </a>
-              <a href="#" className="text-white me-3">
-                <i className="fab fa-instagram"></i>
+              <a href="#" className="text-decoration-none">
+                <img src="/images/footer/instagram.png" alt="Instagram" width="30" height="30" />
               </a>
-              <a href="#" className="text-white me-3">
-                <i className="fab fa-youtube"></i>
+              <a href="#" className="text-decoration-none">
+                <img src="/images/footer/x.png" alt="X" width="30" height="30" />
+              </a>
+              <a href="#" className="text-decoration-none">
+                <img src="/images/footer/youtube.png" alt="Youtube" width="30" height="30" />
               </a>
             </div>
           </div>
+
+          {/* Products Column */}
           <div className="col-lg-2 col-md-6 mb-4">
-            <h6>Sản phẩm</h6>
+            <h6 className="fw-bold mb-3">Sản phẩm</h6>
             <ul className="list-unstyled">
-              <li>
-                <Link to="/products?category=food" className="text-white-50">
-                  Thức ăn
-                </Link>
-              </li>
-              <li>
-                <Link to="/products?category=toys" className="text-white-50">
-                  Đồ chơi
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/products?category=grooming"
-                  className="text-white-50"
-                >
-                  Chăm sóc
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/products?category=accessories"
-                  className="text-white-50"
-                >
-                  Phụ kiện
-                </Link>
-              </li>
+              <li className="mb-2"><Link to="/products?category=food" className="text-dark text-decoration-none">Thức ăn</Link></li>
+              <li className="mb-2"><Link to="/products?category=toys" className="text-dark text-decoration-none">Đồ chơi</Link></li>
+              <li className="mb-2"><Link to="/products?category=care" className="text-dark text-decoration-none">Chăm sóc</Link></li>
+              <li className="mb-2"><Link to="/products?category=accessories" className="text-dark text-decoration-none">Phụ kiện</Link></li>
             </ul>
           </div>
+
+          {/* Services Column */}
           <div className="col-lg-3 col-md-6 mb-4">
-            <h6>Dịch vụ</h6>
+            <h6 className="fw-bold mb-3">Dịch vụ</h6>
             <ul className="list-unstyled">
-              {services.map((service) => (
-                <li key={service.id}>
-                  <Link
-                    to="/services"
-                    className="text-white text-decoration-none service-link"
-                  >
-                    {service.title}
-                  </Link>
-                </li>
-              ))}
+               {services.length > 0 ? (
+                  services.map((service) => (
+                    <li key={service.id} className="mb-2">
+                      <Link to="/services" className="text-dark text-decoration-none">{service.title}</Link>
+                    </li>
+                  ))
+               ) : (
+                 <>
+                    <li className="mb-2"><Link to="/services" className="text-dark text-decoration-none">Tắm rửa</Link></li>
+                    <li className="mb-2"><Link to="/services" className="text-dark text-decoration-none">Cắt tỉa</Link></li>
+                    <li className="mb-2"><Link to="/services" className="text-dark text-decoration-none">Khám sức khỏe</Link></li>
+                    <li className="mb-2"><Link to="/services" className="text-dark text-decoration-none">Tiêm phòng</Link></li>
+                    <li className="mb-2"><Link to="/services" className="text-dark text-decoration-none">Lưu trú</Link></li>
+                    <li className="mb-2"><Link to="/services" className="text-dark text-decoration-none">Massage</Link></li>
+                 </>
+               )}
             </ul>
           </div>
+
+          {/* Contact Column */}
           <div className="col-lg-3 mb-4">
-            <h6>Liên hệ</h6>
-            <p>
-              <i className="fas fa-map-marker-alt me-2"></i>
-              <a
-                href="https://www.google.com/maps/place/Thanh+H%C3%B3a,+Vi%E1%BB%87t+Nam/@19.8088549,105.7084813,12z/data=!3m1!4b1!4m6!3m5!1s0x3136f7fe237e2277:0xa13832367bfc213a!8m2!3d19.806692!4d105.7851816!16zL20vMDdtMjBt?entry=ttu&g_ep=EgoyMDI1MTAyMC4wIKXMDSoASAFQAw%3D%3D"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-white text-decoration-none address-link"
-                title="Bấm để biết định vị"
-              >
-                123 Đường ABC, Quận 1, TP.HCM
-              </a>
-            </p>
-            <p>
-              <i className="fas fa-phone me-2"></i>0123 456 789
-            </p>
-            <p>
-              <i className="fas fa-envelope me-2"></i>
-              <a
-                href="mailto:petshop.service.vn@gmail.com"
-                className="text-white text-decoration-none email-link"
-                title="Gửi email"
-              >
-                petshop.service.vn@gmail.com
-              </a>
-            </p>
+            <h6 className="fw-bold mb-3">Liên hệ</h6>
+            <ul className="list-unstyled">
+              <li className="mb-2">123 Đường ABC, Quận 1, TP.HCM</li>
+              <li className="mb-2">+0123 456 789</li>
+              <li className="mb-2">petshop.service.vn@gmail.com</li>
+            </ul>
           </div>
-        </div>
-        <hr className="text-white-50" />
-        <div className="text-center">
-          <p>&copy; 2025 PawMartHome. All rights reserved.</p>
         </div>
       </div>
     </footer>

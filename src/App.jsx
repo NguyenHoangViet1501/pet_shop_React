@@ -25,7 +25,7 @@ function App() {
   return (
     <div className="App">
       <Headernew />
-      <main style={{ marginTop: "76px" }}>
+      <main style={{ marginTop: "50px", marginBottom: "50px" }}>
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/homenew" element={<HomePageNew />} />
