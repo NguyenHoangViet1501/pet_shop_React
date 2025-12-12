@@ -105,7 +105,7 @@ const Headernew = () => {
         <div className="container">
           <div className="header-main d-flex align-items-center justify-content-between">
             {/* Logo */}
-            <Link className="" to="/" onClick={() => setSearchQuery("")}>
+            <Link className="" to="/homenew" onClick={() => setSearchQuery("")}>
               <div className="d-flex align-items-center gap-2">
                 <img className="logo-icon" src="/images/logo.png" alt="" />
               </div>
@@ -113,7 +113,7 @@ const Headernew = () => {
 
             {/* Menu */}
             <nav className="d-none d-md-flex gap-5 main-nav">
-              <NavLink className="nav-link-item " to="/">
+              <NavLink className="nav-link-item " to="/homenew">
                 <span href="/" className="">
                   Trang chủ
                 </span>

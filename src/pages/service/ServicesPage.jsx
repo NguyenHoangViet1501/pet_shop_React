@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
-import ServicesGrid from "../../components/services/ServicesGrid";
 import BookingModal from "../../components/services/BookingModal";
 import { useNavigate, useLocation } from "react-router-dom";
 import { servicesAPI } from "../../api";
+import ServicesIntroSlider from "../../components/services/ServicesIntroSlider";
+import ServicesList from "../../components/services/ServicesList";
 
 const ServicesPage = () => {
   const navigate = useNavigate();
@@ -54,17 +55,7 @@ const ServicesPage = () => {
   return (
     <div className="page" id="services">
       <div className="container page-content">
-        <h3 ref={servicesRef} className="text-center mb-3">
-          Dịch vụ của chúng tôi
-        </h3>
-        <p
-          className="text-center text-muted mb-4 mx-auto"
-          style={{ maxWidth: 760 }}
-        >
-          Lựa chọn từ danh sách dịch vụ chuyên nghiệp, được thiết kế toàn diện
-          cho nhu cầu của thú cưng.
-        </p>
-
+        <ServicesIntroSlider />
         <div className="mb-5">
           {loadingServices && (
             <div className="text-muted text-center">Đang tải dịch vụ...</div>
@@ -73,7 +64,7 @@ const ServicesPage = () => {
             <div className="text-danger text-center mb-3">{servicesError}</div>
           )}
           {!loadingServices && services.length > 0 && (
-            <ServicesGrid services={services} onBook={handleBookFromCard} />
+            <ServicesList services={services} onBook={handleBookFromCard} />
           )}
           {!loadingServices && !servicesError && services.length === 0 && (
             <div className="text-center text-muted">
@@ -81,7 +72,6 @@ const ServicesPage = () => {
             </div>
           )}
         </div>
-
         <BookingModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}

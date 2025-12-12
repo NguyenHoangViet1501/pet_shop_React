@@ -1,0 +1,57 @@
+.service-list-card {
+  border: none;
+  border-radius: 18px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  transition: box-shadow 0.2s;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.service-list-card:hover {
+  box-shadow: 0 8px 32px rgba(255,152,0,0.12);
+}
+
+.service-list-icon {
+  color: #ff9800;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-warning {
+  background: #ff9800;
+  border: none;
+  color: #fff;
+  font-weight: 600;
+  border-radius: 10px;
+  font-size: 1.05rem;
+  padding: 10px 0;
+}
+
+.btn-warning:hover {
+  background: #ffb74d;
+  color: #fff;
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.card-body .flex-grow-1 {
+  flex-grow: 1 !important;
+}
+
+@media (max-width: 992px) {
+  .service-list-card {
+    min-height: 260px;
+  }
+}
+@media (max-width: 768px) {
+  .service-list-card {
+    min-height: 200px;
+  }
+}

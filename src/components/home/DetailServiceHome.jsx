@@ -19,17 +19,17 @@ const services = [
   },
   // Thêm 3 dịch vụ mẫu để có thể chuyển slide
   {
-    img: '/images/home/service2img/cat1.png',
+    img: '/images/home/service2img/cat4.jpg',
     title: 'Khám sức khỏe tổng quát',
     desc: 'Kiểm tra sức khỏe định kỳ, phát hiện sớm các vấn đề tiềm ẩn.',
   },
   {
-    img: '/images/home/service2img/cat2.png',
+    img: '/images/home/service2img/cat5.jpg',
     title: 'Làm sạch tai & móng',
     desc: 'Chăm sóc tai và móng giúp thú cưng luôn khỏe mạnh, sạch sẽ.',
   },
   {
-    img: '/images/home/service2img/cat3.png',
+    img: '/images/home/service2img/cat6.jpg',
     title: 'Huấn luyện cơ bản',
     desc: 'Dạy thú cưng các kỹ năng cơ bản, tăng sự gắn kết với chủ.',
   },
@@ -67,16 +67,18 @@ const DetailServiceHome = () => {
           {visibleServices.map((service, idx) => (
             <div className="col-12 col-sm-6 col-lg-4 mb-4 d-flex service-slider-item" key={activeIdx + idx}>
               <div className="card h-100 shadow-sm service-card">
-                <img src={service.img} alt={service.title} className="card-img-top service-img" />
+                <img src={service.img} alt={service.title} className="card-img-top service-img service-img-large" />
                 <div className="card-body d-flex flex-column justify-content-between">
-                  <div>
-                    <h5 className="card-title fw-bold mb-2">{service.title}</h5>
-                    <p className="card-text text-muted mb-0">{service.desc}</p>
-                  </div>
-                  <div className="mt-3 text-end">
-                    <span className="btn-warning rounded-circle arrow-btn">
-                      <i className="fas fa-arrow-right" style={{ color: '#fff' }}></i>
-                    </span>
+                  <div className="d-flex align-items-center w-100">
+                    <div className="flex-grow-1">
+                      <h5 className="card-title fw-bold mb-2">{service.title}</h5>
+                      <p className="card-text text-muted mb-0">{service.desc}</p>
+                    </div>
+                    <div className="ms-3">
+                      <span className="btn-warning rounded-circle arrow-btn">
+                        <i className="fas fa-arrow-right" style={{ color: '#fff' }}></i>
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>

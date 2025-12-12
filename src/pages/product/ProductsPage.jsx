@@ -196,7 +196,7 @@ const ProductsPage = () => {
             {totalPages > 0 && (
               <div className="d-flex justify-content-center mt-4 gap-2">
                 <button
-                  className="btn bg-white border rounded-3 d-flex align-items-center justify-content-center"
+                  className="bg-white border rounded-3 d-flex align-items-center justify-content-center"
                   style={{ width: 40, height: 40, color: '#6c757d' }}
                   onClick={prev}
                   disabled={currentPage === 1}
@@ -208,7 +208,7 @@ const ProductsPage = () => {
                   (p) => (
                     <button
                       key={p}
-                      className={`btn rounded-3 d-flex align-items-center justify-content-center fw-bold`}
+                      className={`rounded-3 d-flex align-items-center justify-content-center fw-bold`}
                       style={{
                         width: 40,
                         height: 40,
@@ -224,7 +224,7 @@ const ProductsPage = () => {
                 )}
 
                 <button
-                  className="btn bg-white border rounded-3 d-flex align-items-center justify-content-center"
+                  className="bg-white border rounded-3 d-flex align-items-center justify-content-center"
                   style={{ width: 40, height: 40, color: '#6c757d' }}
                   onClick={next}
                   disabled={currentPage === totalPages}
