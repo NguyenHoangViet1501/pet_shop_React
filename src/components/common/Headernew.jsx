@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Link, useNavigate, NavLink } from "react-router-dom";
+import { Link, useNavigate, NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { useCart } from "../../context/CartContext";
 import { useToast } from "../../context/ToastContext";
+import { useCartQuery } from "../../hooks/useCart.js";
 import { productsApi } from "../../api";
 
 import "./header.css";
@@ -10,15 +10,26 @@ import "./header.css";
 const Headernew = () => {
   const { user, logout } = useAuth();
   const { showToast } = useToast();
-  const { getTotalItems } = useCart();
+  const { data: cart } = useCartQuery();
   const navigate = useNavigate();
+  const location = useLocation();
+
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const inputRef = useRef(null);
-  const [openInfo, setOpenInfo] = useState(false);
-  console.log(openInfo);
 
+  const [openInfo, setOpenInfo] = useState(false);
+
+  // ✅ Tổng số item trong cart (React Query là nguồn duy nhất)
+  const totalItems = cart?.items?.reduce((sum, i) => sum + i.quantity, 0) || 0;
+
+  // ✅ Tự đóng dropdown user khi đổi route
+  useEffect(() => {
+    setOpenInfo(false);
+  }, [location.pathname]);
+
+  // 🔍 Search debounce
   useEffect(() => {
     const delayDebounceFn = setTimeout(async () => {
       if (searchQuery.trim()) {
@@ -29,7 +40,7 @@ const Headernew = () => {
           });
           const products = response?.result?.content || [];
           setSearchResults(products);
-          // Chỉ hiện dropdown nếu input đang được focus
+
           if (document.activeElement === inputRef.current) {
             setShowDropdown(true);
           }
@@ -53,17 +64,6 @@ const Headernew = () => {
       inputRef.current?.blur();
     }
   };
-  const getProductById = async (id) => {
-    try {
-      const response = await productsApi.getProductById(id);
-      if (response && response.result) {
-        navigate(`/products/${id}`);
-        return response.result;
-      }
-    } catch (error) {
-      console.error("Error fetching product by ID:", error);
-    }
-  };
 
   const handleLogout = async () => {
     await logout();
@@ -71,39 +71,35 @@ const Headernew = () => {
     navigate("/");
   };
 
-  const activeStyle = ({ isActive }) => ({
-    color: isActive ? "#f59f00" : undefined,
-    fontWeight: isActive ? 600 : undefined,
-  });
-
   return (
     <header className="site-header">
-      {/* THANH TRÊN – THÔNG TIN LIÊN HỆ */}
+      {/* ================= HEADER TOP ================= */}
       <div className="header-top">
         <div className="container d-flex justify-content-between align-items-center small">
           <div className="d-flex gap-4 contact mt-2">
             <span>
-              <img className="phone-icon me-2" src="images/phone.png" alt="" />{" "}
+              <img className="phone-icon me-2" src="/images/phone.png" alt="" />
               +84 904440436
             </span>
-            <span className="">
-              {" "}
-              <img className="phone-icon me-2" src="images/mail.png" alt="" />
+            <span>
+              <img className="phone-icon me-2" src="/images/mail.png" alt="" />
               abllv@gmail.com
             </span>
           </div>
+
           <div>
             {user ? (
               <div className="dropdown">
                 <button
-                  className="button-info "
+                  className="button-info dropdown-toggle"
                   type="button"
-                  onClick={() => setOpenInfo(!openInfo)}
+                  onClick={() => setOpenInfo((prev) => !prev)}
                 >
-                  <span className="">Xin chào, {user.fullName}</span>
+                  Xin chào, {user.fullName}
                 </button>
+
                 {openInfo && (
-                  <ul className="dropdown-menu show">
+                  <ul className="dropdown-menu show dropdown-menu-end">
                     <li>
                       <Link
                         className="dropdown-item"
@@ -154,7 +150,7 @@ const Headernew = () => {
             ) : (
               <NavLink to="/login">
                 <button className="login mt-2">
-                  <span>Đăng nhập/Đăng ký</span>{" "}
+                  <span>Đăng nhập / Đăng ký</span>
                 </button>
               </NavLink>
             )}
@@ -162,38 +158,34 @@ const Headernew = () => {
         </div>
       </div>
 
-      {/* THANH DƯỚI – NAV CHÍNH */}
+      {/* ================= HEADER MAIN ================= */}
       <div className="header-main-wrapper">
         <div className="container">
           <div className="header-main d-flex align-items-center justify-content-between">
             {/* Logo */}
-            <Link className="" to="/" onClick={() => setSearchQuery("")}>
-              <div className="d-flex align-items-center gap-2">
-                <img className="logo-icon" src="/images/logo.png" alt="" />
-              </div>
+            <Link to="/" onClick={() => setSearchQuery("")}>
+              <img className="logo-icon" src="/images/logo.png" alt="Logo" />
             </Link>
 
             {/* Menu */}
             <nav className="d-none d-md-flex gap-5 main-nav">
-              <NavLink className="nav-link-item " to="/">
-                <span href="/" className="">
-                  Trang chủ
-                </span>
+              <NavLink className="nav-link-item" to="/">
+                Trang chủ
               </NavLink>
-              <NavLink className="nav-link-item " to="/products">
-                <span className="">Sản phẩm</span>
+              <NavLink className="nav-link-item" to="/products">
+                Sản phẩm
               </NavLink>
-
               <NavLink className="nav-link-item" to="/services">
-                <span className="">Dịch vụ</span>
+                Dịch vụ
               </NavLink>
               <NavLink className="nav-link-item" to="/adoption">
-                <span className>Nhận nuôi</span>
+                Nhận nuôi
               </NavLink>
             </nav>
 
-            {/* Search + icons */}
+            {/* Search + Cart */}
             <div className="d-flex align-items-center gap-3">
+              {/* Search */}
               <div
                 className="search-box d-none d-md-flex align-items-center"
                 style={{ position: "relative" }}
@@ -222,7 +214,6 @@ const Headernew = () => {
                   </button>
                 </form>
 
-                {/* ⭐ DROPDOWN nằm ngay dưới form */}
                 {showDropdown && searchResults.length > 0 && (
                   <div
                     className="dropdown-menu show w-100"
@@ -233,18 +224,16 @@ const Headernew = () => {
                       zIndex: 2000,
                       maxHeight: "400px",
                       overflowY: "auto",
-                      boxShadow: "0 4px 8px rgba(0,0,0,0.15)",
-                      borderRadius: "4px",
                     }}
                   >
                     {searchResults.map((product) => {
-                      const primaryImage = product.productImage?.find(
-                        (img) => img.isPrimary === 1
-                      );
+                      const primaryImage =
+                        product.productImage?.find(
+                          (img) => img.isPrimary === 1
+                        ) || product.productImage?.[0];
 
                       const imageUrl =
                         primaryImage?.imageUrl ||
-                        product.productImage?.[0]?.imageUrl ||
                         "https://via.placeholder.com/50";
 
                       const price = product.productVariant?.[0]?.price || 0;
@@ -270,10 +259,7 @@ const Headernew = () => {
                             }}
                           />
                           <div className="flex-grow-1 overflow-hidden">
-                            <div
-                              className="text-truncate fw-bold"
-                              style={{ fontSize: "0.9rem" }}
-                            >
+                            <div className="text-truncate fw-bold">
                               {product.name}
                             </div>
                             <div className="text-danger small">
@@ -290,17 +276,16 @@ const Headernew = () => {
                 )}
               </div>
 
+              {/* Cart */}
               <Link to="/cart" className="shopping-cart-wrapper">
-                <div className="">
-                  <button className="shopping-cart">
-                    <img
-                      className="shopping-cart"
-                      src="/images/shopping-cart.png"
-                      alt=""
-                    />
-                    <span className="cart-badge">{getTotalItems()}</span>
-                  </button>
-                </div>
+                <img
+                  className="shopping-cart"
+                  src="/images/shopping-cart.png"
+                  alt="Cart"
+                />
+                {totalItems > 0 && (
+                  <span className="cart-badge">{totalItems}</span>
+                )}
               </Link>
             </div>
           </div>
@@ -309,4 +294,5 @@ const Headernew = () => {
     </header>
   );
 };
+
 export default Headernew;

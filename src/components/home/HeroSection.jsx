@@ -21,7 +21,7 @@ const HeroSection = () => {
           <img src={orangeShapeSmall} className="shape small-2" alt="" />
           <img src={bird} className="shape bird" alt="" />
 
-          <p className="text-warning fw-bold">Pet Care Shop</p>
+          <p className="text-warning fw-bold fs-4">Pet Care Shop</p>
 
           <h1 className="fw-bold hero-title">
             Cửa hàng thú cưng <br /> với mọi thứ bạn cần.
