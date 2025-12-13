@@ -15,19 +15,18 @@ export const productsApi = {
     if (params.animal) queryParams.append("animal", params.animal);
     if (params.brand) queryParams.append("brand", params.brand);
     if (params.isFeatured !== undefined)
-      queryParams.append("isFeatured", params.isFeatured);
+      queryParams.append("isFeature", params.isFeatured);
 
     return await apiFetch(`/v1/products?${queryParams.toString()}`);
   },
 
   // Lấy sản phẩm nổi bật (isFeatured = 1)
   getFeaturedProducts: async (size = 10) => {
-    const queryParams = new URLSearchParams();
-    queryParams.append("pageNumber", 1);
-    queryParams.append("size", size);
-    queryParams.append("isFeatured", 1);
-
-    return await apiFetch(`/v1/products?${queryParams.toString()}`);
+    return await productsApi.getProducts({
+      pageNumber: 1,
+      size: size,
+      isFeatured: "1",
+    });
   },
 
   // Lấy chi tiết 1 product
