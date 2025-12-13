@@ -12,7 +12,7 @@ const CartSummary = () => {
       0
     ) || 0;
 
-  const shipping = 5.0;
+  const shipping = 30000;
   const total = subtotal + shipping;
 
   return (
