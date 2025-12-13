@@ -1,33 +1,129 @@
-import React from "react";
+import React, { useState } from "react";
 import { useCart } from "../../context/CartContext";
+import { useToast } from "../../context/ToastContext";
+import DeleteConfirmModal from "./DeleteConfirmModal";
 
-const CartItem = ({ item }) => {
-  // CartContext chỉ để GỌI ACTION
+const CartItem = ({ item, isSelected, onToggleSelect }) => {
   const { updateQuantity, removeItem } = useCart();
+  const { showToast } = useToast();
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  const handleDecrease = () => {
+  const performDelete = async () => {
+    try {
+      setIsUpdating(true);
+      await removeItem(item.productVariantId);
+      showToast("Đã xóa sản phẩm khỏi giỏ hàng", "success");
+    } catch (error) {
+      console.error("Error removing item:", error);
+      showToast("Không thể xóa sản phẩm. Vui lòng thử lại!", "error");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleDecrease = async () => {
+    if (isUpdating) return;
+    
     const newQty = item.quantity - 1;
-    if (newQty <= 0) return;
-    updateQuantity(item.id, newQty);
+    
+    // Nếu quantity về 0, hiển thị modal xác nhận xóa
+    if (newQty === 0) {
+      setShowDeleteModal(true);
+      return;
+    }
+
+    // Nếu quantity > 0, gọi API với quantity = -1
+    try {
+      setIsUpdating(true);
+      await updateQuantity(item.productVariantId, -1);
+    } catch (error) {
+      console.error("Error updating quantity:", error);
+      showToast("Không thể cập nhật số lượng. Vui lòng thử lại!", "error");
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
-  const handleIncrease = () => {
-    const newQty = item.quantity + 1;
-    updateQuantity(item.id, newQty);
+  const handleIncrease = async () => {
+    if (isUpdating) return;
+    
+    try {
+      setIsUpdating(true);
+      // Gọi API với quantity = +1
+      await updateQuantity(item.productVariantId, 1);
+    } catch (error) {
+      console.error("Error updating quantity:", error);
+      showToast("Không thể cập nhật số lượng. Vui lòng thử lại!", "error");
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
-  const handleChange = (e) => {
+  const handleChange = async (e) => {
+    if (isUpdating) return;
+    
     const value = parseInt(e.target.value, 10);
-    if (Number.isNaN(value) || value <= 0) return;
-    updateQuantity(item.id, value);
+    if (Number.isNaN(value) || value < 0) return;
+
+    // Nếu quantity về 0, hiển thị modal xác nhận xóa
+    if (value === 0) {
+      setShowDeleteModal(true);
+      // Reset về giá trị cũ tạm thời, sẽ xóa sau khi xác nhận
+      e.target.value = item.quantity;
+      return;
+    }
+
+    // Tính delta giữa giá trị mới và giá trị cũ
+    const delta = value - item.quantity;
+    if (delta === 0) return; // Không có thay đổi
+
+    try {
+      setIsUpdating(true);
+      await updateQuantity(item.productVariantId, delta);
+    } catch (error) {
+      console.error("Error updating quantity:", error);
+      showToast("Không thể cập nhật số lượng. Vui lòng thử lại!", "error");
+      e.target.value = item.quantity; // Reset về giá trị cũ
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const handleRemove = () => {
-    removeItem(item.id);
+    if (isUpdating) return;
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    setShowDeleteModal(false);
+    await performDelete();
+  };
+
+  const handleCloseModal = () => {
+    setShowDeleteModal(false);
   };
 
   return (
-    <div className="d-flex align-items-center justify-content-between border-bottom py-3">
+    <>
+      <DeleteConfirmModal
+        isOpen={showDeleteModal}
+        onClose={handleCloseModal}
+        onConfirm={handleConfirmDelete}
+        itemName={item.name}
+      />
+      <div className="d-flex align-items-center justify-content-between border-bottom py-3">
+      {/* Checkbox */}
+      <div className="me-3">
+        <input
+          type="checkbox"
+          className="form-check-input"
+          style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+          checked={isSelected || false}
+          onChange={(e) => onToggleSelect && onToggleSelect(item.id, e.target.checked)}
+        />
+      </div>
+
       {/* Ảnh */}
       <div className="me-3">
         {item.image && (
@@ -65,7 +161,7 @@ const CartItem = ({ item }) => {
         <button
           className="btn btn-outline-secondary btn-sm"
           onClick={handleDecrease}
-          disabled={item.quantity <= 1}
+          disabled={isUpdating}
           style={{ width: 32, height: 32, padding: 0 }}
         >
           −
@@ -73,16 +169,18 @@ const CartItem = ({ item }) => {
 
         <input
           type="number"
-          min="1"
+          min="0"
           className="form-control form-control-sm mx-2 text-center"
           style={{ width: 60, height: 32 }}
           value={item.quantity}
           onChange={handleChange}
+          disabled={isUpdating}
         />
 
         <button
           className="btn btn-outline-secondary btn-sm"
           onClick={handleIncrease}
+          disabled={isUpdating}
           style={{ width: 32, height: 32, padding: 0 }}
         >
           +
@@ -100,6 +198,7 @@ const CartItem = ({ item }) => {
         <button
           className="btn btn-sm"
           onClick={handleRemove}
+          disabled={isUpdating}
           style={{
             backgroundColor: "#dc3545",
             color: "white",
@@ -111,6 +210,7 @@ const CartItem = ({ item }) => {
         </button>
       </div>
     </div>
+    </>
   );
 };
 

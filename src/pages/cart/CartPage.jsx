@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useCartQuery } from "../../hooks/useCart";
 import CartItem from "../../components/cart/CartItem";
@@ -6,7 +6,30 @@ import CartSummary from "../../components/cart/CartSummary";
 import { useAuth } from "../../context/AuthContext";
 
 const CartPage = () => {
+  const { user } = useAuth();
+  const [selectedItems, setSelectedItems] = useState(new Set());
+
   const { data, isLoading, isError } = useCartQuery();
+  if (!user) {
+    return (
+      <div className="container page-content">
+        <h1 className="mb-4">Giỏ hàng</h1>
+
+        <div className="card">
+          <div className="card-body text-center py-5">
+            <i className="fas fa-user-lock fa-3x text-muted mb-3"></i>
+            <h5>Bạn chưa đăng nhập</h5>
+            <p className="text-muted">
+              Vui lòng đăng nhập để xem giỏ hàng của bạn
+            </p>
+            <Link to="/login" className="btn btn-primary">
+              Đăng nhập
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -29,6 +52,18 @@ const CartPage = () => {
   }
 
   const items = data.result.items || [];
+
+  const handleToggleSelect = (itemId, isSelected) => {
+    setSelectedItems((prev) => {
+      const newSet = new Set(prev);
+      if (isSelected) {
+        newSet.add(itemId);
+      } else {
+        newSet.delete(itemId);
+      }
+      return newSet;
+    });
+  };
 
   if (items.length === 0) {
     return (
@@ -68,19 +103,22 @@ const CartPage = () => {
                   key={item.id}
                   item={{
                     id: item.id,
+                    productVariantId: item.productVariantId, // Thêm productVariantId
                     name: item.productName,
                     variantName: item.variantName,
                     image: item.imageUrl,
                     price: item.unitPrice,
                     quantity: item.quantity,
                   }}
+                  isSelected={selectedItems.has(item.id)}
+                  onToggleSelect={handleToggleSelect}
                 />
               ))}
             </div>
           </div>
         </div>
         <div className="col-lg-4">
-          <CartSummary />
+          <CartSummary items={items} selectedItems={selectedItems} />
         </div>
       </div>
     </div>

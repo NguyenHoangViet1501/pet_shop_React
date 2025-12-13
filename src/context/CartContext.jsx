@@ -50,56 +50,51 @@ export const CartProvider = ({ children }) => {
     });
   };
 
-  // /**
-  //  * ➖ Remove item khỏi cart
-  //  */
-  // const removeItem = async (cartItemId) => {
-  //   if (!token) return;
+  /**
+   * 🔄 Update quantity bằng cách gọi addCart với quantity delta (+1 hoặc -1)
+   * @param {number} productVariantId - ID của product variant
+   * @param {number} quantityDelta - Số lượng thay đổi (+1 hoặc -1)
+   * @returns {Promise<boolean>} - true nếu thành công, false nếu cần xác nhận xóa
+   */
+  const updateQuantity = async (productVariantId, quantityDelta) => {
+    if (!token) {
+      throw new Error("User not logged in");
+    }
 
-  //   await removeFromCartAPI(cartItemId, token);
+    // Gọi API addCart với quantity delta
+    await addToCartAPI([{ productVariantId, quantity: quantityDelta }], token);
 
-  //   queryClient.invalidateQueries({
-  //     queryKey: ["cart"],
-  //   });
-  // };
+    // 🔥 Sync UI ngay lập tức
+    queryClient.invalidateQueries({
+      queryKey: ["cart"],
+    });
+  };
 
-  // /**
-  //  * 🔄 Update quantity
-  //  */
-  // // const updateQuantity = async (cartItemId, quantity) => {
-  // //   if (!token) return;
+  /**
+   * ➖ Remove item khỏi cart bằng cách gọi addCart với quantity = -1 nhiều lần
+   * Hoặc có thể gọi với số lượng âm lớn để xóa hết
+   * @param {number} productVariantId - ID của product variant
+   */
+  const removeItem = async (productVariantId) => {
+    if (!token) {
+      throw new Error("User not logged in");
+    }
 
-  // //   if (quantity <= 0) {
-  // //     await removeItem(cartItemId);
-  // //     return;
-  // //   }
+    // Gọi API addCart với quantity = -1 để xóa (API sẽ xử lý việc xóa khi quantity về 0)
+    // Gọi nhiều lần với -1 để đảm bảo xóa hết, hoặc có thể dùng số lượng âm lớn
+    // Theo yêu cầu: dùng addCart với quantity = -1
+    await addToCartAPI([{ productVariantId, quantity: -1 }], token);
 
-  // //   await updateCartItemAPI(cartItemId, quantity, token);
-
-  // //   queryClient.invalidateQueries({
-  // //     queryKey: ["cart"],
-  // //   });
-  // // };
-
-  // /**
-  //  * 🧹 Clear toàn bộ cart
-  //  */
-  // const clearCart = async () => {
-  //   if (!token) return;
-
-  //   await clearCartAPI(token);
-
-  //   queryClient.invalidateQueries({
-  //     queryKey: ["cart"],
-  //   });
-  // };
+    // 🔥 Sync UI ngay lập tức
+    queryClient.invalidateQueries({
+      queryKey: ["cart"],
+    });
+  };
 
   const value = {
     addItem,
+    updateQuantity,
+    removeItem,
   };
-
-  // removeItem,
-  //   updateQuantity,
-  //   clearCart,
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 };
