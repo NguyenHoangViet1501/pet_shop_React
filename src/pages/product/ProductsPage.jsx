@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import ProductCard from "../../components/product/ProductCard";
-import { useCategoriesQuery } from "../../hooks/useCategoriesQuery";
-import { useProductsQuery } from "../../hooks/useProductsQuery";
+import { useCategoriesWithCountFrontend } from "../../hooks/useCategoriesQuery";
+import { useBrandsQuery, useProductsQuery } from "../../hooks/useProductsQuery";
 import { useNavigate } from "react-router-dom";
 import ProductAnimal from "../../components/product/ProductAnimal";
 import ProductFilter2 from "../../components/product/ProductFilter2";
+import { use } from "react";
 
 const ProductsPage = () => {
   const [searchParams] = useSearchParams();
@@ -27,14 +28,7 @@ const ProductsPage = () => {
   const [sortBy, setSortBy] = useState("");
   const pageSize = 6;
 
-  const brands = [
-    { id: 'Natural food', name: 'Natural food', count: 28 },
-    { id: 'Pet care', name: 'Pet care', count: 18 },
-    { id: 'Dogs friend', name: 'Dogs friend', count: 16 },
-    { id: 'Pet food', name: 'Pet food', count: 40 },
-    { id: 'Favorite pet', name: 'Favorite pet', count: 28 },
-    { id: 'Green line', name: 'Green line', count: 18 },
-  ];
+  const { data: brandsData } = useBrandsQuery();
 
   // Reset page when search query changes
   useEffect(() => {
@@ -65,14 +59,10 @@ const ProductsPage = () => {
     
     setCurrentPage(1);
   };
-
-  // Categories query
   const {
-    data: categoriesData,
+    data: categoriesWithCount,
     isLoading: categoriesLoading,
-    isError: categoriesError,
-  } = useCategoriesQuery();
-  // Products query
+  } = useCategoriesWithCountFrontend();
 
   const {
     data: productsData,
@@ -90,11 +80,7 @@ const ProductsPage = () => {
     ...(searchQuery && { search: searchQuery }),
   });
 
-  const categories = Array.isArray(categoriesData?.result?.content)
-    ? categoriesData.result.content
-    : Array.isArray(categoriesData?.result)
-    ? categoriesData.result
-    : [];
+  const categories = categoriesWithCount || [];
 
   const products = productsData?.result?.content || [];
   const totalPages = productsData?.result?.totalPages || 0;
@@ -134,7 +120,7 @@ const ProductsPage = () => {
           <div className="col-lg-3 mb-4">
             <ProductFilter2 
                 categories={categories}
-                brands={brands}
+                brands={brandsData || []}
                 onFilterChange={handleFilterChange}
             />
           </div>

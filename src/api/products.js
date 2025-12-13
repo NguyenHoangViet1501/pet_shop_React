@@ -34,4 +34,7 @@ export const productsApi = {
   getProductById: async (id) => {
     return await apiFetch(`/v1/products/${id}`);
   },
+  getBrands: async () => {
+    return await apiFetch(`/v1/products/brands`);
+  }
 };
