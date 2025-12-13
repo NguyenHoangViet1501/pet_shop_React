@@ -26,40 +26,77 @@ const CartItem = ({ item }) => {
 
   return (
     <div className="d-flex align-items-center justify-content-between border-bottom py-3">
-      <div className="d-flex align-items-center">
+      {/* Thẻ 1: Ảnh sản phẩm */}
+      <div className="me-3">
         {item.image && (
           <img
             src={item.image}
             alt={item.name}
-            style={{ width: 64, height: 64, objectFit: 'cover' }}
-            className="me-3 rounded"
+            style={{ width: 80, height: 80, objectFit: 'cover' }}
+            className="rounded"
           />
         )}
-        <div>
-          <div className="fw-semibold">{item.name}</div>
-          <div className="text-muted small">${item.price?.toFixed(2)}</div>
+      </div>
+
+      {/* Thẻ 2: Tên và giá (tên ở trên, giá ở dưới) */}
+      <div className="flex-grow-1 me-3">
+        <div className="fw-semibold mb-2">{item.name}</div>
+        <div className="fw-bold" style={{ color: 'var(--primary-orange)', fontSize: '1.1rem' }}>
+          {item.price?.toLocaleString('vi-VN')}&nbsp;₫
         </div>
       </div>
 
-      <div className="d-flex align-items-center">
-        <button className="btn btn-outline-secondary btn-sm" onClick={handleDecrease} disabled={item.quantity <= 1}>
+      {/* Thẻ 3: Phân loại */}
+      <div className="me-3" style={{ minWidth: 150 }}>
+        {item.variantName && (
+          <div className="text-muted">
+            <span className="fw-semibold">Phân loại:</span> {item.variantName}
+          </div>
+        )}
+      </div>
+
+      {/* Thẻ 4: Nút tăng giảm số lượng và số lượng sản phẩm */}
+      <div className="d-flex align-items-center me-3">
+        <button 
+          className="btn btn-outline-secondary btn-sm" 
+          onClick={handleDecrease} 
+          disabled={item.quantity <= 1}
+          style={{ width: 32, height: 32, padding: 0 }}
+        >
           −
         </button>
         <input
           type="number"
           min="1"
-          className="form-control form-control-sm mx-2"
-          style={{ width: 70 }}
+          className="form-control form-control-sm mx-2 text-center"
+          style={{ width: 60, height: 32 }}
           value={item.quantity}
           onChange={handleChange}
         />
-        <button className="btn btn-outline-secondary btn-sm" onClick={handleIncrease}>+
+        <button 
+          className="btn btn-outline-secondary btn-sm" 
+          onClick={handleIncrease}
+          style={{ width: 32, height: 32, padding: 0 }}
+        >
+          +
         </button>
       </div>
 
-      <div className="text-end" style={{ minWidth: 100 }}>
-        <div className="fw-bold">${(item.price * item.quantity).toFixed(2)}</div>
-        <button className="btn btn-link text-danger p-0 mt-1" onClick={handleRemove}>
+      {/* Thẻ 5: Giá * quantity và nút xóa */}
+      <div className="text-end" style={{ minWidth: 120 }}>
+        <div className="fw-bold mb-2" style={{ color: 'var(--primary-orange)', fontSize: '1.1rem' }}>
+          {(item.price * item.quantity).toLocaleString('vi-VN')}&nbsp;₫
+        </div>
+        <button 
+          className="btn btn-sm" 
+          onClick={handleRemove} 
+          style={{ 
+            backgroundColor: '#dc3545', 
+            color: 'white', 
+            border: 'none',
+            padding: '4px 12px'
+          }}
+        >
           Xóa
         </button>
       </div>

@@ -94,7 +94,7 @@ const BookingModal = ({ isOpen, onClose, services, initialServiceKey }) => {
         userId: user?.id,
         namePet: formData.petName,
         speciePet: formData.petType,
-        appoinmentStart: isoDateTime,
+        appointmentStart: isoDateTime,
         status: 'SCHEDULED',
         notes: formData.notes || ''
       };

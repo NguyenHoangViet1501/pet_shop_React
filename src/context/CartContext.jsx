@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useReducer } from 'react';
+import { addToCart as addToCartAPI } from '../api/cart';
+import { useAuth } from './AuthContext';
 
 const CartContext = createContext();
 
@@ -54,9 +56,35 @@ export const useCart = () => {
 
 export const CartProvider = ({ children }) => {
   const [state, dispatch] = useReducer(cartReducer, { items: [] });
+  const { token } = useAuth();
 
-  const addItem = (product) => {
-    dispatch({ type: 'ADD_ITEM', payload: product });
+  const addItem = async (product) => {
+    // Kiểm tra nếu có variant, lấy productVariantId từ variant.id
+    // Nếu không có variant, có thể lấy từ product.variantId hoặc product.id
+    const productVariantId = product.variant?.id || product.variantId || product.id;
+    const quantity = product.quantity || 1;
+
+    // Nếu không có token, chỉ thêm vào state local (cho trường hợp chưa đăng nhập)
+    if (!token) {
+      dispatch({ type: 'ADD_ITEM', payload: product });
+      return;
+    }
+
+    try {
+      // Gọi API để thêm vào giỏ hàng trên server
+      await addToCartAPI(
+        [{ productVariantId, quantity }],
+        token
+      );
+      
+      // Nếu API thành công, cập nhật state local
+      dispatch({ type: 'ADD_ITEM', payload: product });
+    } catch (error) {
+      console.error('Error adding item to cart:', error);
+      // Nếu API thất bại, vẫn thêm vào state local để UX tốt hơn
+      // Hoặc có thể throw error để component xử lý
+      throw error;
+    }
   };
 
   const removeItem = (productId) => {
