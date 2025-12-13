@@ -22,7 +22,7 @@ const Headernew = () => {
   const [openInfo, setOpenInfo] = useState(false);
 
   // ✅ Tổng số item trong cart (React Query là nguồn duy nhất)
-  const totalItems = cart?.items?.reduce((sum, i) => sum + i.quantity, 0) || 0;
+  const totalItems = cart?.result?.totalItems;
 
   // ✅ Tự đóng dropdown user khi đổi route
   useEffect(() => {
@@ -89,13 +89,13 @@ const Headernew = () => {
 
           <div>
             {user ? (
-              <div className="dropdown">
+              <div className="dropdown mt-2">
                 <button
                   className="button-info dropdown-toggle"
                   type="button"
                   onClick={() => setOpenInfo((prev) => !prev)}
                 >
-                  Xin chào, {user.fullName}
+                  <span>Xin chào, {user.fullName}</span>
                 </button>
 
                 {openInfo && (

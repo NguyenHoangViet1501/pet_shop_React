@@ -6,8 +6,29 @@ import CartSummary from "../../components/cart/CartSummary";
 import { useAuth } from "../../context/AuthContext";
 
 const CartPage = () => {
+  const { user } = useAuth();
+
   const { data, isLoading, isError } = useCartQuery();
-  const [selectedItems, setSelectedItems] = useState(new Set());
+  if (!user) {
+    return (
+      <div className="container page-content">
+        <h1 className="mb-4">Giỏ hàng</h1>
+
+        <div className="card">
+          <div className="card-body text-center py-5">
+            <i className="fas fa-user-lock fa-3x text-muted mb-3"></i>
+            <h5>Bạn chưa đăng nhập</h5>
+            <p className="text-muted">
+              Vui lòng đăng nhập để xem giỏ hàng của bạn
+            </p>
+            <Link to="/login" className="btn btn-primary">
+              Đăng nhập
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

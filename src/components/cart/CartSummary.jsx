@@ -1,16 +1,17 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
-const CartSummary = ({ items = [], selectedItems = new Set() }) => {
-  // ✅ Tính subtotal chỉ từ những item được chọn
-  const selectedItemsList = items.filter((item) => selectedItems.has(item.id));
-  const subtotal = selectedItemsList.reduce(
-    (total, item) => total + item.unitPrice * item.quantity,
-    0
-  );
+const CartSummary = () => {
+  const { data: cart } = useCartQuery();
 
-  const hasSelectedItems = selectedItems.size > 0;
-  const shipping = hasSelectedItems ? 5.0 : 0;
+  // ✅ Tính subtotal từ cart (React Query)
+  const subtotal =
+    cart?.items?.reduce(
+      (total, item) => total + item.price * item.quantity,
+      0
+    ) || 0;
+
+  const shipping = 30000;
   const total = subtotal + shipping;
 
   return (
