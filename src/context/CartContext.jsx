@@ -1,5 +1,5 @@
 import React, { createContext, useContext } from "react";
-import { addToCart as addToCartAPI } from "../api/cart";
+import { addToCart as addToCartAPI, deleteCartItem } from "../api/cart";
 import { useAuth } from "./AuthContext";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -71,19 +71,16 @@ export const CartProvider = ({ children }) => {
   };
 
   /**
-   * ➖ Remove item khỏi cart bằng cách gọi addCart với quantity = -1 nhiều lần
-   * Hoặc có thể gọi với số lượng âm lớn để xóa hết
-   * @param {number} productVariantId - ID của product variant
+   * ➖ Remove item khỏi cart bằng cách gọi deleteCartItem
+   * @param {number} cartItemId - ID của cart item
    */
-  const removeItem = async (productVariantId) => {
+  const removeItem = async (cartItemId) => {
     if (!token) {
       throw new Error("User not logged in");
     }
 
-    // Gọi API addCart với quantity = -1 để xóa (API sẽ xử lý việc xóa khi quantity về 0)
-    // Gọi nhiều lần với -1 để đảm bảo xóa hết, hoặc có thể dùng số lượng âm lớn
-    // Theo yêu cầu: dùng addCart với quantity = -1
-    await addToCartAPI([{ productVariantId, quantity: -1 }], token);
+    // Gọi API deleteCartItem để xóa item khỏi cart
+    await deleteCartItem(cartItemId, token);
 
     // 🔥 Sync UI ngay lập tức
     queryClient.invalidateQueries({

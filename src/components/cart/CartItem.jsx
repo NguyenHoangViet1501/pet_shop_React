@@ -12,7 +12,7 @@ const CartItem = ({ item, isSelected, onToggleSelect }) => {
   const performDelete = async () => {
     try {
       setIsUpdating(true);
-      await removeItem(item.productVariantId);
+      await removeItem(item.id);
       showToast("Đã xóa sản phẩm khỏi giỏ hàng", "success");
     } catch (error) {
       console.error("Error removing item:", error);
