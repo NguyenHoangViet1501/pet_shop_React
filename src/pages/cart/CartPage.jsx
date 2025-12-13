@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useCartQuery } from "../../hooks/useCart";
 import CartItem from "../../components/cart/CartItem";
 import CartSummary from "../../components/cart/CartSummary";
+import { useAuth } from "../../context/AuthContext";
 
 const CartPage = () => {
   const { data, isLoading, isError } = useCartQuery();
@@ -20,7 +21,9 @@ const CartPage = () => {
   if (isError || !data?.result) {
     return (
       <div className="container page-content text-center py-5">
-        <div className="alert alert-danger">Không thể tải giỏ hàng. Vui lòng thử lại sau.</div>
+        <div className="alert alert-danger">
+          Không thể tải giỏ hàng. Vui lòng thử lại sau.
+        </div>
       </div>
     );
   }
@@ -61,14 +64,17 @@ const CartPage = () => {
           <div className="card">
             <div className="card-body">
               {items.map((item) => (
-                <CartItem key={item.id} item={{
-                  id: item.id,
-                  name: item.productName,
-                  variantName: item.variantName,
-                  image: item.imageUrl,
-                  price: item.unitPrice,
-                  quantity: item.quantity,
-                }} />
+                <CartItem
+                  key={item.id}
+                  item={{
+                    id: item.id,
+                    name: item.productName,
+                    variantName: item.variantName,
+                    image: item.imageUrl,
+                    price: item.unitPrice,
+                    quantity: item.quantity,
+                  }}
+                />
               ))}
             </div>
           </div>
