@@ -8,15 +8,6 @@ const ProductFilter2 = ({
     maxPrice = 1000000, 
     onFilterChange 
 }) => {
-    // Mock data if props are empty (matching the image)
-    // const defaultCategories = [
-    //     { id: 1, name: 'Thức ăn', count: 21 },
-    //     { id: 2, name: 'Đồ chơi', count: 28 },
-    //     { id: 3, name: 'Đồ dùng', count: 12 },
-    //     { id: 4, name: 'Food', count: 80 },
-    //     { id: 5, name: 'Toys', count: 90 },
-    //     { id: 6, name: 'Sale', count: 24 },
-    // ];
 
     const defaultBrands = [
         { id: 1, name: 'Natural food', count: 28 },
@@ -29,18 +20,14 @@ const ProductFilter2 = ({
 
     const displayCategories = categories;
     const displayBrands = brands.length > 0 ? brands : defaultBrands;
-
-    // State
     const [selectedCats, setSelectedCats] = useState([]);
     const [selectedBrands, setSelectedBrands] = useState([]);
     const [priceRange, setPriceRange] = useState({ min: minPrice, max: maxPrice });
 
     // Handle Category Change
     const handleCategoryChange = (id) => {
-        // Chỉ cho phép chọn 1 danh mục (nếu chọn lại cái đang chọn thì bỏ chọn)
         const newSelected = selectedCats.includes(id) ? [] : [id];
         setSelectedCats(newSelected);
-        
         if (onFilterChange) {
             onFilterChange({
                 categories: newSelected,
@@ -168,20 +155,30 @@ const ProductFilter2 = ({
             <div className="filter-section">
                 <h3 className="filter-title">Hãng</h3>
                 <ul className="filter-list">
-                    {displayBrands.map(brand => (
-                        <li key={brand.id} className="filter-item" onClick={() => handleBrandChange(brand.id)}>
-                            <div className="d-flex align-items-center">
-                                <input 
-                                    type="checkbox" 
-                                    className="filter-checkbox"
-                                    checked={selectedBrands.includes(brand.id)}
-                                    onChange={() => {}}
-                                />
-                                <span>{brand.name}</span>
-                            </div>
-                            <span className="filter-count">{brand.count}</span>
-                        </li>
-                    ))}
+                    {displayBrands.map((brand, index) => {
+                        const isObject = typeof brand === 'object' && brand !== null;
+                        const name = isObject ? brand.name : brand;
+                        // Nếu là object mà không có id thì dùng name làm id
+                        const id = isObject ? (brand.id || brand.name) : brand;
+                        const count = isObject ? brand.count : null;
+
+                        if (!name) return null;
+
+                        return (
+                            <li key={id || index} className="filter-item" onClick={() => handleBrandChange(id)}>
+                                <div className="d-flex align-items-center">
+                                    <input 
+                                        type="checkbox" 
+                                        className="filter-checkbox"
+                                        checked={selectedBrands.includes(id)}
+                                        onChange={() => {}}
+                                    />
+                                    <span>{name}</span>
+                                </div>
+                                {count !== null && <span className="filter-count">{count}</span>}
+                            </li>
+                        );
+                    })}
                 </ul>
             </div>
         </div>

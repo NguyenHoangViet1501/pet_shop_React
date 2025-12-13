@@ -10,4 +10,7 @@ export const categoriesApi = {
     }).toString();
     return await apiFetch(`/v1/categories?${queryParams}`);
   },
+  getCategoriesWithCount: async () => {
+    return await apiFetch(`/v1/categories/count`);
+  },
 };
