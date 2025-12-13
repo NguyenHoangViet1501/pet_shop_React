@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import './DeleteConfirmModal.css';
 
 const DeleteConfirmModal = ({ isOpen, onClose, onConfirm, itemName }) => {
@@ -18,7 +19,7 @@ const DeleteConfirmModal = ({ isOpen, onClose, onConfirm, itemName }) => {
     onClose();
   };
 
-  return (
+  return ReactDOM.createPortal(
     <>
       <div
         className="modal-backdrop fade show"
@@ -94,7 +95,8 @@ const DeleteConfirmModal = ({ isOpen, onClose, onConfirm, itemName }) => {
           </div>
         </div>
       </div>
-    </>
+    </>,
+    document.body
   );
 };
 
