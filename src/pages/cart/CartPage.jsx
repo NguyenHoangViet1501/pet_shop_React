@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useCartQuery } from "../../hooks/useCart";
 import CartItem from "../../components/cart/CartItem";
@@ -7,6 +7,7 @@ import { useAuth } from "../../context/AuthContext";
 
 const CartPage = () => {
   const { data, isLoading, isError } = useCartQuery();
+  const [selectedItems, setSelectedItems] = useState(new Set());
 
   if (isLoading) {
     return (
@@ -29,6 +30,18 @@ const CartPage = () => {
   }
 
   const items = data.result.items || [];
+
+  const handleToggleSelect = (itemId, isSelected) => {
+    setSelectedItems((prev) => {
+      const newSet = new Set(prev);
+      if (isSelected) {
+        newSet.add(itemId);
+      } else {
+        newSet.delete(itemId);
+      }
+      return newSet;
+    });
+  };
 
   if (items.length === 0) {
     return (
@@ -68,19 +81,22 @@ const CartPage = () => {
                   key={item.id}
                   item={{
                     id: item.id,
+                    productVariantId: item.productVariantId, // Thêm productVariantId
                     name: item.productName,
                     variantName: item.variantName,
                     image: item.imageUrl,
                     price: item.unitPrice,
                     quantity: item.quantity,
                   }}
+                  isSelected={selectedItems.has(item.id)}
+                  onToggleSelect={handleToggleSelect}
                 />
               ))}
             </div>
           </div>
         </div>
         <div className="col-lg-4">
-          <CartSummary />
+          <CartSummary items={items} selectedItems={selectedItems} />
         </div>
       </div>
     </div>

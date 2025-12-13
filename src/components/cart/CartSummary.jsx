@@ -1,18 +1,16 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { useCartQuery } from "../../hooks/useCart";
 
-const CartSummary = () => {
-  const { data: cart } = useCartQuery();
+const CartSummary = ({ items = [], selectedItems = new Set() }) => {
+  // ✅ Tính subtotal chỉ từ những item được chọn
+  const selectedItemsList = items.filter((item) => selectedItems.has(item.id));
+  const subtotal = selectedItemsList.reduce(
+    (total, item) => total + item.unitPrice * item.quantity,
+    0
+  );
 
-  // ✅ Tính subtotal từ cart (React Query)
-  const subtotal =
-    cart?.items?.reduce(
-      (total, item) => total + item.price * item.quantity,
-      0
-    ) || 0;
-
-  const shipping = 5.0;
+  const hasSelectedItems = selectedItems.size > 0;
+  const shipping = hasSelectedItems ? 5.0 : 0;
   const total = subtotal + shipping;
 
   return (
@@ -52,7 +50,21 @@ const CartSummary = () => {
           </span>
         </div>
 
-        <Link to="/checkout" className="btn btn-primary w-100 mt-3">
+        <Link
+          to="/checkout"
+          className={`btn btn-primary w-100 mt-3 ${
+            !hasSelectedItems ? "disabled" : ""
+          }`}
+          style={{
+            pointerEvents: !hasSelectedItems ? "none" : "auto",
+            opacity: !hasSelectedItems ? 0.6 : 1,
+          }}
+          onClick={(e) => {
+            if (!hasSelectedItems) {
+              e.preventDefault();
+            }
+          }}
+        >
           Thanh toán
         </Link>
 

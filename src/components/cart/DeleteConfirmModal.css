@@ -1,0 +1,32 @@
+/* Đảm bảo modal-footer luôn hiển thị, không bị ảnh hưởng bởi hover */
+.delete-confirm-modal .modal-content {
+  overflow: visible !important;
+}
+
+.delete-confirm-modal .modal-footer {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  height: auto !important;
+  min-height: 60px !important;
+  max-height: none !important;
+}
+
+/* Override bất kỳ CSS hover nào có thể ảnh hưởng */
+.delete-confirm-modal .modal-content:hover .modal-footer,
+.delete-confirm-modal:hover .modal-footer,
+.delete-confirm-modal .modal-footer:hover {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Đảm bảo modal-content không bị transform khi hover (nếu có card:hover) */
+.delete-confirm-modal .modal-content {
+  transform: none !important;
+}
+
+.delete-confirm-modal .modal-content:hover {
+  transform: none !important;
+}
+
