@@ -7,6 +7,7 @@ import { useAuth } from "../../context/AuthContext";
 
 const CartPage = () => {
   const { user } = useAuth();
+  const [selectedItems, setSelectedItems] = useState(new Set());
 
   const { data, isLoading, isError } = useCartQuery();
   if (!user) {
