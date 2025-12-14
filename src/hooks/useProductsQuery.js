@@ -2,9 +2,12 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { productsApi } from "../api/products";
 
 export function useProductsQuery(params = {}) {
+  // Mặc định lấy sản phẩm chưa xóa (isDelete = "0")
+  const queryParams = { isDelete: "0", ...params };
+  
   return useQuery({
-    queryKey: ["products", params],
-    queryFn: () => productsApi.getProducts(params),
+    queryKey: ["products", queryParams],
+    queryFn: () => productsApi.getProducts(queryParams),
     placeholderData: keepPreviousData,
   });
 }

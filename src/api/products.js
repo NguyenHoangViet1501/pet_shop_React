@@ -16,7 +16,8 @@ export const productsApi = {
     if (params.brand) queryParams.append("brand", params.brand);
     if (params.isFeatured !== undefined)
       queryParams.append("isFeature", params.isFeatured);
-
+        if (params.isDelete !== undefined)
+      queryParams.append("isDelete", params.isDelete);
     return await apiFetch(`/v1/products?${queryParams.toString()}`);
   },
 

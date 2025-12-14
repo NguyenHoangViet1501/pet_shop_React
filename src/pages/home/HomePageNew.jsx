@@ -8,6 +8,7 @@ import DetailServiceHome from "../../components/home/DetailServiceHome.jsx";
 import BrandFeature from "../../components/home/BrandFeature.jsx";
 import Feedback from "../../components/home/Feedback.jsx";
 import About from "../../components/home/About.jsx";
+import Adoption from "../../components/home/Adoption.jsx";
 
 const HomePageNew = () => {
   const { data: featuredProductsData } = useFeaturedProductsQuery(16);
@@ -25,7 +26,7 @@ const HomePageNew = () => {
       <ProductHome title="Sản phẩm nổi bật" products={featuredProducts} />
       <DisplayService />
       <DetailServiceHome />
-
+      <Adoption />
       <BrandFeature />
       <Feedback />
       <About />
