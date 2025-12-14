@@ -31,7 +31,7 @@ const CheckoutPage = () => {
     phone: user?.phone || "",
     address: "",
     notes: "",
-    paymentMethod: "cod",
+    paymentMethod: "",
   });
 
   // nếu user load sau → cập nhật lại fullname/phone
