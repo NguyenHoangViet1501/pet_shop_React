@@ -35,7 +35,7 @@ export function useCategoriesWithCountFrontend() {
   const countQueries = useQueries({
     queries: categories.map((cat) => ({
       queryKey: ["products-count", cat.id],
-      queryFn: () => productsApi.getProducts({ categoryId: cat.id, size: 1 }),
+      queryFn: () => productsApi.getProducts({ categoryId: cat.id, size: 1, isDelete: "0" }),
       staleTime: 5 * 60 * 1000, // Cache 5 phút
     })),
   });

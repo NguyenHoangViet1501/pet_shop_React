@@ -51,7 +51,7 @@ const CartItem = ({ item, isSelected, onToggleSelect }) => {
     try {
       setIsUpdating(true);
       // Gọi API với quantity = +1
-      await updateQuantity(item.productVariantId, 1);
+      updateQuantity(item.productVariantId, 1);
     } catch (error) {
       console.error("Error updating quantity:", error);
       showToast("Không thể cập nhật số lượng. Vui lòng thử lại!", "error");
@@ -80,7 +80,7 @@ const CartItem = ({ item, isSelected, onToggleSelect }) => {
 
     try {
       setIsUpdating(true);
-      await updateQuantity(item.productVariantId, delta);
+      updateQuantity(item.productVariantId, delta);
     } catch (error) {
       console.error("Error updating quantity:", error);
       showToast("Không thể cập nhật số lượng. Vui lòng thử lại!", "error");
