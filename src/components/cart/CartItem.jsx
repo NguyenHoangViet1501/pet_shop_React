@@ -12,7 +12,7 @@ const CartItem = ({ item, isSelected, onToggleSelect }) => {
   const performDelete = async () => {
     try {
       setIsUpdating(true);
-      await removeItem(item.productVariantId);
+      await removeItem(item.id);
       showToast("Đã xóa sản phẩm khỏi giỏ hàng", "success");
     } catch (error) {
       console.error("Error removing item:", error);
@@ -24,9 +24,9 @@ const CartItem = ({ item, isSelected, onToggleSelect }) => {
 
   const handleDecrease = async () => {
     if (isUpdating) return;
-    
+
     const newQty = item.quantity - 1;
-    
+
     // Nếu quantity về 0, hiển thị modal xác nhận xóa
     if (newQty === 0) {
       setShowDeleteModal(true);
@@ -47,7 +47,7 @@ const CartItem = ({ item, isSelected, onToggleSelect }) => {
 
   const handleIncrease = async () => {
     if (isUpdating) return;
-    
+
     try {
       setIsUpdating(true);
       // Gọi API với quantity = +1
@@ -62,7 +62,7 @@ const CartItem = ({ item, isSelected, onToggleSelect }) => {
 
   const handleChange = async (e) => {
     if (isUpdating) return;
-    
+
     const value = parseInt(e.target.value, 10);
     if (Number.isNaN(value) || value < 0) return;
 
@@ -113,103 +113,107 @@ const CartItem = ({ item, isSelected, onToggleSelect }) => {
         itemName={item.name}
       />
       <div className="d-flex align-items-center justify-content-between border-bottom py-3">
-      {/* Checkbox */}
-      <div className="me-3">
-        <input
-          type="checkbox"
-          className="form-check-input"
-          style={{ width: '20px', height: '20px', cursor: 'pointer' }}
-          checked={isSelected || false}
-          onChange={(e) => onToggleSelect && onToggleSelect(item.id, e.target.checked)}
-        />
-      </div>
-
-      {/* Ảnh */}
-      <div className="me-3">
-        {item.image && (
-          <img
-            src={item.image}
-            alt={item.name}
-            style={{ width: 80, height: 80, objectFit: "cover" }}
-            className="rounded"
+        {/* Checkbox */}
+        <div className="me-3">
+          <input
+            type="checkbox"
+            disabled={isUpdating}
+            className="form-check-input"
+            style={{ width: "20px", height: "20px", cursor: "pointer" }}
+            checked={isSelected || false}
+            onChange={(e) =>
+              onToggleSelect && onToggleSelect(item.id, e.target.checked)
+            }
           />
-        )}
-      </div>
-
-      {/* Tên + giá */}
-      <div className="flex-grow-1 me-3">
-        <div className="fw-semibold mb-2">{item.name}</div>
-        <div
-          className="fw-bold"
-          style={{ color: "var(--primary-orange)", fontSize: "1.1rem" }}
-        >
-          {item.price?.toLocaleString("vi-VN")} ₫
+          {console.log("item_id" + item.id)}
         </div>
-      </div>
 
-      {/* Variant */}
-      <div className="me-3" style={{ minWidth: 150 }}>
-        {item.variantName && (
-          <div className="text-muted">
-            <span className="fw-semibold">Phân loại:</span> {item.variantName}
+        {/* Ảnh */}
+        <div className="me-3">
+          {item.image && (
+            <img
+              src={item.image}
+              alt={item.name}
+              style={{ width: 80, height: 80, objectFit: "cover" }}
+              className="rounded"
+            />
+          )}
+        </div>
+
+        {/* Tên + giá */}
+        <div className="flex-grow-1 me-3">
+          <div className="fw-semibold mb-2">{item.name}</div>
+          <div
+            className="fw-bold"
+            style={{ color: "var(--primary-orange)", fontSize: "1.1rem" }}
+          >
+            {item.price?.toLocaleString("vi-VN")} ₫
           </div>
-        )}
-      </div>
-
-      {/* Quantity */}
-      <div className="d-flex align-items-center me-3">
-        <button
-          className="btn btn-outline-secondary btn-sm"
-          onClick={handleDecrease}
-          disabled={isUpdating}
-          style={{ width: 32, height: 32, padding: 0 }}
-        >
-          −
-        </button>
-
-        <input
-          type="number"
-          min="0"
-          className="form-control form-control-sm mx-2 text-center"
-          style={{ width: 60, height: 32 }}
-          value={item.quantity}
-          onChange={handleChange}
-          disabled={isUpdating}
-        />
-
-        <button
-          className="btn btn-outline-secondary btn-sm"
-          onClick={handleIncrease}
-          disabled={isUpdating}
-          style={{ width: 32, height: 32, padding: 0 }}
-        >
-          +
-        </button>
-      </div>
-
-      {/* Thành tiền + xoá */}
-      <div className="text-end" style={{ minWidth: 120 }}>
-        <div
-          className="fw-bold mb-2"
-          style={{ color: "var(--primary-orange)", fontSize: "1.1rem" }}
-        >
-          {(item.price * item.quantity).toLocaleString("vi-VN")} ₫
         </div>
-        <button
-          className="btn btn-sm"
-          onClick={handleRemove}
-          disabled={isUpdating}
-          style={{
-            backgroundColor: "#dc3545",
-            color: "white",
-            border: "none",
-            padding: "4px 12px",
-          }}
-        >
-          Xóa
-        </button>
+
+        {/* Variant */}
+        <div className="me-3" style={{ minWidth: 150 }}>
+          {item.variantName && (
+            <div className="text-muted">
+              <span className="fw-semibold">Phân loại:</span> {item.variantName}
+            </div>
+          )}
+        </div>
+
+        {/* Quantity */}
+        <div className="d-flex align-items-center me-3">
+          <button
+            className="btn btn-outline-secondary btn-sm"
+            onClick={handleDecrease}
+            disabled={isUpdating}
+            style={{ width: 32, height: 32, padding: 0 }}
+          >
+            −
+          </button>
+
+          <input
+            type="number"
+            min="0"
+            className="form-control form-control-sm mx-2 text-center"
+            style={{ width: 60, height: 32 }}
+            value={item.quantity}
+            onChange={handleChange}
+            disabled={isUpdating}
+          />
+
+          <button
+            className="btn btn-outline-secondary btn-sm"
+            onClick={handleIncrease}
+            disabled={isUpdating}
+            style={{ width: 32, height: 32, padding: 0 }}
+          >
+            +
+          </button>
+        </div>
+
+        {/* Thành tiền + xoá */}
+        <div className="text-end" style={{ minWidth: 120 }}>
+          <div
+            className="fw-bold mb-2"
+            style={{ color: "var(--primary-orange)", fontSize: "1.1rem" }}
+          >
+            {(item.price * item.quantity).toLocaleString("vi-VN")} ₫
+          </div>
+          <button
+            className="btn btn-sm"
+            onClick={handleRemove}
+            disabled={isUpdating}
+            style={{
+              backgroundColor: "#dc3545",
+              color: "white",
+              border: "none",
+              padding: "4px 12px",
+            }}
+          >
+            Xóa
+          </button>
+        </div>
       </div>
-    </div>
     </>
   );
 };

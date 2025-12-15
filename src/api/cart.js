@@ -18,3 +18,11 @@ export async function addToCart(items, token) {
     token,
   });
 }
+
+// Xóa sản phẩm khỏi giỏ hàng
+export async function deleteCartItem(cartid, token) {
+  return await apiFetch(`/v1/carts/item/${cartid}`, {
+    method: 'DELETE',
+    token,
+  });
+}

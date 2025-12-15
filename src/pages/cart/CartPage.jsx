@@ -1,13 +1,58 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useCartQuery } from "../../hooks/useCart";
 import CartItem from "../../components/cart/CartItem";
 import CartSummary from "../../components/cart/CartSummary";
 import { useAuth } from "../../context/AuthContext";
+import { addressAPI, orderAPI } from "../../api";
+import { useNavigate } from "react-router-dom";
 
 const CartPage = () => {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
+  const navigate = useNavigate();
+
+  const [address, setAddress] = useState([]);
   const [selectedItems, setSelectedItems] = useState(new Set());
+
+  const fetchAddresses = useCallback(async () => {
+    if (!token) return;
+    debugger;
+    try {
+      const response = await addressAPI.getUserAddresses(token, 10, 0);
+
+      if (response?.success && Array.isArray(response?.result)) {
+        const mapped = response.result.map((addr) => ({
+          id: addr.id,
+          fullName: addr.contactName,
+          phone: addr.phone,
+          line: addr.detailAddress,
+          city: addr.city,
+          district: addr.state,
+          ward: addr.ward,
+          isDefault: addr.isDefault === "1",
+        }));
+
+        const defaultAddr = mapped.find((a) => a.isDefault);
+        if (defaultAddr) {
+          const formattedAddress =
+            `${defaultAddr.fullName} - ${defaultAddr.phone} - ${defaultAddr.line}, ` +
+            `${defaultAddr.ward}, ${defaultAddr.district}, ${defaultAddr.city}`;
+
+          setAddress(formattedAddress);
+
+          debugger;
+        }
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    if (token) {
+      fetchAddresses();
+    }
+  }, [token, fetchAddresses]);
 
   const { data, isLoading, isError } = useCartQuery();
   if (!user) {
@@ -51,6 +96,7 @@ const CartPage = () => {
     );
   }
 
+  console.log("user", user);
   const items = data.result.items || [];
 
   const handleToggleSelect = (itemId, isSelected) => {
@@ -65,6 +111,39 @@ const CartPage = () => {
     });
   };
 
+  console.log("📍 Current address state:", address);
+  const handleCheckout = async () => {
+    const selectedCartItemIds = Array.from(selectedItems);
+
+    if (selectedCartItemIds.length === 0) {
+      console.warn("Chưa chọn sản phẩm nào");
+      return;
+    }
+
+    const selectedItemsList = items.filter((item) =>
+      selectedItems.has(item.id)
+    );
+
+    const payload = {
+      shippingAmount: 30000,
+      discountPercent: 0.1,
+      shippingAddress: address,
+      note: "",
+      items: selectedItemsList.map((item) => ({
+        productVariantId: item.productVariantId,
+        quantity: item.quantity,
+      })),
+    };
+
+    try {
+      const res = await orderAPI.createOrder(payload, token);
+
+      navigate("/checkout", {});
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   if (items.length === 0) {
     return (
       <div className="container page-content">
@@ -76,6 +155,7 @@ const CartPage = () => {
                 <div className="text-center py-5">
                   <i className="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
                   <h5>Giỏ hàng trống</h5>
+
                   <p className="text-muted">
                     Hãy thêm một số sản phẩm vào giỏ hàng của bạn
                   </p>
@@ -100,7 +180,7 @@ const CartPage = () => {
             <div className="card-body">
               {items.map((item) => (
                 <CartItem
-                  key={item.id}
+                  key={item.productVariantId}
                   item={{
                     id: item.id,
                     productVariantId: item.productVariantId, // Thêm productVariantId
@@ -118,7 +198,11 @@ const CartPage = () => {
           </div>
         </div>
         <div className="col-lg-4">
-          <CartSummary items={items} selectedItems={selectedItems} />
+          <CartSummary
+            items={items}
+            selectedItems={selectedItems}
+            onCheckout={handleCheckout}
+          />
         </div>
       </div>
     </div>

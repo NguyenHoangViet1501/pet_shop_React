@@ -1,8 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
-const CartSummary = ({ items = [], selectedItems = new Set() }) => {
-  // ✅ Tính subtotal chỉ từ những item được chọn
+const CartSummary = ({ items = [], selectedItems = new Set(), onCheckout }) => {
   const selectedItemsList = items.filter((item) => selectedItems.has(item.id));
   const subtotal = selectedItemsList.reduce(
     (total, item) => total + item.unitPrice * item.quantity,
@@ -50,8 +49,8 @@ const CartSummary = ({ items = [], selectedItems = new Set() }) => {
           </span>
         </div>
 
-        <Link
-          to="/checkout"
+        <button
+          to=""
           className={`btn btn-primary w-100 mt-3 ${
             !hasSelectedItems ? "disabled" : ""
           }`}
@@ -59,14 +58,11 @@ const CartSummary = ({ items = [], selectedItems = new Set() }) => {
             pointerEvents: !hasSelectedItems ? "none" : "auto",
             opacity: !hasSelectedItems ? 0.6 : 1,
           }}
-          onClick={(e) => {
-            if (!hasSelectedItems) {
-              e.preventDefault();
-            }
-          }}
+          disable={!hasSelectedItems}
+          onClick={onCheckout}
         >
           Thanh toán
-        </Link>
+        </button>
 
         <Link to="/products" className="btn btn-outline-primary w-100 mt-2">
           Tiếp tục mua sắm

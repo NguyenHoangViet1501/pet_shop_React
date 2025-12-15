@@ -5,3 +5,4 @@ export { userAPI } from "./user";
 export { categoriesApi } from "./categories";
 export { productsApi } from "./products";
 export { addressAPI } from "./address";
+export { orderAPI } from "./order";
