@@ -124,21 +124,23 @@ const CartPage = () => {
       selectedItems.has(item.id)
     );
 
-    const payload = {
+    const checkoutData = {
       shippingAmount: 30000,
       discountPercent: 0.1,
-      shippingAddress: address,
       note: "",
       items: selectedItemsList.map((item) => ({
+        cartItemId: item.id,
         productVariantId: item.productVariantId,
+        name: item.productName,
+        variantName: item.variantName,
+        image: item.imageUrl,
+        price: item.unitPrice,
         quantity: item.quantity,
       })),
     };
 
     try {
-      const res = await orderAPI.createOrder(payload, token);
-
-      navigate("/checkout", {});
+      navigate("/checkout", { state: checkoutData });
     } catch (err) {
       console.error(err);
     }
