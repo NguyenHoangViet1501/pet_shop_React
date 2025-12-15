@@ -61,7 +61,7 @@ const CartSummary = ({ items = [], selectedItems = new Set(), onCheckout }) => {
           disable={!hasSelectedItems}
           onClick={onCheckout}
         >
-          Thanh toán
+          Mua hàng
         </button>
 
         <Link to="/products" className="btn btn-outline-primary w-100 mt-2">

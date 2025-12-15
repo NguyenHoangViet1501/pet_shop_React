@@ -1,8 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 
-import { useCartQuery } from "../../hooks/useCart";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 
@@ -10,22 +9,32 @@ import ShippingForm from "../../components/checkout/ShippingForm";
 import PaymentMethod from "../../components/checkout/PaymentMethod";
 import OrderSummary from "../../components/checkout/OrderSummary";
 import AddressModal from "../../components/checkout/AddressModal";
+import SelectedItemCard from "../../components/checkout/SelectedItemCard";
 
 import { addressAPI } from "../../api/address";
-// import { orderAPI } from "../../api/order"; // <-- bạn cần có file này
+import { orderAPI } from "../../api/order";
+import { paymentAPI } from "../../api";
 
 const CheckoutPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
 
   const { user, token } = useAuth();
   const { showToast } = useToast();
 
-  // ✅ cart từ API
-  const { data, isLoading, isError } = useCartQuery();
-  const items = data?.result?.items || [];
+  // 🔑 DATA TỪ CART PAGE
+  const checkoutData = location.state;
+  const selectedItems = checkoutData?.items || [];
 
-  // ✅ form state
+  // ⛔ Truy cập thẳng /checkout → quay về cart
+  useEffect(() => {
+    if (!checkoutData || !checkoutData.items) {
+      navigate("/cart");
+    }
+  }, [checkoutData, navigate]);
+
+  // 🧾 FORM DATA
   const [formData, setFormData] = useState({
     fullName: user?.fullName || "",
     phone: user?.phone || "",
@@ -34,7 +43,7 @@ const CheckoutPage = () => {
     paymentMethod: "",
   });
 
-  // nếu user load sau → cập nhật lại fullname/phone
+  // nếu user load sau
   useEffect(() => {
     if (user) {
       setFormData((prev) => ({
@@ -45,7 +54,7 @@ const CheckoutPage = () => {
     }
   }, [user]);
 
-  // ✅ address modal state
+  // 📍 ADDRESS MODAL
   const [addresses, setAddresses] = useState([]);
   const [loadingAddresses, setLoadingAddresses] = useState(false);
   const [showAddressModal, setShowAddressModal] = useState(false);
@@ -78,13 +87,9 @@ const CheckoutPage = () => {
             `${defaultAddr.fullName} - ${defaultAddr.phone} - ${defaultAddr.line}, ` +
             `${defaultAddr.ward}, ${defaultAddr.district}, ${defaultAddr.city}`;
 
-          setFormData((prev) => {
-            if (prev.address) return prev;
-            return {
-              ...prev,
-              address: formatted,
-            };
-          });
+          setFormData((prev) =>
+            prev.address ? prev : { ...prev, address: formatted }
+          );
         }
       }
     } catch (err) {
@@ -99,7 +104,7 @@ const CheckoutPage = () => {
     fetchAddresses();
   }, [fetchAddresses]);
 
-  // ✅ change handler
+  // ✏️ INPUT CHANGE
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -114,15 +119,16 @@ const CheckoutPage = () => {
     setShowAddressModal(false);
   };
 
-  // ✅ totals
-  const subtotal = items.reduce(
-    (sum, item) => sum + (item.unitPrice || 0) * (item.quantity || 0),
+  // 💰 TÍNH TIỀN TỪ ITEM ĐÃ CHỌN
+  const subtotal = selectedItems.reduce(
+    (sum, item) => sum + item.price * item.quantity,
     0
   );
-  const shipping = 5;
+
+  const shipping = 30000;
   const total = subtotal + shipping;
 
-  // ✅ guards
+  // 🔐 GUARD USER
   if (!user) {
     return (
       <div className="container page-content">
@@ -133,33 +139,11 @@ const CheckoutPage = () => {
     );
   }
 
-  if (isLoading) {
-    return (
-      <div className="container page-content text-center py-5">
-        <div className="spinner-border text-primary" role="status" />
-      </div>
-    );
+  if (selectedItems.length === 0) {
+    return null; // đang redirect
   }
 
-  if (isError) {
-    return (
-      <div className="container page-content">
-        <div className="alert alert-danger">
-          Không thể tải giỏ hàng. Vui lòng thử lại sau.
-        </div>
-      </div>
-    );
-  }
-
-  if (items.length === 0) {
-    return (
-      <div className="container page-content">
-        <div className="alert alert-info">Giỏ hàng của bạn đang trống.</div>
-      </div>
-    );
-  }
-
-  // ✅ submit
+  // 🧾 SUBMIT
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -168,21 +152,53 @@ const CheckoutPage = () => {
       return;
     }
 
+    const payload = {
+      shippingAmount: shipping,
+      shippingAddress: formData.address,
+      paymentMethod: formData.paymentMethod,
+      discountPercent: 0.1,
+      note: formData.notes,
+      items: selectedItems.map((item) => ({
+        productVariantId: item.productVariantId,
+        quantity: item.quantity,
+      })),
+    };
+
+    console.log("ORDER PAYLOAD:", payload);
+
     try {
-      // TODO: bạn thay bằng API thật của bạn
-      // await orderAPI.createOrder({
-      //   items,
-      //   address: formData.address,
-      //   paymentMethod: formData.paymentMethod,
-      //   notes: formData.notes,
-      // });
+      const orderRes = await orderAPI.createOrder(payload);
 
-      showToast("Đặt hàng thành công!", "success");
+      const { orderCode } = orderRes.result;
 
-      // cart sẽ tự refetch lại (trống) nếu backend đã clear cart
-      queryClient.invalidateQueries({ queryKey: ["cart"] });
+      if (formData.paymentMethod === "cod") {
+        showToast("Đặt hàng thành công! ", "success");
+        navigate("/payment-success");
+        return;
+      }
 
-      navigate("/orders");
+      if (formData.paymentMethod === "vnpay") {
+        const orderRes = await orderAPI.createOrder(payload);
+        const orderId = orderRes.result.id;
+
+        if (!orderId) {
+          showToast("Thiếu orderId để thanh toán VNPAY", "error");
+          return;
+        }
+
+        const res = await paymentAPI.createVnpayPayment(orderId, token);
+
+        // tùy ApiResponse của bạn: res.result.url hoặc res.result.paymentUrl
+        const paymentUrl = res?.result?.url;
+
+        if (!paymentUrl) {
+          showToast("Không nhận được link thanh toán", "error");
+          return;
+        }
+
+        // ✅ Redirect sang VNPAY
+        window.location.href = paymentUrl;
+      }
     } catch (err) {
       console.error(err);
       showToast("Đặt hàng thất bại, vui lòng thử lại", "error");
@@ -196,6 +212,9 @@ const CheckoutPage = () => {
       <form onSubmit={handleSubmit} noValidate>
         <div className="row">
           <div className="col-lg-7">
+            {/* 🛒 SẢN PHẨM ĐÃ CHỌN */}
+            <SelectedItemCard selectedItems={selectedItems} />
+
             <ShippingForm
               formData={formData}
               onChange={handleChange}
@@ -209,8 +228,16 @@ const CheckoutPage = () => {
           </div>
 
           <div className="col-lg-5">
-            <OrderSummary items={items} shipping={shipping} total={total} />
-            <button type="submit" className="btn btn-primary w-100 mt-3">
+            <OrderSummary
+              items={selectedItems}
+              shipping={shipping}
+              total={total}
+            />
+            <button
+              type="submit"
+              className="btn btn-primary w-100 mt-3"
+              disabled={!formData.address || !formData.paymentMethod}
+            >
               Đặt hàng
             </button>
           </div>
