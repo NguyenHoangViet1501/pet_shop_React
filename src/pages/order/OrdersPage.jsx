@@ -2,25 +2,37 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { useAuth } from "../../context/AuthContext";
+import { useToast } from "../../context/ToastContext";
 import { orderAPI } from "../../api/order";
 
 const ORDER_STATUS_MAP = {
-  PENDING: { label: "Đang tạo đơn", className: "bg-secondary" },
-  CREATED: { label: "Đã đặt (COD)", className: "bg-secondary" },
   WAITING_PAYMENT: { label: "Chờ thanh toán", className: "bg-warning" },
-  PAID: { label: "Đã thanh toán", className: "bg-success" },
   PROCESSING: { label: "Đang xử lý", className: "bg-info" },
-  SHIPPING: { label: "Đang giao", className: "bg-primary" },
-  COMPLETED: { label: "Hoàn thành", className: "bg-success" },
+  SHIPPED: { label: "Đang giao", className: "bg-primary" },
+  DELIVERED: { label: "Đã giao", className: "bg-success" },
   CANCELLED: { label: "Đã hủy", className: "bg-danger" },
+  REFUNDED: { label: "Đã hoàn tiền", className: "bg-secondary" },
 };
+
+const FILTER_TABS = [
+  { value: "", label: "Tất cả" },
+  { value: "WAITING_PAYMENT", label: "Chờ thanh toán" },
+  { value: "PROCESSING", label: "Đang xử lý" },
+  { value: "SHIPPED", label: "Đang giao" },
+  { value: "DELIVERED", label: "Đã giao" },
+  { value: "CANCELLED", label: "Đã hủy" },
+  { value: "REFUNDED", label: "Đã hoàn tiền" },
+];
 
 const OrdersPage = () => {
   const navigate = useNavigate();
   const { token } = useAuth();
+  const { showToast } = useToast();
 
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedStatus, setSelectedStatus] = useState("");
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // 🔥 PAGE BẮT ĐẦU TỪ 1 (THEO API)
   const [pageNumber, setPageNumber] = useState(1);
@@ -33,10 +45,15 @@ const OrdersPage = () => {
     const fetchOrders = async () => {
       setLoading(true);
       try {
-        const res = await orderAPI.getMyOrders(token, {
+        const params = {
           pageNumber,
           size,
-        });
+        };
+        if (selectedStatus) {
+          params.status = selectedStatus;
+        }
+
+        const res = await orderAPI.getMyOrders(token, params);
 
         if (res?.success) {
           setOrders(res.result?.content || []);
@@ -53,7 +70,24 @@ const OrdersPage = () => {
     };
 
     fetchOrders();
-  }, [token, pageNumber, size]);
+  }, [token, pageNumber, size, selectedStatus, refreshKey]);
+
+  const handleCancelOrder = async (orderCode) => {
+    if (!window.confirm("Bạn có chắc chắn muốn hủy đơn hàng này?")) return;
+
+    try {
+      const res = await orderAPI.cancelOrder(orderCode, token);
+      if (res?.success) {
+        showToast("Hủy đơn hàng thành công", "success");
+        setRefreshKey((prev) => prev + 1);
+      } else {
+        showToast(res?.message || "Hủy đơn hàng thất bại", "error");
+      }
+    } catch (error) {
+      console.error(error);
+      showToast("Lỗi khi hủy đơn hàng", "error");
+    }
+  };
 
   const formatDate = (dateStr) => {
     if (!dateStr) return "-";
@@ -69,6 +103,28 @@ const OrdersPage = () => {
   return (
     <div className="container page-content">
       <h1 className="mb-4">Đơn hàng của tôi</h1>
+
+      {/* Filter Tabs */}
+      <div className="mb-4 overflow-auto">
+        <div className="d-flex gap-2 pb-2" style={{ minWidth: "max-content" }}>
+          {FILTER_TABS.map((tab) => (
+            <button
+              key={tab.value}
+              className={`btn ${
+                selectedStatus === tab.value
+                  ? "btn-primary"
+                  : "btn-outline-secondary"
+              } rounded-pill px-3`}
+              onClick={() => {
+                setSelectedStatus(tab.value);
+                setPageNumber(1); // Reset về trang 1 khi đổi filter
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <div className="card">
         <div className="card-body table-responsive">
@@ -112,6 +168,16 @@ const OrdersPage = () => {
                       >
                         Xem
                       </button>
+
+                      {(order.status === "WAITING_PAYMENT" ||
+                        order.status === "PROCESSING") && (
+                        <button
+                          className="btn btn-sm btn-outline-danger ms-2"
+                          onClick={() => handleCancelOrder(order.orderCode)}
+                        >
+                          Hủy
+                        </button>
+                      )}
 
                       {order.status === "WAITING_PAYMENT" && (
                         <button
