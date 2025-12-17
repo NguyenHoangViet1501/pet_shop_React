@@ -164,7 +164,7 @@ const OrdersPage = () => {
                     <td>
                       <button
                         className="btn btn-sm btn-outline-primary"
-                        onClick={() => navigate(`/orders/${order.orderCode}`)}
+                        onClick={() => navigate(`/orders/detail/${order.id}`)}
                       >
                         Xem
                       </button>

@@ -30,4 +30,11 @@ export const orderAPI = {
       token,
     });
   },
+
+  getOrderDetail: async (id, token) => {
+    return apiFetch(`/v1/orders/detail/${id}`, {
+      method: "GET",
+      token,
+    });
+  },
 };
