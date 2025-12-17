@@ -20,6 +20,7 @@ import OrderDetailPage from "./pages/order/OrderDetailPage";
 import AdoptionRequestDetailPage from "./pages/adoption/AdoptionRequestDetailPage";
 import HomePageNew from "./pages/home/HomePageNew";
 import Headernew from "./components/common/Headernew";
+import PaymentFailedPage from "./pages/payment/PaymentFailedPage";
 import PaymentSuccessPage from "./pages/payment/PaymentSuccessPage";
 
 function App() {
@@ -29,7 +30,6 @@ function App() {
       <main style={{ marginTop: "50px", marginBottom: "50px" }}>
         <Routes>
           <Route path="/" element={<HomePageNew />} />
-
           <Route path="/products" element={<ProductsPage />} />
           <Route path="/products/:id" element={<ProductDetailPage />} />
           <Route path="/login" element={<LoginPage />} />
@@ -37,6 +37,7 @@ function App() {
           <Route path="/cart" element={<CartPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/payment-success" element={<PaymentSuccessPage />} />
+          <Route path="/payment-failed" element={<PaymentFailedPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/orders" element={<OrdersPage />} />
           <Route path="/orders/:id" element={<OrderDetailPage />} />

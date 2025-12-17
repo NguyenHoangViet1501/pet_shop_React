@@ -117,7 +117,12 @@ const OrdersPage = () => {
                         <button
                           className="btn btn-sm btn-outline-warning ms-2"
                           onClick={() =>
-                            navigate(`/payment/retry/${order.orderCode}`)
+                            navigate("/checkout", {
+                              state: {
+                                order, // gửi nguyên object order
+                                from: "orders",
+                              },
+                            })
                           }
                         >
                           Thanh toán
