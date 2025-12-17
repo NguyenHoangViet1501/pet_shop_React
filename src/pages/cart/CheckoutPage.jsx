@@ -20,6 +20,8 @@ const CheckoutPage = () => {
   const location = useLocation();
   const queryClient = useQueryClient();
 
+  const [order, setOrder] = useState(null);
+
   const { user, token } = useAuth();
   const { showToast } = useToast();
 
@@ -29,10 +31,12 @@ const CheckoutPage = () => {
 
   // ⛔ Truy cập thẳng /checkout → quay về cart
   useEffect(() => {
+    if (order) return;
+
     if (!checkoutData || !checkoutData.items) {
       navigate("/cart");
     }
-  }, [checkoutData, navigate]);
+  }, [order, checkoutData, navigate]);
 
   // 🧾 FORM DATA
   const [formData, setFormData] = useState({
@@ -58,6 +62,7 @@ const CheckoutPage = () => {
   const [addresses, setAddresses] = useState([]);
   const [loadingAddresses, setLoadingAddresses] = useState(false);
   const [showAddressModal, setShowAddressModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const fetchAddresses = useCallback(async () => {
     if (!token) return;
@@ -119,9 +124,8 @@ const CheckoutPage = () => {
     setShowAddressModal(false);
   };
 
-  // 💰 TÍNH TIỀN TỪ ITEM ĐÃ CHỌN
   const subtotal = selectedItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
+    (sum, item) => sum + Number(item.price) * Number(item.quantity),
     0
   );
 
@@ -165,11 +169,17 @@ const CheckoutPage = () => {
     };
 
     console.log("ORDER PAYLOAD:", payload);
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
     try {
       const orderRes = await orderAPI.createOrder(payload);
 
-      const { orderCode } = orderRes.result;
+      const { id: orderId, orderCode } = orderRes.result;
+      if (!orderId) {
+        showToast("Không tạo được đơn hàng", "error");
+        return;
+      }
 
       if (formData.paymentMethod === "cod") {
         showToast("Đặt hàng thành công! ", "success");
@@ -178,17 +188,8 @@ const CheckoutPage = () => {
       }
 
       if (formData.paymentMethod === "vnpay") {
-        const orderRes = await orderAPI.createOrder(payload);
-        const orderId = orderRes.result.id;
-
-        if (!orderId) {
-          showToast("Thiếu orderId để thanh toán VNPAY", "error");
-          return;
-        }
-
         const res = await paymentAPI.createVnpayPayment(orderId, token);
 
-        // tùy ApiResponse của bạn: res.result.url hoặc res.result.paymentUrl
         const paymentUrl = res?.result?.url;
 
         if (!paymentUrl) {
