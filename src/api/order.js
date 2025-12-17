@@ -8,7 +8,13 @@ export const orderAPI = {
       token,
     });
   },
-
+  checkStock: async (payload, token) => {
+    return apiFetch("/v1/orders/check-stock", {
+      method: "POST",
+      body: payload,
+      token,
+    });
+  },
   getMyOrders: async (token, params = {}) => {
     const queryParams = new URLSearchParams({
       pageNumber: params.pageNumber || 1,
