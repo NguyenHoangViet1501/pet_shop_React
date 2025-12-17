@@ -6,6 +6,7 @@ import CartSummary from "../../components/cart/CartSummary";
 import { useAuth } from "../../context/AuthContext";
 import { addressAPI, orderAPI } from "../../api";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "../../context/ToastContext";
 
 const CartPage = () => {
   const { user, token } = useAuth();
@@ -13,6 +14,7 @@ const CartPage = () => {
 
   const [address, setAddress] = useState([]);
   const [selectedItems, setSelectedItems] = useState(new Set());
+  const { showToast } = useToast();
 
   const fetchAddresses = useCallback(async () => {
     if (!token) return;
@@ -140,6 +142,34 @@ const CartPage = () => {
     };
 
     try {
+      const checkPayload = {
+        items: selectedItemsList.map((item) => ({
+          productVariantId: item.productVariantId,
+          quantity: item.quantity,
+        })),
+      };
+      try {
+        const checkRes = await orderAPI.checkStock(checkPayload, token);
+        console.log("checkRes", checkRes);
+
+        if (!checkRes.success) {
+          showToast("Số lượng sản phẩm không đủ", "error");
+          return;
+        }
+
+        // OK → tiếp tục tạo order
+      } catch (error) {
+        console.error("check stock error", error);
+
+        // ⬇️ lấy message backend trả về
+        const message =
+          error?.response?.data?.message ||
+          error?.data?.message ||
+          "Số lượng sản phẩm không đủ";
+
+        showToast(message, "error");
+        return;
+      }
       navigate("/checkout", { state: checkoutData });
     } catch (err) {
       console.error(err);
