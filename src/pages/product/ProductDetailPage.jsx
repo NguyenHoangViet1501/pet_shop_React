@@ -5,6 +5,7 @@ import { useCart } from "../../context/CartContext";
 import { useCartQuery } from "../../hooks/useCart";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
+import Button from "../../components/ui/button/Button";
 
 const ProductDetailPage = () => {
   const { id } = useParams();
@@ -25,6 +26,7 @@ const ProductDetailPage = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showExpandButton, setShowExpandButton] = useState(false);
   const descriptionRef = useRef(null);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -168,6 +170,7 @@ const ProductDetailPage = () => {
     }
 
     try {
+      setIsAddingToCart(true);
       await addItem({
         ...product,
         variant: selectedVariant, // Lưu cả object variant
@@ -179,6 +182,8 @@ const ProductDetailPage = () => {
     } catch (error) {
       console.error("Error adding to cart:", error);
       showToast(error?.message || "Không thể thêm sản phẩm vào giỏ hàng. Vui lòng thử lại!", "error");
+    } finally {
+      setIsAddingToCart(false);
     }
   };
 
@@ -400,8 +405,8 @@ const ProductDetailPage = () => {
           )}
 
           <div className="d-flex gap-3 mb-5">
-            <button
-              className={`btn btn-lg px-4 text-white fw-bold ${
+            <Button
+              className={`btn-lg px-4 text-white fw-bold ${
                 isOutOfStock ? "btn-secondary" : ""
               }`}
               style={{
@@ -410,10 +415,11 @@ const ProductDetailPage = () => {
               }}
               onClick={handleAddToCart}
               disabled={isOutOfStock}
+              isLoading={isAddingToCart}
             >
               <i className="fas fa-cart-plus me-2"></i>
               {isOutOfStock ? "Hết hàng" : "Thêm vào giỏ"}
-            </button>
+            </Button>
             <Link
               className="btn btn-outline-secondary btn-lg px-4"
               to="/products"

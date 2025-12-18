@@ -1,13 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import { useToast } from '../../context/ToastContext';
+import Button from '../ui/button/Button';
 
 const ProductCard = ({ product }) => {
   const { user } = useAuth();
   const { addItem } = useCart();
   const { showToast } = useToast();
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
 
   // Lấy ảnh primary (isPrimary = 1) hoặc ảnh đầu tiên
   const primaryImage = product.productImage?.find(img => img.isPrimary === 1);
@@ -34,6 +36,7 @@ const ProductCard = ({ product }) => {
       return;
     }
     try {
+      setIsAddingToCart(true);
       // Lấy variant đầu tiên nếu có
       const variant = product.productVariant?.[0];
       await addItem({
@@ -47,6 +50,8 @@ const ProductCard = ({ product }) => {
     } catch (error) {
       console.error('Error adding to cart:', error);
       showToast(error?.message || 'Không thể thêm sản phẩm vào giỏ hàng. Vui lòng thử lại!', 'error');
+    } finally {
+      setIsAddingToCart(false);
     }
   };
 
@@ -84,14 +89,16 @@ const ProductCard = ({ product }) => {
           <div className="fw-bold" style={{ color: 'var(--primary-orange)', fontSize: '1.1rem' }}>
             {formatPrice(price)}
           </div>
-          <button 
-            className="btn btn-primary rounded-circle d-flex align-items-center justify-content-center p-0" 
+          <Button 
+            variant="primary"
+            className="rounded-circle p-0" 
             style={{ width: '36px', height: '36px' }}
             onClick={handleAddToCart}
             disabled={isOutOfStock}
+            isLoading={isAddingToCart}
           >
-            <i className="fas fa-shopping-cart text-white" style={{ fontSize: '0.9rem' }}></i>
-          </button>
+            {!isAddingToCart && <i className="fas fa-shopping-cart text-white" style={{ fontSize: '0.9rem' }}></i>}
+          </Button>
         </div>
       </div>
     </div>

@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import { orderAPI } from "../../api/order";
+import Button from "../../components/ui/button/Button";
 
 const ORDER_STATUS_MAP = {
   WAITING_PAYMENT: { label: "Chờ thanh toán", className: "bg-warning" },
@@ -31,6 +32,7 @@ const OrdersPage = () => {
 
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [cancellingOrderId, setCancellingOrderId] = useState(null);
   const [selectedStatus, setSelectedStatus] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -75,6 +77,7 @@ const OrdersPage = () => {
   const handleCancelOrder = async (orderCode) => {
     if (!window.confirm("Bạn có chắc chắn muốn hủy đơn hàng này?")) return;
 
+    setCancellingOrderId(orderCode);
     try {
       const res = await orderAPI.cancelOrder(orderCode, token);
       if (res?.success) {
@@ -86,6 +89,8 @@ const OrdersPage = () => {
     } catch (error) {
       console.error(error);
       showToast("Lỗi khi hủy đơn hàng", "error");
+    } finally {
+      setCancellingOrderId(null);
     }
   };
 
@@ -171,17 +176,20 @@ const OrdersPage = () => {
 
                       {(order.status === "WAITING_PAYMENT" ||
                         order.status === "PROCESSING") && (
-                        <button
-                          className="btn btn-sm btn-outline-danger ms-2"
+                        <Button
+                          variant="outline-danger"
+                          className="btn-sm ms-2"
                           onClick={() => handleCancelOrder(order.orderCode)}
+                          isLoading={cancellingOrderId === order.orderCode}
                         >
                           Hủy
-                        </button>
+                        </Button>
                       )}
 
                       {order.status === "WAITING_PAYMENT" && (
-                        <button
-                          className="btn btn-sm btn-outline-warning ms-2"
+                        <Button
+                          variant="outline-warning"
+                          className="btn-sm ms-2"
                           onClick={() =>
                             navigate("/checkout", {
                               state: {
@@ -192,7 +200,7 @@ const OrdersPage = () => {
                           }
                         >
                           Thanh toán
-                        </button>
+                        </Button>
                       )}
                     </td>
                   </tr>

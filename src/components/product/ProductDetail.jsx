@@ -4,6 +4,7 @@ import { productsApi } from '../api';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import Button from '../ui/button/Button';
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -18,6 +19,7 @@ const ProductDetail = () => {
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState(null);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -109,6 +111,7 @@ const ProductDetail = () => {
     }
 
     try {
+      setIsAddingToCart(true);
       await addItem({ 
         ...product, 
         variant: selectedVariant, // Lưu cả object variant
@@ -120,6 +123,8 @@ const ProductDetail = () => {
     } catch (error) {
       console.error('Error adding to cart:', error);
       showToast(error?.message || 'Không thể thêm sản phẩm vào giỏ hàng. Vui lòng thử lại!', 'error');
+    } finally {
+      setIsAddingToCart(false);
     }
   };
 
