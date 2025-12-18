@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import Button from "../../components/ui/button/Button";
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
@@ -11,6 +12,7 @@ const LoginPage = () => {
     rememberMe: false,
   });
   const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -18,33 +20,24 @@ const LoginPage = () => {
   const { showToast } = useToast();
   const navigate = useNavigate();
 
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
-
-    // Clear error when user starts typing
-    if (errors[name]) {
-      setErrors((prev) => ({
-        ...prev,
-        [name]: "",
-      }));
-    }
-  };
-
-  const validateForm = () => {
+  // Real-time validation
+  useEffect(() => {
     const newErrors = {};
-
+    
     // Email validation
     if (!formData.email) {
       newErrors.email = "Vui lòng nhập email hoặc username";
+    } else if (/\s/.test(formData.email)) {
+      newErrors.email = "Email/Username không được chứa khoảng trắng";
+    } else if (/[^a-zA-Z0-9@._-]/.test(formData.email)) {
+      newErrors.email = "Email/Username không được chứa ký tự đặc biệt hoặc tiếng Việt có dấu";
     }
 
     // Password validation
     if (!formData.password) {
       newErrors.password = "Vui lòng nhập mật khẩu";
+    } else if (/\s/.test(formData.password)) {
+      newErrors.password = "Mật khẩu không được chứa khoảng trắng";
     } else if (formData.password.length < 6) {
       newErrors.password = "Mật khẩu phải có ít nhất 6 ký tự";
     } else {
@@ -57,15 +50,32 @@ const LoginPage = () => {
           "Mật khẩu phải chứa ít nhất 1 chữ thường, 1 chữ hoa, 1 chữ số và 1 ký tự đặc biệt (@$!%*?&#)";
       }
     }
-
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  }, [formData]);
+
+  const handleBlur = (e) => {
+    setTouched((prev) => ({ ...prev, [e.target.name]: true }));
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!validateForm()) {
+    if (Object.keys(errors).length > 0) {
+      if (!formData.email || !formData.password) {
+        showToast("Vui lòng nhập đầy đủ thông tin", "error");
+      }
+      setTouched({
+        email: true,
+        password: true,
+      });
       return;
     }
 
@@ -123,15 +133,16 @@ const LoginPage = () => {
                     <input
                       type="email"
                       className={`form-control ${
-                        errors.email ? "is-invalid" : ""
+                        errors.email && (touched.email || formData.email) ? "is-invalid" : ""
                       }`}
                       name="email"
                       value={formData.email}
                       onChange={handleInputChange}
+                      onBlur={handleBlur}
                       placeholder="Email or username"
                       required
                     />
-                    {errors.email && (
+                    {errors.email && (touched.email || formData.email) && (
                       <div className="invalid-feedback">{errors.email}</div>
                     )}
                   </div>
@@ -142,11 +153,12 @@ const LoginPage = () => {
                       <input
                         type={showPassword ? "text" : "password"}
                         className={`form-control pe-5 ${
-                          errors.password ? "is-invalid" : ""
+                          errors.password && (touched.password || formData.password) ? "is-invalid" : ""
                         }`}
                         name="password"
                         value={formData.password}
                         onChange={handleInputChange}
+                        onBlur={handleBlur}
                         placeholder="Password"
                         required
                       />
@@ -154,8 +166,8 @@ const LoginPage = () => {
                         onClick={() => setShowPassword(!showPassword)}
                         style={{
                           position: "absolute",
-                          right: errors.password ? "40px" : "10px",
-                          top: errors.password ? "21%" : "45%",
+                          right: errors.password && (touched.password || formData.password) ? "40px" : "10px",
+                          top: errors.password && (touched.password || formData.password) ? "21%" : "45%",
                           transform: "translateY(-50%)",
                           cursor: "pointer",
                           color: "#6c757d",
@@ -163,7 +175,7 @@ const LoginPage = () => {
                       >
                         {showPassword ? <FaEyeSlash /> : <FaEye />}
                       </span>
-                      {errors.password && (
+                      {errors.password && (touched.password || formData.password) && (
                         <div className="invalid-feedback d-block">
                           {errors.password}
                         </div>
@@ -185,13 +197,14 @@ const LoginPage = () => {
                     </label>
                   </div>
 
-                  <button
+                  <Button
                     type="submit"
-                    className="btn btn-primary w-100 mb-3"
+                    className="w-100 mb-3"
                     disabled={isSubmitting}
+                    isLoading={isSubmitting}
                   >
                     {isSubmitting ? "Đang đăng nhập..." : "Đăng nhập"}
-                  </button>
+                  </Button>
 
                   <div className="text-center">
                     <Link to="/register" className="text-decoration-none">

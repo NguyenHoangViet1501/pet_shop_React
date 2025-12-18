@@ -45,7 +45,7 @@ export const CartProvider = ({ children }) => {
     await addToCartAPI([{ productVariantId, quantity }], token);
 
     // 🔥 Sync UI ngay lập tức
-    queryClient.invalidateQueries({
+    await queryClient.invalidateQueries({
       queryKey: ["cart"],
     });
   };
@@ -65,7 +65,7 @@ export const CartProvider = ({ children }) => {
     await addToCartAPI([{ productVariantId, quantity: quantityDelta }], token);
 
     // 🔥 Sync UI ngay lập tức
-    queryClient.invalidateQueries({
+    await queryClient.invalidateQueries({
       queryKey: ["cart"],
     });
   };
@@ -83,7 +83,7 @@ export const CartProvider = ({ children }) => {
     await deleteCartItem(cartItemId, token);
 
     // 🔥 Sync UI ngay lập tức
-    queryClient.invalidateQueries({
+    await queryClient.invalidateQueries({
       queryKey: ["cart"],
     });
   };

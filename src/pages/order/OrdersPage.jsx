@@ -113,20 +113,21 @@ const OrdersPage = () => {
       <div className="mb-4 overflow-auto">
         <div className="d-flex gap-2 pb-2" style={{ minWidth: "max-content" }}>
           {FILTER_TABS.map((tab) => (
-            <button
+            <Button
               key={tab.value}
-              className={`btn ${
+              variant={
                 selectedStatus === tab.value
-                  ? "btn-primary"
-                  : "btn-outline-secondary"
-              } rounded-pill px-3`}
+                  ? "primary"
+                  : "outline-secondary"
+              }
+              className="rounded-pill px-3"
               onClick={() => {
                 setSelectedStatus(tab.value);
                 setPageNumber(1); // Reset về trang 1 khi đổi filter
               }}
             >
               {tab.label}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
@@ -167,12 +168,13 @@ const OrdersPage = () => {
                     </td>
                     <td>{formatMoney(order.totalAmount)}</td>
                     <td>
-                      <button
-                        className="btn btn-sm btn-outline-primary"
+                      <Button
+                        variant="outline-primary"
+                        className="btn-sm"
                         onClick={() => navigate(`/orders/detail/${order.id}`)}
                       >
                         Xem
-                      </button>
+                      </Button>
 
                       {(order.status === "WAITING_PAYMENT" ||
                         order.status === "PROCESSING") && (

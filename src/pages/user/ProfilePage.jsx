@@ -7,6 +7,7 @@ import AddressEditModal from "../../components/user/AddressEditModal";
 import ChangePasswordTab from "../../components/user/ChangePasswordTab";
 import { userAPI } from "../../api/user";
 import { addressAPI } from "../../api/address";
+import Button from "../../components/ui/button/Button";
 
 const ProfilePage = () => {
   const { user, token } = useAuth();
@@ -367,28 +368,27 @@ const ProfilePage = () => {
                       </div>
                       {isEditing ? (
                         <>
-                          <button
+                          <Button
                             type="submit"
-                            className="btn btn-primary me-2"
+                            className="me-2"
                           >
                             Lưu
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             type="button"
-                            className="btn btn-secondary"
+                            variant="secondary"
                             onClick={handleCancelEdit}
                           >
                             Hủy
-                          </button>
+                          </Button>
                         </>
                       ) : (
-                        <button
+                        <Button
                           type="button"
-                          className="btn btn-primary"
                           onClick={handleEditClick}
                         >
                           Cập nhật
-                        </button>
+                        </Button>
                       )}
                     </form>
                   </div>

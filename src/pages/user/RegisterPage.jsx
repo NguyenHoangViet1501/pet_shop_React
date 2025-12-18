@@ -3,6 +3,7 @@ import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
+import Button from "../../components/ui/button/Button";
 
 const TERMS_CONTENT = (
   <div>
@@ -495,13 +496,14 @@ const RegisterPage = () => {
                     )}
                   </div>
 
-                  <button
+                  <Button
                     type="submit"
-                    className="btn btn-primary w-100 mb-3"
+                    className="w-100 mb-3"
                     disabled={isSubmitting}
+                    isLoading={isSubmitting}
                   >
                     {isSubmitting ? "Đang đăng ký..." : "Đăng ký"}
-                  </button>
+                  </Button>
 
                   <div className="text-center">
                     <Link to="/login" className="text-decoration-none">

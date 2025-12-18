@@ -387,11 +387,18 @@ const ProductDetailPage = () => {
                     background: "transparent",
                   }}
                   value={quantity}
-                  onChange={(e) =>
-                    setQuantity(
-                      Math.max(1, parseInt(e.target.value || "1", 10))
-                    )
-                  }
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === "") {
+                      setQuantity("");
+                    } else {
+                      const num = parseInt(val, 10);
+                      if (!isNaN(num)) setQuantity(num);
+                    }
+                  }}
+                  onBlur={() => {
+                    if (!quantity || Number(quantity) < 1) setQuantity(1);
+                  }}
                 />
                 <button
                   className="btn btn-link text-dark text-decoration-none px-3"

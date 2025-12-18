@@ -14,6 +14,7 @@ import SelectedItemCard from "../../components/checkout/SelectedItemCard";
 import { addressAPI } from "../../api/address";
 import { orderAPI } from "../../api/order";
 import { paymentAPI } from "../../api";
+import Button from "../../components/ui/button/Button";
 
 const CheckoutPage = () => {
   const navigate = useNavigate();
@@ -203,6 +204,8 @@ const CheckoutPage = () => {
     } catch (err) {
       console.error(err);
       showToast("Đặt hàng thất bại, vui lòng thử lại", "error");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -234,13 +237,14 @@ const CheckoutPage = () => {
               shipping={shipping}
               total={total}
             />
-            <button
+            <Button
               type="submit"
-              className="btn btn-primary w-100 mt-3"
+              className="w-100 mt-3"
               disabled={!formData.address || !formData.paymentMethod}
+              isLoading={isSubmitting}
             >
               Đặt hàng
-            </button>
+            </Button>
           </div>
         </div>
       </form>

@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import Button from "../ui/button/Button";
 
 const CartSummary = ({ items = [], selectedItems = new Set(), onCheckout }) => {
   const selectedItemsList = items.filter((item) => selectedItems.has(item.id));
@@ -49,20 +50,13 @@ const CartSummary = ({ items = [], selectedItems = new Set(), onCheckout }) => {
           </span>
         </div>
 
-        <button
-          to=""
-          className={`btn btn-primary w-100 mt-3 ${
-            !hasSelectedItems ? "disabled" : ""
-          }`}
-          style={{
-            pointerEvents: !hasSelectedItems ? "none" : "auto",
-            opacity: !hasSelectedItems ? 0.6 : 1,
-          }}
-          disable={!hasSelectedItems}
+        <Button
+          className={`w-100 mt-3`}
+          disabled={!hasSelectedItems}
           onClick={onCheckout}
         >
           Mua hàng
-        </button>
+        </Button>
 
         <Link to="/products" className="btn btn-outline-primary w-100 mt-2">
           Tiếp tục mua sắm

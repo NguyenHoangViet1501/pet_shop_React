@@ -148,11 +148,15 @@ const Headernew = () => {
                 )}
               </div>
             ) : (
-              <NavLink to="/login">
-                <button className="login mt-2">
-                  <span>Đăng nhập / Đăng ký</span>
-                </button>
-              </NavLink>
+              <div className="d-flex align-items-center mt-2 gap-2">
+                <Link to="/login" className="auth-link">
+                  <span>Đăng nhập</span>
+                </Link>
+                <span className="text-dark fw-bold">/</span>
+                <Link to="/register" className="auth-link">
+                  <span>Đăng ký</span>
+                </Link>
+              </div>
             )}
           </div>
         </div>

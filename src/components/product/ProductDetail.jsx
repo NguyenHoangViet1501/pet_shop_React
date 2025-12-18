@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { productsApi } from '../api';
 import { useCart } from '../context/CartContext';
+import { useCartQuery } from '../../hooks/useCart';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import Button from '../ui/button/Button';
@@ -9,7 +10,9 @@ import Button from '../ui/button/Button';
 const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { addItem, items } = useCart();
+  const { addItem } = useCart();
+  const { data: cartData } = useCartQuery();
+  const items = cartData?.result?.items || [];
   const { user } = useAuth();
   const { showToast } = useToast();
 
@@ -214,21 +217,37 @@ const ProductDetail = () => {
               <div className="me-3 fw-bold">Số lượng:</div>
               <div className="input-group" style={{ width: 140 }}>
                 <button className="btn btn-outline-secondary" onClick={() => setQuantity((q) => Math.max(1, q - 1))}>−</button>
-                <input className="form-control text-center fw-bold" value={quantity} onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value || '1', 10)))} />
+                <input 
+                  className="form-control text-center fw-bold" 
+                  value={quantity} 
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === "") {
+                      setQuantity("");
+                    } else {
+                      const num = parseInt(val, 10);
+                      if (!isNaN(num)) setQuantity(num);
+                    }
+                  }}
+                  onBlur={() => {
+                    if (!quantity || Number(quantity) < 1) setQuantity(1);
+                  }}
+                />
                 <button className="btn btn-outline-secondary" onClick={() => setQuantity((q) => q + 1)}>+</button>
               </div>
             </div>
           )}
 
           <div className="d-flex gap-3 mb-4">
-            <button 
-              className={`btn btn-lg px-4 ${isOutOfStock ? 'btn-secondary' : 'btn-primary'}`} 
+            <Button 
+              className={`btn-lg px-4 ${isOutOfStock ? 'btn-secondary' : 'btn-primary'}`} 
               onClick={handleAddToCart}
               disabled={isOutOfStock}
+              isLoading={isAddingToCart}
             >
               <i className="fas fa-cart-plus me-2"></i>
               {isOutOfStock ? 'Hết hàng' : 'Thêm vào giỏ'}
-            </button>
+            </Button>
             <Link className="btn btn-outline-secondary btn-lg px-4" to="/products">
               Tiếp tục mua sắm
             </Link>

@@ -136,11 +136,46 @@ span{
 .button-info{
   border: none;
   background: #ffffff;
+  transition: transform 0.3s ease;
+}
+
+.button-info:hover {
+  transform: translateY(-3px);
+}
+
+.button-info:hover span {
+  color: #f7941d;
 }
 
 .button-info > span {
     font-size: 16px !important;
     font-weight: bold;    
+    transition: color 0.3s ease;
+}
+
+.auth-link {
+  text-decoration: none;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: inline-block;
+  transition: transform 0.3s ease;
+}
+
+.auth-link span {
+  font-size: 16px !important;
+  font-weight: bold;
+  color: #000;
+  transition: color 0.3s ease;
+}
+
+.auth-link:hover {
+  transform: translateY(-3px);
+}
+
+.auth-link:hover span {
+  color: #f7941d;
 }
 
 .login{

@@ -9,7 +9,7 @@ export default function Button({
   className = "",
   disabled = false,
   isLoading = false,
-  debounceTime = 300, // Mặc định chặn click liên tiếp trong 300ms
+  debounceTime = 600, // Mặc định chặn click liên tiếp trong 600ms
   style,
   ...props
 }) {
@@ -27,8 +27,9 @@ export default function Button({
       onClick(e);
     }
 
-    // Kích hoạt debounce nếu có debounceTime
-    if (debounceTime > 0) {
+    // Kích hoạt debounce nếu có debounceTime và KHÔNG phải là nút submit
+    // (Vì nút submit sẽ bị disable ngay lập tức nếu debounce kích hoạt, làm chặn sự kiện submit form)
+    if (debounceTime > 0 && type !== "submit") {
       setIsDebouncing(true);
       setTimeout(() => {
         setIsDebouncing(false);
