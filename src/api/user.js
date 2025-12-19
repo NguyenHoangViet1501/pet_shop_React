@@ -21,5 +21,20 @@ export const userAPI = {
       body: passwordData,
       token
     });
+  },
+
+  // Gửi OTP xác thực email
+  sendOtp: async (email) => {
+    return await apiFetch(`/v1/users/send-otp?email=${email}`, {
+      method: 'POST',
+    });
+  },
+
+  // Đăng ký tài khoản mới với OTP
+  register: async (userData, otp) => {
+    return await apiFetch(`/v1/users?otp=${otp}`, {
+      method: 'POST',
+      body: userData,
+    });
   }
 };

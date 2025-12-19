@@ -5,6 +5,8 @@ import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import Button from "../../components/ui/button/Button";
 import { useEffect } from "react";
+import { userAPI } from "../../api";
+
 const TERMS_CONTENT = (
   <div>
     <h4>Điều khoản sử dụng Pet Shop</h4>
@@ -186,6 +188,8 @@ const RegisterPage = () => {
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [otp, setOtp] = useState("");
 
   const { register } = useAuth();
   const { showToast } = useToast();
@@ -271,6 +275,38 @@ const RegisterPage = () => {
     }));
   };
 
+  const handleRegisterWithOtp = async () => {
+    if (!otp) {
+      showToast("Vui lòng nhập mã OTP", "error");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const data = await userAPI.register({
+        username: formData.username,
+        password: formData.password,
+        email: formData.email,
+        fullName: formData.fullName,
+        phone: formData.phone,
+      }, otp);
+
+      if (data.success) {
+        showToast("Đăng ký thành công! Vui lòng đăng nhập.", "success");
+        navigate("/login");
+      } else {
+        showToast(
+          data.message || "Đăng ký thất bại. Vui lòng thử lại.",
+          "error"
+        );
+      }
+    } catch (error) {
+      showToast(error.message || "Đăng ký thất bại. Vui lòng thử lại.", "error");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -290,29 +326,13 @@ const RegisterPage = () => {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("api/v1/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: formData.username,
-          password: formData.password,
-          email: formData.email,
-          fullName: formData.fullName,
-          phone: formData.phone,
-        }),
-      });
-      const data = await response.json();
-      if (data.success) {
-        showToast("Đăng ký thành công! Vui lòng đăng nhập.", "success");
-        navigate("/login");
-      } else {
-        showToast(
-          data.message || "Đăng ký thất bại. Vui lòng thử lại.",
-          "error"
-        );
-      }
+      // Step 1: Send OTP
+      await userAPI.sendOtp(formData.email);
+      
+      showToast("Mã OTP đã được gửi đến email của bạn", "success");
+      setShowOtpModal(true);
     } catch (error) {
-      showToast("Đăng ký thất bại. Vui lòng thử lại.", "error");
+      showToast(error.message || "Lỗi khi gửi OTP. Vui lòng thử lại.", "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -602,6 +622,53 @@ const RegisterPage = () => {
                 >
                   Đóng
                 </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal OTP */}
+      {showOtpModal && (
+        <div
+          className="modal fade show"
+          style={{ display: "block", background: "rgba(0,0,0,0.5)" }}
+        >
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Xác thực OTP</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setShowOtpModal(false)}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <p>Vui lòng nhập mã OTP đã được gửi đến email: <b>{formData.email}</b></p>
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Nhập mã OTP"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                />
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowOtpModal(false)}
+                >
+                  Hủy
+                </button>
+                <Button
+                  onClick={handleRegisterWithOtp}
+                  isLoading={isSubmitting}
+                  disabled={isSubmitting}
+                >
+                  Xác nhận
+                </Button>
               </div>
             </div>
           </div>
