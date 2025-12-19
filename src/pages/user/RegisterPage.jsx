@@ -4,7 +4,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import Button from "../../components/ui/button/Button";
-
+import { useEffect } from "react";
 const TERMS_CONTENT = (
   <div>
     <h4>Điều khoản sử dụng Pet Shop</h4>
@@ -181,6 +181,7 @@ const RegisterPage = () => {
     agreeTerms: false,
   });
   const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -190,30 +191,20 @@ const RegisterPage = () => {
   const { showToast } = useToast();
   const navigate = useNavigate();
 
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
-
-    // Clear error when user starts typing
-    if (errors[name]) {
-      setErrors((prev) => ({
-        ...prev,
-        [name]: "",
-      }));
-    }
-  };
-
-  const validateForm = () => {
+  // Real-time validation
+  useEffect(() => {
     const newErrors = {};
 
     // Username validation
     if (!formData.username.trim()) {
       newErrors.username = "Vui lòng nhập tên đăng nhập";
-    } else if (formData.username.length < 4) {
-      newErrors.username = "Tên đăng nhập phải có ít nhất 4 ký tự";
+    } else if (/\s/.test(formData.username)) {
+      newErrors.username = "Tên đăng nhập không được chứa khoảng trắng";
+    } else if (/[^a-zA-Z0-9._-]/.test(formData.username)) {
+      newErrors.username =
+        "Tên đăng nhập không được chứa ký tự đặc biệt hoặc tiếng Việt có dấu";
+    } else if (formData.username.length < 3) {
+      newErrors.username = "Tên đăng nhập phải có ít nhất 3 ký tự";
     }
 
     // Full name validation
@@ -238,10 +229,19 @@ const RegisterPage = () => {
     // Password validation
     if (!formData.password) {
       newErrors.password = "Vui lòng nhập mật khẩu";
-    } else if (formData.password.length < 8) {
-      newErrors.password = "Mật khẩu phải có ít nhất 8 ký tự";
-    } else if (!/(?=.*[a-zA-Z])(?=.*\d)/.test(formData.password)) {
-      newErrors.password = "Mật khẩu phải chứa cả chữ và số";
+    } else if (/\s/.test(formData.password)) {
+      newErrors.password = "Mật khẩu không được chứa khoảng trắng";
+    } else if (formData.password.length < 6) {
+      newErrors.password = "Mật khẩu phải có ít nhất 6 ký tự";
+    } else {
+      const hasLowerCase = /[a-z]/.test(formData.password);
+      const hasUpperCase = /[A-Z]/.test(formData.password);
+      const hasDigit = /\d/.test(formData.password);
+      const hasSpecialChar = /[@$!%*?&#]/.test(formData.password);
+      if (!hasLowerCase || !hasUpperCase || !hasDigit || !hasSpecialChar) {
+        newErrors.password =
+          "Mật khẩu phải chứa ít nhất 1 chữ thường, 1 chữ hoa, 1 chữ số và 1 ký tự đặc biệt (@$!%*?&#)";
+      }
     }
 
     // Confirm password validation
@@ -257,13 +257,33 @@ const RegisterPage = () => {
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  }, [formData]);
+
+  const handleBlur = (e) => {
+    setTouched((prev) => ({ ...prev, [e.target.name]: true }));
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!validateForm()) {
+    if (Object.keys(errors).length > 0) {
+      setTouched({
+        username: true,
+        fullName: true,
+        phone: true,
+        email: true,
+        password: true,
+        confirmPassword: true,
+        agreeTerms: true,
+      });
       return;
     }
 
@@ -328,50 +348,61 @@ const RegisterPage = () => {
                       <input
                         type="text"
                         className={`form-control ${
-                          errors.username ? "is-invalid" : ""
+                          errors.username && (touched.username || formData.username)
+                            ? "is-invalid"
+                            : ""
                         }`}
                         name="username"
                         value={formData.username}
                         onChange={handleInputChange}
+                        onBlur={handleBlur}
                         required
                       />
-                      {errors.username && (
-                        <div className="invalid-feedback">
-                          {errors.username}
-                        </div>
-                      )}
+                      {errors.username &&
+                        (touched.username || formData.username) && (
+                          <div className="invalid-feedback">
+                            {errors.username}
+                          </div>
+                        )}
                     </div>
                     <div className="col-md-6 mb-3">
                       <label className="form-label">Họ và tên</label>
                       <input
                         type="text"
                         className={`form-control ${
-                          errors.fullName ? "is-invalid" : ""
+                          errors.fullName && (touched.fullName || formData.fullName)
+                            ? "is-invalid"
+                            : ""
                         }`}
                         name="fullName"
                         value={formData.fullName}
                         onChange={handleInputChange}
+                        onBlur={handleBlur}
                         required
                       />
-                      {errors.fullName && (
-                        <div className="invalid-feedback">
-                          {errors.fullName}
-                        </div>
-                      )}
+                      {errors.fullName &&
+                        (touched.fullName || formData.fullName) && (
+                          <div className="invalid-feedback">
+                            {errors.fullName}
+                          </div>
+                        )}
                     </div>
                     <div className="col-md-6 mb-3">
                       <label className="form-label">Số điện thoại</label>
                       <input
                         type="tel"
                         className={`form-control ${
-                          errors.phone ? "is-invalid" : ""
+                          errors.phone && (touched.phone || formData.phone)
+                            ? "is-invalid"
+                            : ""
                         }`}
                         name="phone"
                         value={formData.phone}
                         onChange={handleInputChange}
+                        onBlur={handleBlur}
                         required
                       />
-                      {errors.phone && (
+                      {errors.phone && (touched.phone || formData.phone) && (
                         <div className="invalid-feedback">{errors.phone}</div>
                       )}
                     </div>
@@ -382,14 +413,17 @@ const RegisterPage = () => {
                     <input
                       type="email"
                       className={`form-control ${
-                        errors.email ? "is-invalid" : ""
+                        errors.email && (touched.email || formData.email)
+                          ? "is-invalid"
+                          : ""
                       }`}
                       name="email"
                       value={formData.email}
                       onChange={handleInputChange}
+                      onBlur={handleBlur}
                       required
                     />
-                    {errors.email && (
+                    {errors.email && (touched.email || formData.email) && (
                       <div className="invalid-feedback">{errors.email}</div>
                     )}
                   </div>
@@ -400,11 +434,14 @@ const RegisterPage = () => {
                       <input
                         type={showPassword ? "text" : "password"}
                         className={`form-control pe-5 ${
-                          errors.password ? "is-invalid" : ""
+                          errors.password && (touched.password || formData.password)
+                            ? "is-invalid"
+                            : ""
                         }`}
                         name="password"
                         value={formData.password}
                         onChange={handleInputChange}
+                        onBlur={handleBlur}
                         required
                         minLength="6"
                       />
@@ -412,7 +449,11 @@ const RegisterPage = () => {
                         onClick={() => setShowPassword(!showPassword)}
                         style={{
                           position: "absolute",
-                          right: errors.password ? "45px" : "25px",
+                          right:
+                            errors.password &&
+                            (touched.password || formData.password)
+                              ? "45px"
+                              : "25px",
                           top: "33px",
                           cursor: "pointer",
                           color: "#6c757d",
@@ -422,22 +463,27 @@ const RegisterPage = () => {
                       >
                         {showPassword ? <FaEyeSlash /> : <FaEye />}
                       </span>
-                      {errors.password && (
-                        <div className="invalid-feedback">
-                          {errors.password}
-                        </div>
-                      )}
+                      {errors.password &&
+                        (touched.password || formData.password) && (
+                          <div className="invalid-feedback">
+                            {errors.password}
+                          </div>
+                        )}
                     </div>
                     <div className="col-md-6 mb-3 position-relative">
                       <label className="form-label">Xác nhận mật khẩu</label>
                       <input
                         type={showConfirmPassword ? "text" : "password"}
                         className={`form-control pe-5 ${
-                          errors.confirmPassword ? "is-invalid" : ""
+                          errors.confirmPassword &&
+                          (touched.confirmPassword || formData.confirmPassword)
+                            ? "is-invalid"
+                            : ""
                         }`}
                         name="confirmPassword"
                         value={formData.confirmPassword}
                         onChange={handleInputChange}
+                        onBlur={handleBlur}
                         required
                       />
                       <span
@@ -446,7 +492,12 @@ const RegisterPage = () => {
                         }
                         style={{
                           position: "absolute",
-                          right: errors.confirmPassword ? "45px" : "25px",
+                          right:
+                            errors.confirmPassword &&
+                            (touched.confirmPassword ||
+                              formData.confirmPassword)
+                              ? "45px"
+                              : "25px",
                           top: "33px",
                           cursor: "pointer",
                           color: "#6c757d",
@@ -456,11 +507,13 @@ const RegisterPage = () => {
                       >
                         {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
                       </span>
-                      {errors.confirmPassword && (
-                        <div className="invalid-feedback">
-                          {errors.confirmPassword}
-                        </div>
-                      )}
+                      {errors.confirmPassword &&
+                        (touched.confirmPassword ||
+                          formData.confirmPassword) && (
+                          <div className="invalid-feedback">
+                            {errors.confirmPassword}
+                          </div>
+                        )}
                     </div>
                   </div>
 
@@ -468,12 +521,15 @@ const RegisterPage = () => {
                     <input
                       type="checkbox"
                       className={`form-check-input ${
-                        errors.agreeTerms ? "is-invalid" : ""
+                        errors.agreeTerms && touched.agreeTerms
+                          ? "is-invalid"
+                          : ""
                       }`}
                       id="agreeTerms"
                       name="agreeTerms"
                       checked={formData.agreeTerms}
                       onChange={handleInputChange}
+                      onBlur={handleBlur}
                       required
                     />
                     <label className="form-check-label" htmlFor="agreeTerms">
@@ -489,7 +545,7 @@ const RegisterPage = () => {
                         điều khoản sử dụng
                       </span>
                     </label>
-                    {errors.agreeTerms && (
+                    {errors.agreeTerms && touched.agreeTerms && (
                       <div className="invalid-feedback">
                         {errors.agreeTerms}
                       </div>

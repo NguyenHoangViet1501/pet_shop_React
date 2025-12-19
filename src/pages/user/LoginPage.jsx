@@ -31,6 +31,8 @@ const LoginPage = () => {
       newErrors.email = "Email/Username không được chứa khoảng trắng";
     } else if (/[^a-zA-Z0-9@._-]/.test(formData.email)) {
       newErrors.email = "Email/Username không được chứa ký tự đặc biệt hoặc tiếng Việt có dấu";
+    } else if (formData.email.length < 3) {
+      newErrors.email = "Username phải có ít nhất 3 ký tự";
     }
 
     // Password validation

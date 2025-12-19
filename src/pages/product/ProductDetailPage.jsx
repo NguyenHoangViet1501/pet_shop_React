@@ -25,6 +25,7 @@ const ProductDetailPage = () => {
   const [similarProducts, setSimilarProducts] = useState([]);
   const [isExpanded, setIsExpanded] = useState(false);
   const [showExpandButton, setShowExpandButton] = useState(false);
+  const [isZoomed, setIsZoomed] = useState(false);
   const descriptionRef = useRef(null);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
 
@@ -36,12 +37,15 @@ const ProductDetailPage = () => {
         const productData = response.result;
         setProduct(productData);
 
-        // Set default variant (first one)
+        // Set default variant (first in-stock one, or first one if all out of stock)
         if (
           productData.productVariant &&
           productData.productVariant.length > 0
         ) {
-          setSelectedVariant(productData.productVariant[0]);
+          const firstInStock = productData.productVariant.find(
+            (v) => Number(v.stockQuantity) > 0
+          );
+          setSelectedVariant(firstInStock || productData.productVariant[0]);
         }
 
         // Set default image
@@ -189,6 +193,42 @@ const ProductDetailPage = () => {
 
   return (
     <div className="container page-content py-4">
+      {isZoomed && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            backgroundColor: "rgba(0,0,0,0.8)",
+            zIndex: 1050,
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            cursor: "zoom-out",
+          }}
+          onClick={() => setIsZoomed(false)}
+        >
+          <img
+            src={activeImage}
+            alt="Zoomed Product"
+            className="rounded-3 shadow-lg"
+            style={{
+              width: "600px",
+              height: "600px",
+              maxWidth: "90vw",
+              maxHeight: "90vh",
+              objectFit: "contain",
+              backgroundColor: "white",
+              cursor: "default",
+              padding: "1rem",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
+
       <div className="row g-5">
         {/* Left Column: Images + Description */}
         <div className="col-lg-6">
@@ -197,7 +237,13 @@ const ProductDetailPage = () => {
               src={activeImage}
               alt={product.name}
               className="card-img-top rounded-4"
-              style={{ width: "100%", height: "480px", objectFit: "cover" }}
+              style={{
+                width: "100%",
+                height: "480px",
+                objectFit: "cover",
+                cursor: "zoom-in",
+              }}
+              onClick={() => setIsZoomed(true)}
             />
           </div>
 
@@ -219,17 +265,6 @@ const ProductDetailPage = () => {
                   }}
                   onClick={() => {
                     setActiveImage(img.imageUrl);
-                    if (product.productVariant) {
-                      const variant = product.productVariant.find(
-                        (v) =>
-                          v.imageUrl === img.imageUrl ||
-                          (Array.isArray(v.imageUrl) &&
-                            v.imageUrl.includes(img.imageUrl))
-                      );
-                      if (variant) {
-                        setSelectedVariant(variant);
-                      }
-                    }
                   }}
                 >
                   <img
@@ -339,28 +374,39 @@ const ProductDetailPage = () => {
             <div className="mb-4">
               <div className="fw-bold mb-2">Loại sản phẩm</div>
               <div className="d-flex flex-wrap gap-2">
-                {product.productVariant.map((v) => (
-                  <button
-                    key={v.id}
-                    className={`btn btn-sm px-3 py-2 rounded-3 ${
-                      selectedVariant?.id === v.id
-                        ? "btn-outline-primary active"
-                        : "btn-outline-secondary"
-                    }`}
-                    style={{ minWidth: "80px" }}
-                    onClick={() => {
-                      setSelectedVariant(v);
-                      if (v.imageUrl) {
-                        const imgUrl = Array.isArray(v.imageUrl)
-                          ? v.imageUrl[0]
-                          : v.imageUrl;
-                        if (imgUrl) setActiveImage(imgUrl);
-                      }
-                    }}
-                  >
-                    {v.variantName}
-                  </button>
-                ))}
+                {product.productVariant.map((v) => {
+                  const isVariantOutOfStock = Number(v.stockQuantity) === 0;
+                  return (
+                    <button
+                      key={v.id}
+                      disabled={isVariantOutOfStock}
+                      className={`btn btn-sm px-3 py-2 rounded-3 ${
+                        selectedVariant?.id === v.id
+                          ? "btn-outline-primary active"
+                          : isVariantOutOfStock
+                          ? "btn-light text-muted border-secondary"
+                          : "btn-outline-secondary"
+                      }`}
+                      style={{
+                        minWidth: "80px",
+                        opacity: isVariantOutOfStock ? 0.5 : 1,
+                        cursor: isVariantOutOfStock ? "not-allowed" : "pointer",
+                      }}
+                      onClick={() => {
+                        if (isVariantOutOfStock) return;
+                        setSelectedVariant(v);
+                        if (v.imageUrl) {
+                          const imgUrl = Array.isArray(v.imageUrl)
+                            ? v.imageUrl[0]
+                            : v.imageUrl;
+                          if (imgUrl) setActiveImage(imgUrl);
+                        }
+                      }}
+                    >
+                      {v.variantName}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -447,7 +493,7 @@ const ProductDetailPage = () => {
                     key={p.id}
                     className="d-flex gap-3 align-items-center p-2 rounded hover-bg-light"
                     style={{ cursor: "pointer" }}
-                    onClick={() => navigate(`/product/${p.id}`)}
+                    onClick={() => navigate(`/products/${p.id}`)}
                   >
                     <img
                       src={
