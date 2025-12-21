@@ -185,18 +185,23 @@ const LoginPage = () => {
                     </div>
                   </div>
 
-                  <div className="mb-3 form-check">
-                    <input
-                      type="checkbox"
-                      className="form-check-input"
-                      id="rememberMe"
-                      name="rememberMe"
-                      checked={formData.rememberMe}
-                      onChange={handleInputChange}
-                    />
-                    <label className="form-check-label" htmlFor="rememberMe">
-                      Ghi nhớ đăng nhập
-                    </label>
+                  <div className="mb-3 form-check d-flex justify-content-between align-items-center">
+                    <div>
+                      <input
+                        type="checkbox"
+                        className="form-check-input"
+                        id="rememberMe"
+                        name="rememberMe"
+                        checked={formData.rememberMe}
+                        onChange={handleInputChange}
+                      />
+                      <label className="form-check-label" htmlFor="rememberMe">
+                        Ghi nhớ đăng nhập
+                      </label>
+                    </div>
+                    <Link to="/forgot-password" className="text-decoration-none small">
+                      Quên mật khẩu?
+                    </Link>
                   </div>
 
                   <Button
