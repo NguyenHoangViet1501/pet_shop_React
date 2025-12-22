@@ -22,33 +22,132 @@ const CheckoutPage = () => {
   const queryClient = useQueryClient();
 
   const [order, setOrder] = useState(null);
+  const [orderDetails, setOrderDetails] = useState(null);
+  const [loadingOrder, setLoadingOrder] = useState(false);
 
   const { user, token } = useAuth();
   const { showToast } = useToast();
 
-  // 🔑 DATA TỪ CART PAGE
-  const checkoutData = location.state;
-  const selectedItems = checkoutData?.items || [];
+  // 🔑 DATA TỪ CART PAGE HOẶC ORDERS PAGE
+  const locationState = location.state;
+  const isFromOrders = locationState?.from === "orders";
+  const orderToRepay = locationState?.order;
+  const checkoutData = isFromOrders ? null : locationState;
+
+  // Nếu từ orders, fetch chi tiết order và redirect thẳng sang VNPAY
+  useEffect(() => {
+    if (isFromOrders && orderToRepay?.id && token) {
+      setLoadingOrder(true);
+      orderAPI
+        .getOrderDetail(orderToRepay.id, token)
+        .then((res) => {
+          if (res?.success && res.result) {
+            setOrderDetails(res.result);
+            // 🔗 Redirect thẳng sang VNPAY thanh toán
+            handleVNPayPayment(orderToRepay.id);
+          }
+        })
+        .catch((err) => {
+          console.error("Fetch order detail error:", err);
+          showToast("Không tải được chi tiết đơn hàng", "error");
+          navigate("/orders");
+        })
+        .finally(() => setLoadingOrder(false));
+    }
+  }, [isFromOrders, orderToRepay?.id, token, showToast]);
+
+  // Xử lý redirect VNPAY
+  const handleVNPayPayment = async (orderId) => {
+    try {
+      const res = await paymentAPI.createVnpayPayment(orderId, token);
+
+      if (!res.success) {
+        showToast(res.message || "Không nhận được link thanh toán", "error");
+        navigate("/orders");
+        return;
+      }
+
+      const paymentUrl = res?.result?.url;
+      if (!paymentUrl) {
+        showToast("Không nhận được link thanh toán", "error");
+        navigate("/orders");
+        return;
+      }
+
+      console.log("🔗 Redirecting to VNPAY:", paymentUrl);
+      window.location.href = paymentUrl;
+    } catch (paymentErr) {
+      console.error("Payment error:", paymentErr);
+      const message =
+        paymentErr?.response?.data?.message ||
+        paymentErr?.data?.message ||
+        "Lỗi thanh toán";
+      showToast(message, "error");
+      navigate("/orders");
+    }
+  };
+
+  // Xử lý items
+  let selectedItems = [];
+  if (isFromOrders && orderDetails) {
+    let items = [];
+    if (Array.isArray(orderDetails)) {
+      items = orderDetails;
+    } else if (orderDetails.items && Array.isArray(orderDetails.items)) {
+      items = orderDetails.items;
+    } else if (
+      orderDetails.orderDetails &&
+      Array.isArray(orderDetails.orderDetails)
+    ) {
+      items = orderDetails.orderDetails;
+    }
+
+    selectedItems = items.map((item) => ({
+      cartItemId: item.id || item.cartItemId,
+      productVariantId:
+        item.productVariantId || item.variantId || item.id,
+      name: item.productName,
+      variantName: item.variantName,
+      image: item.imageUrl,
+      price: item.unitPrice || item.price,
+      quantity: item.quantity,
+    }));
+  } else {
+    selectedItems = checkoutData?.items || [];
+  }
 
   // ⛔ Truy cập thẳng /checkout → quay về cart
   useEffect(() => {
-    if (order) return;
+    if (loadingOrder) return;
 
-    if (!checkoutData || !checkoutData.items) {
-      navigate("/cart");
+    if (isFromOrders) {
+      if (!orderToRepay || (orderDetails && selectedItems.length === 0)) {
+        navigate("/orders");
+      }
+    } else {
+      if (!checkoutData || !checkoutData.items || selectedItems.length === 0) {
+        navigate("/cart");
+      }
     }
-  }, [order, checkoutData, navigate]);
+  }, [
+    isFromOrders,
+    orderToRepay,
+    orderDetails,
+    checkoutData,
+    selectedItems.length,
+    navigate,
+    loadingOrder,
+  ]);
 
   // 🧾 FORM DATA
   const [formData, setFormData] = useState({
     fullName: user?.fullName || "",
     phone: user?.phone || "",
-    address: "",
-    notes: "",
+    address: isFromOrders ? orderToRepay?.shippingAddress || "" : "",
+    notes: isFromOrders ? orderToRepay?.note || "" : "",
     paymentMethod: "",
   });
 
-  // nếu user load sau
   useEffect(() => {
     if (user) {
       setFormData((prev) => ({
@@ -57,7 +156,15 @@ const CheckoutPage = () => {
         phone: user.phone || "",
       }));
     }
-  }, [user]);
+
+    if (isFromOrders && orderToRepay) {
+      setFormData((prev) => ({
+        ...prev,
+        address: prev.address || orderToRepay?.shippingAddress || "",
+        notes: prev.notes || orderToRepay?.note || "",
+      }));
+    }
+  }, [user, isFromOrders, orderToRepay]);
 
   // 📍 ADDRESS MODAL
   const [addresses, setAddresses] = useState([]);
@@ -144,8 +251,20 @@ const CheckoutPage = () => {
     );
   }
 
+  // Đang load order detail từ orders
+  if (loadingOrder || isFromOrders) {
+    return (
+      <div className="container page-content text-center py-5">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+        <p className="mt-2">Đang chuyển sang thanh toán...</p>
+      </div>
+    );
+  }
+
   if (selectedItems.length === 0) {
-    return null; // đang redirect
+    return null;
   }
 
   // 🧾 SUBMIT
@@ -157,54 +276,175 @@ const CheckoutPage = () => {
       return;
     }
 
-    const payload = {
-      shippingAmount: shipping,
-      shippingAddress: formData.address,
-      paymentMethod: formData.paymentMethod,
-      discountPercent: 0.1,
-      note: formData.notes,
-      items: selectedItems.map((item) => ({
-        productVariantId: item.productVariantId,
-        quantity: item.quantity,
-      })),
-    };
+    if (!formData.paymentMethod) {
+      showToast("Vui lòng chọn phương thức thanh toán", "error");
+      return;
+    }
 
-    console.log("ORDER PAYLOAD:", payload);
     if (isSubmitting) return;
     setIsSubmitting(true);
 
     try {
+      // 🔄 NẾU TỪ ORDERS (THANH TOÁN LẠI)
+      if (isFromOrders) {
+        const orderId = orderToRepay?.id;
+        if (!orderId) {
+          showToast("Không tìm thấy ID đơn hàng", "error");
+          setIsSubmitting(false);
+          return;
+        }
+
+        // 💳 VNPAY - Redirect thẳng sang thanh toán (bỏ qua checkStock)
+        if (formData.paymentMethod === "vnpay") {
+          try {
+            const res = await paymentAPI.createVnpayPayment(orderId, token);
+
+            if (!res.success) {
+              showToast(
+                res.message || "Không nhận được link thanh toán",
+                "error"
+              );
+              setIsSubmitting(false);
+              return;
+            }
+
+            const paymentUrl = res?.result?.url;
+            if (!paymentUrl) {
+              showToast("Không nhận được link thanh toán", "error");
+              setIsSubmitting(false);
+              return;
+            }
+
+            console.log("🔗 Redirecting to VNPAY:", paymentUrl);
+            window.location.href = paymentUrl;
+          } catch (paymentErr) {
+            console.error("Payment error:", paymentErr);
+            const message =
+              paymentErr?.response?.data?.message ||
+              paymentErr?.data?.message ||
+              "Lỗi thanh toán";
+            showToast(message, "error");
+            setIsSubmitting(false);
+          }
+          return;
+        }
+
+        // 🔄 COD - Update phương thức thanh toán
+        try {
+          const updateRes = await orderAPI.updatePaymentMethod(
+            orderId,
+            formData.paymentMethod,
+            token
+          );
+
+          if (!updateRes.success) {
+            showToast(
+              updateRes.message || "Không cập nhật được phương thức thanh toán",
+              "error"
+            );
+            setIsSubmitting(false);
+            return;
+          }
+        } catch (updateErr) {
+          console.error("Update payment method error:", updateErr);
+          const message =
+            updateErr?.response?.data?.message ||
+            updateErr?.data?.message ||
+            "Lỗi cập nhật phương thức thanh toán";
+          showToast(message, "error");
+          setIsSubmitting(false);
+          return;
+        }
+
+        showToast("Cập nhật phương thức thanh toán thành công!", "success");
+        setTimeout(() => {
+          navigate("/orders");
+        }, 1000);
+        return;
+      }
+
+      // 📦 NẾU TỪ CART (ĐẶT HÀNG MỚI)
+      const payload = {
+        shippingAmount: checkoutData?.shippingAmount || 30000,
+        shippingAddress: formData.address,
+        paymentMethod: formData.paymentMethod,
+        discountPercent: checkoutData?.discountPercent || 0.1,
+        note: formData.notes || "",
+        items: selectedItems.map((item) => ({
+          productVariantId: item.productVariantId,
+          quantity: item.quantity,
+        })),
+      };
+
+      console.log("📦 ORDER PAYLOAD:", payload);
+
       const orderRes = await orderAPI.createOrder(payload);
+
+      if (!orderRes.success) {
+        showToast(orderRes.message || "Không tạo được đơn hàng", "error");
+        setIsSubmitting(false);
+        return;
+      }
 
       const { id: orderId, orderCode } = orderRes.result;
       if (!orderId) {
         showToast("Không tạo được đơn hàng", "error");
+        setIsSubmitting(false);
         return;
       }
 
+      setOrder(orderRes.result);
+
       if (formData.paymentMethod === "cod") {
-        showToast("Đặt hàng thành công! ", "success");
-        navigate("/payment-success");
+        showToast("Đặt hàng thành công!", "success");
+        queryClient.invalidateQueries({ queryKey: ["cart"] });
+        setTimeout(() => {
+          navigate("/payment-success", {
+            state: { orderId, orderCode, from: "cart" },
+          });
+        }, 1000);
         return;
       }
 
       if (formData.paymentMethod === "vnpay") {
-        const res = await paymentAPI.createVnpayPayment(orderId, token);
+        try {
+          const res = await paymentAPI.createVnpayPayment(orderId, token);
 
-        const paymentUrl = res?.result?.url;
+          if (!res.success) {
+            showToast(
+              res.message || "Không nhận được link thanh toán",
+              "error"
+            );
+            setIsSubmitting(false);
+            return;
+          }
 
-        if (!paymentUrl) {
-          showToast("Không nhận được link thanh toán", "error");
-          return;
+          const paymentUrl = res?.result?.url;
+
+          if (!paymentUrl) {
+            showToast("Không nhận được link thanh toán", "error");
+            setIsSubmitting(false);
+            return;
+          }
+
+          window.location.href = paymentUrl;
+        } catch (paymentErr) {
+          console.error("Payment error:", paymentErr);
+          const message =
+            paymentErr?.response?.data?.message ||
+            paymentErr?.data?.message ||
+            "Lỗi thanh toán";
+          showToast(message, "error");
+          setIsSubmitting(false);
         }
-
-        // ✅ Redirect sang VNPAY
-        window.location.href = paymentUrl;
       }
     } catch (err) {
-      console.error(err);
-      showToast("Đặt hàng thất bại, vui lòng thử lại", "error");
-    } finally {
+      console.error("Checkout error:", err);
+      const message =
+        err?.response?.data?.message ||
+        err?.data?.message ||
+        "Đặt hàng thất bại, vui lòng thử lại";
+      showToast(message, "error");
       setIsSubmitting(false);
     }
   };
@@ -216,7 +456,6 @@ const CheckoutPage = () => {
       <form onSubmit={handleSubmit} noValidate>
         <div className="row">
           <div className="col-lg-7">
-            {/* 🛒 SẢN PHẨM ĐÃ CHỌN */}
             <SelectedItemCard selectedItems={selectedItems} />
 
             <ShippingForm
