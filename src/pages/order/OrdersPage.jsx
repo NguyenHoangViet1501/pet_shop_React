@@ -201,7 +201,7 @@ const OrdersPage = () => {
                             })
                           }
                         >
-                          Thanh toán
+                          Thanh toán lại
                         </Button>
                       )}
                     </td>
