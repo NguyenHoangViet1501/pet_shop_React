@@ -4,6 +4,8 @@ import HomePage from '../pages/home/HomePageNew';
 import ProductsPage from '../pages/ProductsPage';
 import LoginPage from '../pages/LoginPage';
 import RegisterPage from '../pages/RegisterPage';
+import ForgotPasswordPage from '../pages/user/ForgotPasswordPage';
+import ResetPasswordPage from '../pages/user/ResetPasswordPage';
 import CartPage from '../pages/CartPage';
 import CheckoutPage from '../pages/CheckoutPage';
 import ProfilePage from '../pages/ProfilePage';
@@ -25,6 +27,8 @@ function AppRoutes() {
       <Route path="/products/:id" element={<ProductDetailPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/cart" element={<CartPage />} />
       <Route path="/checkout" element={<CheckoutPage />} />
       <Route path="/profile" element={<ProfilePage />} />

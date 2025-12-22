@@ -13,11 +13,13 @@ import Adoption from "../../components/home/Adoption.jsx";
 const HomePageNew = () => {
   const { data: featuredProductsData } = useFeaturedProductsQuery(16);
 
-  const featuredProducts = Array.isArray(featuredProductsData?.result?.content)
-    ? featuredProductsData.result.content
-    : Array.isArray(featuredProductsData?.result)
-    ? featuredProductsData.result
-    : [];
+  const featuredProducts = (
+    Array.isArray(featuredProductsData?.result?.content)
+      ? featuredProductsData.result.content
+      : Array.isArray(featuredProductsData?.result)
+      ? featuredProductsData.result
+      : []
+  ).filter((p) => Number(p.isDelete) !== 1);
 
   const navigate = useNavigate();
   return (

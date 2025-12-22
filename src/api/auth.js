@@ -26,4 +26,29 @@ export const authAPI = {
     });
   },
 
+  // Gửi OTP
+  sendOtp: async (identifier) => {
+    return await apiFetch('/v1/auth/send-otp', {
+      method: 'POST',
+      body: { identifier }
+    });
+  },
+
+  // Verify OTP
+  verifyOtp: async (identifier, otp) => {
+    // Backend đã sửa thành @RequestParam String identifier
+    return await apiFetch(`/v1/auth/verify-otp?identifier=${encodeURIComponent(identifier)}&otp=${encodeURIComponent(otp)}`, {
+      method: 'POST'
+    });
+  },
+
+  // Đổi mật khẩu
+  changePassword: async (identifier, newPassword) => {
+    return await apiFetch('/v1/auth/change-password', {
+      method: 'POST',
+      body: { identifier, password: newPassword }
+    });
+  },
+
 };
+

@@ -7,6 +7,8 @@ import HomePage from "./pages/home/HomePage";
 import ProductsPage from "./pages/product/ProductsPage";
 import LoginPage from "./pages/user/LoginPage";
 import RegisterPage from "./pages/user/RegisterPage";
+import ForgotPasswordPage from "./pages/user/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/user/ResetPasswordPage";
 import CartPage from "./pages/cart/CartPage";
 import CheckoutPage from "./pages/cart/CheckoutPage";
 import ProfilePage from "./pages/user/ProfilePage";
@@ -34,6 +36,8 @@ function App() {
           <Route path="/products/:id" element={<ProductDetailPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/payment-success" element={<PaymentSuccessPage />} />
