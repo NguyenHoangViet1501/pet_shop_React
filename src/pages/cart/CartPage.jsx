@@ -18,7 +18,7 @@ const CartPage = () => {
 
   const fetchAddresses = useCallback(async () => {
     if (!token) return;
-    debugger;
+    
     try {
       const response = await addressAPI.getUserAddresses(token, 10, 0);
 
@@ -42,7 +42,7 @@ const CartPage = () => {
 
           setAddress(formattedAddress);
 
-          debugger;
+        
         }
       }
     } catch (error) {

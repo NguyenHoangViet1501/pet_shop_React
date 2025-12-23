@@ -119,9 +119,9 @@ const AppointmentsPage = () => {
                             : ""}
                         </td>
                         <td>
-                          {appointment.appoinmentStart
+                          {appointment.appointmentStart
                             ? new Date(
-                                appointment.appoinmentStart
+                                appointment.appointmentStart
                               ).toLocaleString("vi-VN", {
                                 hour: "2-digit",
                                 minute: "2-digit",
@@ -132,9 +132,9 @@ const AppointmentsPage = () => {
                             : ""}
                         </td>
                         <td>
-                          {appointment.appoinmentEnd
+                          {appointment.appointmentEnd
                             ? new Date(
-                                appointment.appoinmentEnd
+                                appointment.appointmentEnd
                               ).toLocaleString("vi-VN", {
                                 hour: "2-digit",
                                 minute: "2-digit",
@@ -167,26 +167,40 @@ const AppointmentsPage = () => {
                           </span>
                         </td>
                         <td>
-                          {appointment.status === "SCHEDULED" ? (
-                            <>
-                              <button
-                                className="btn btn-sm btn-outline-primary me-1"
-                                onClick={() => openEdit(appointment)}
-                              >
-                                Sửa
-                              </button>
-                              <button
-                                className="btn btn-sm btn-outline-danger"
-                                onClick={() => handleCancel(appointment.id)}
-                              >
-                                Hủy
-                              </button>
-                            </>
-                          ) : (
-                            <button className="btn btn-sm btn-outline-primary">
-                              Đánh giá
-                            </button>
-                          )}
+                          {(() => {
+                            const now = new Date();
+                            const isPast = appointment.appointmentEnd && new Date(appointment.appointmentEnd) < now;
+                            if (isPast) {
+                              return (
+                                <button className="btn btn-sm btn-outline-primary">
+                                  Đánh giá
+                                </button>
+                              );
+                            } else if (appointment.status === "SCHEDULED") {
+                              return (
+                                <div className="d-flex gap-1">
+                                  <button
+                                    className="btn btn-sm btn-outline-primary"
+                                    onClick={() => openEdit(appointment)}
+                                  >
+                                    Sửa
+                                  </button>
+                                  <button
+                                    className="btn btn-sm btn-outline-danger"
+                                    onClick={() => handleCancel(appointment.id)}
+                                  >
+                                    Hủy
+                                  </button>
+                                </div>
+                              );
+                            } else {
+                              return (
+                                <button className="btn btn-sm btn-outline-primary">
+                                  Đánh giá
+                                </button>
+                              );
+                            }
+                          })()}
                         </td>
                       </tr>
                     ))

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useCart } from "../../context/CartContext";
 import { useToast } from "../../context/ToastContext";
 import DeleteConfirmModal from "./DeleteConfirmModal";
@@ -6,25 +6,20 @@ import DeleteConfirmModal from "./DeleteConfirmModal";
 const CartItem = ({ item, isSelected, onToggleSelect }) => {
   const { updateQuantity, removeItem } = useCart();
   const { showToast } = useToast();
-  const [isUpdating, setIsUpdating] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [inputValue, setInputValue] = useState(String(item.quantity));
 
-  const performDelete = async () => {
-    try {
-      setIsUpdating(true);
-      await removeItem(item.id);
-      showToast("Đã xóa sản phẩm khỏi giỏ hàng", "success");
-    } catch (error) {
-      console.error("Error removing item:", error);
-      showToast("Không thể xóa sản phẩm. Vui lòng thử lại!", "error");
-    } finally {
-      setIsUpdating(false);
-    }
+  // Sync input khi item.quantity thay đổi từ cache
+  useEffect(() => {
+    setInputValue(String(item.quantity));
+  }, [item.quantity]);
+
+  const performDelete = () => {
+    removeItem(item.id);
+    showToast("Đã xóa sản phẩm khỏi giỏ hàng", "success");
   };
 
-  const handleDecrease = async () => {
-    if (isUpdating) return;
-
+  const handleDecrease = () => {
     const newQty = item.quantity - 1;
 
     // Nếu quantity về 0, hiển thị modal xác nhận xóa
@@ -33,65 +28,46 @@ const CartItem = ({ item, isSelected, onToggleSelect }) => {
       return;
     }
 
-    // Nếu quantity > 0, gọi API với quantity = -1
-    try {
-      setIsUpdating(true);
-      await updateQuantity(item.productVariantId, -1);
-    } catch (error) {
-      console.error("Error updating quantity:", error);
-      showToast("Không thể cập nhật số lượng. Vui lòng thử lại!", "error");
-    } finally {
-      setIsUpdating(false);
-    }
+    // Gọi mutation với quantity = -1 (không chờ - optimistic update)
+    updateQuantity(item.productVariantId, -1);
   };
 
-  const handleIncrease = async () => {
-    if (isUpdating) return;
-
-    try {
-      setIsUpdating(true);
-      // Gọi API với quantity = +1
-      updateQuantity(item.productVariantId, 1);
-    } catch (error) {
-      console.error("Error updating quantity:", error);
-      showToast("Không thể cập nhật số lượng. Vui lòng thử lại!", "error");
-    } finally {
-      setIsUpdating(false);
-    }
+  const handleIncrease = () => {
+    // Gọi mutation với quantity = +1 (không chờ - optimistic update)
+    updateQuantity(item.productVariantId, 1);
   };
 
-  const handleChange = async (e) => {
-    if (isUpdating) return;
-
-    const value = parseInt(e.target.value, 10);
-    if (Number.isNaN(value) || value < 0) return;
-
-    // Nếu quantity về 0, hiển thị modal xác nhận xóa
-    if (value === 0) {
-      setShowDeleteModal(true);
-      // Reset về giá trị cũ tạm thời, sẽ xóa sau khi xác nhận
-      e.target.value = item.quantity;
+  const handleChange = (e) => {
+    const value = e.target.value;
+    
+    // Update local input state ngay (user thấy số mình nhập)
+    setInputValue(value);
+    
+    // Cho phép input rỗng tạm thời (user đang xóa)
+    if (value === "") {
       return;
     }
 
+    const numValue = parseInt(value, 10);
+    if (Number.isNaN(numValue) || numValue < 1) return;
+
     // Tính delta giữa giá trị mới và giá trị cũ
-    const delta = value - item.quantity;
+    const delta = numValue - item.quantity;
     if (delta === 0) return; // Không có thay đổi
 
-    try {
-      setIsUpdating(true);
-      updateQuantity(item.productVariantId, delta);
-    } catch (error) {
-      console.error("Error updating quantity:", error);
-      showToast("Không thể cập nhật số lượng. Vui lòng thử lại!", "error");
-      e.target.value = item.quantity; // Reset về giá trị cũ
-    } finally {
-      setIsUpdating(false);
+    // Gọi mutation với delta (không chờ - optimistic update)
+    updateQuantity(item.productVariantId, delta);
+  };
+
+  const handleBlur = (e) => {
+    // Nếu input rỗng hoặc < 1, reset về giá trị cũ
+    const value = parseInt(inputValue, 10);
+    if (inputValue === "" || Number.isNaN(value) || value < 1) {
+      setInputValue(String(item.quantity));
     }
   };
 
   const handleRemove = () => {
-    if (isUpdating) return;
     setShowDeleteModal(true);
   };
 
@@ -117,7 +93,7 @@ const CartItem = ({ item, isSelected, onToggleSelect }) => {
         <div className="me-3">
           <input
             type="checkbox"
-            disabled={isUpdating}
+            disabled={false}
             className="form-check-input"
             style={{ width: "20px", height: "20px", cursor: "pointer" }}
             checked={isSelected || false}
@@ -165,7 +141,7 @@ const CartItem = ({ item, isSelected, onToggleSelect }) => {
           <button
             className="btn btn-outline-secondary btn-sm"
             onClick={handleDecrease}
-            disabled={isUpdating}
+            disabled={false}
             style={{ width: 32, height: 32, padding: 0 }}
           >
             −
@@ -176,15 +152,16 @@ const CartItem = ({ item, isSelected, onToggleSelect }) => {
             min="0"
             className="form-control form-control-sm mx-2 text-center"
             style={{ width: 60, height: 32 }}
-            value={item.quantity}
+            value={inputValue}
             onChange={handleChange}
-            disabled={isUpdating}
+            onBlur={handleBlur}
+            disabled={false}
           />
 
           <button
             className="btn btn-outline-secondary btn-sm"
             onClick={handleIncrease}
-            disabled={isUpdating}
+            disabled={false}
             style={{ width: 32, height: 32, padding: 0 }}
           >
             +
@@ -202,7 +179,7 @@ const CartItem = ({ item, isSelected, onToggleSelect }) => {
           <button
             className="btn btn-sm"
             onClick={handleRemove}
-            disabled={isUpdating}
+            disabled={false}
             style={{
               backgroundColor: "#dc3545",
               color: "white",

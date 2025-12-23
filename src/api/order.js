@@ -43,4 +43,17 @@ export const orderAPI = {
       token,
     });
   },
+
+  updatePaymentMethod: async (orderId, paymentMethod, token) => {
+    const queryParams = new URLSearchParams();
+    queryParams.append("method", paymentMethod);
+
+    return apiFetch(
+      `/v1/orders/${orderId}/payment-method?${queryParams.toString()}`,
+      {
+        method: "PUT",
+        token,
+      }
+    );
+  },
 };

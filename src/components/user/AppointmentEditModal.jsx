@@ -30,7 +30,7 @@ const ModalShell = ({ isOpen, title, onClose, children, footer }) => {
 const AppointmentEditModal = ({ isOpen, onClose, initial, onSave }) => {
 	const { showToast } = useToast();
 	const [form, setForm] = useState({
-		serviceType: '',
+		serviceId: '',
 		petType: '',
 		petName: '',
 		appointmentDate: '',
@@ -38,6 +38,10 @@ const AppointmentEditModal = ({ isOpen, onClose, initial, onSave }) => {
 		notes: ''
 	});
 	const [services, setServices] = useState([]);
+	const [availableSlots, setAvailableSlots] = useState([]);
+	const [loadingSlots, setLoadingSlots] = useState(false);
+	const [selectedSlotId, setSelectedSlotId] = useState(null);
+	const [errors, setErrors] = useState({});
 
 	useEffect(() => {
 		if (isOpen) {
@@ -45,14 +49,26 @@ const AppointmentEditModal = ({ isOpen, onClose, initial, onSave }) => {
 		}
 	}, [isOpen]);
 
+	const fetchSlots = async (serviceId, date) => {
+		setLoadingSlots(true);
+		try {
+			const response = await servicesAPI.getAvailableBookingTimes(serviceId, date);
+			setAvailableSlots(response.result || []);
+		} catch (error) {
+			console.error(error);
+			setAvailableSlots([]);
+		} finally {
+			setLoadingSlots(false);
+		}
+	};
+
 	useEffect(() => {
 		if (isOpen && initial && services.length > 0) {
-			let mappedServiceType = '';
-			if (initial.serviceType) mappedServiceType = initial.serviceType;
-			else if (initial.serviceName) {
+			let mappedServiceId = initial.serviceId || '';
+			if (!mappedServiceId && initial.serviceName) {
 				// Tìm service có title trùng với serviceName
 				const found = services.find(s => s.title === initial.serviceName);
-				if (found) mappedServiceType = found.key;
+				if (found) mappedServiceId = found.id;
 			}
 			let mappedPetType = '';
 			if (initial.petType) mappedPetType = initial.petType;
@@ -63,38 +79,69 @@ const AppointmentEditModal = ({ isOpen, onClose, initial, onSave }) => {
 				else if (specie === 'chim') mappedPetType = 'bird';
 				else mappedPetType = 'other';
 			}
+			const date = initial.appointmentDate || (initial.appointmentStart ? initial.appointmentStart.slice(0,10) : '');
+			const time = initial.appointmentTime || (initial.appointmentStart ? initial.appointmentStart.slice(11,16) : '');
 			setForm({
-				serviceType: mappedServiceType,
+				serviceId: mappedServiceId,
 				petType: mappedPetType,
 				petName: initial.petName || initial.namePet || '',
-				appointmentDate: initial.appointmentDate || (initial.appoinmentStart ? initial.appoinmentStart.slice(0,10) : ''),
-				appointmentTime: initial.appointmentTime || (initial.appoinmentStart ? initial.appoinmentStart.slice(11,16) : ''),
+				appointmentDate: date,
+				appointmentTime: time,
 				notes: initial.notes || ''
 			});
+			if (mappedServiceId && date) {
+				fetchSlots(mappedServiceId, date);
+			}
 		}
 	}, [isOpen, initial, services]);
 
 	const handleChange = (e) => {
 		const { name, value } = e.target;
-		setForm((prev) => ({ ...prev, [name]: value }));
+		if (name === 'serviceId') {
+			setForm((prev) => ({ ...prev, serviceId: value ? Number(value) : '', appointmentDate: '', appointmentTime: '' }));
+			setAvailableSlots([]);
+			setSelectedSlotId(null);
+		} else if (name === 'appointmentDate') {
+			if (value) {
+				const selectedDate = new Date(value);
+				const today = new Date();
+				today.setHours(0, 0, 0, 0);
+				const maxDate = new Date(today);
+				maxDate.setDate(today.getDate() + 14);
+				if (selectedDate < today || selectedDate > maxDate) {
+					setErrors(prev => ({ ...prev, appointmentDate: 'Ngày đặt lịch không hợp lệ, phải trong khoảng từ hôm nay đến 14 ngày tới' }));
+					showToast('Ngày đặt lịch không hợp lệ, phải trong khoảng từ hôm nay đến 14 ngày tới', 'error');
+				} else {
+					setErrors(prev => ({ ...prev, appointmentDate: '' }));
+				}
+			} else {
+				setErrors(prev => ({ ...prev, appointmentDate: '' }));
+			}
+			setForm((prev) => ({ ...prev, appointmentDate: value, appointmentTime: '' }));
+			setSelectedSlotId(null);
+			if (value && form.serviceId) {
+				fetchSlots(form.serviceId, value);
+			} else {
+				setAvailableSlots([]);
+			}
+		} else {
+			setForm((prev) => ({ ...prev, [name]: value }));
+		}
 	};
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 		try {
 			const token = localStorage.getItem('auth_token');
-			const selectedService = services.find(s => s.key === form.serviceType);
-			const serviceId = selectedService ? selectedService.id : null;
 			const payload = {
 				id: initial.id,
-				serviceId: serviceId,
+				bookingTimeId: selectedSlotId,
 				namePet: form.petName,
 				speciePet:
 					form.petType === 'dog' ? 'Chó' :
 					form.petType === 'cat' ? 'Mèo' :
 					form.petType === 'bird' ? 'Chim' :
 					'Khác',
-				appoinmentStart: `${form.appointmentDate}T${form.appointmentTime}:00`,
 				notes: form.notes
 			};
 			const response = await servicesAPI.updateAppointment(payload, token);
@@ -126,10 +173,10 @@ const AppointmentEditModal = ({ isOpen, onClose, initial, onSave }) => {
 			<form id="appointmentEditForm" onSubmit={handleSubmit}>
 				<div className="mb-3">
 					<label className="form-label">Loại dịch vụ</label>
-					<select className="form-select" name="serviceType" value={form.serviceType} onChange={handleChange}>
+					<select className="form-select" name="serviceId" value={form.serviceId} onChange={handleChange}>
 						<option value="">Chọn dịch vụ</option>
 						{services.map(s => (
-							<option key={s.key} value={s.key}>{s.title}</option>
+							<option key={s.id} value={s.id}>{s.title}</option>
 						))}
 					</select>
 				</div>
@@ -149,25 +196,89 @@ const AppointmentEditModal = ({ isOpen, onClose, initial, onSave }) => {
 						<input className="form-control" name="petName" value={form.petName} onChange={handleChange} />
 					</div>
 				</div>
-				<div className="row">
-					<div className="col-md-6 mb-3">
-						<label className="form-label">Ngày hẹn</label>
-						<input type="date" className="form-control" name="appointmentDate" value={form.appointmentDate} onChange={handleChange} />
-					</div>
-					<div className="col-md-6 mb-3">
-						<label className="form-label">Giờ hẹn</label>
-						<select className="form-select" name="appointmentTime" value={form.appointmentTime} onChange={handleChange}>
-							<option value="">Chọn giờ</option>
-							<option value="08:00">08:00</option>
-							<option value="09:00">09:00</option>
-							<option value="10:00">10:00</option>
-							<option value="11:00">11:00</option>
-							<option value="14:00">14:00</option>
-							<option value="15:00">15:00</option>
-							<option value="16:00">16:00</option>
-							<option value="17:00">17:00</option>
-						</select>
-					</div>
+				<div className="mb-3">
+					<label className="form-label">Ngày hẹn</label>
+					<input type="date" className={`form-control ${errors.appointmentDate ? 'is-invalid' : ''}`} name="appointmentDate" value={form.appointmentDate} onChange={handleChange} />
+					{errors.appointmentDate && (
+						<div className="invalid-feedback">{errors.appointmentDate}</div>
+					)}
+				</div>
+				<div className="mb-3">
+					<label className="form-label">Khung giờ hẹn</label>
+					{!form.appointmentDate ? (
+						<p className="text-muted">Vui lòng chọn ngày hẹn trước</p>
+					) : loadingSlots ? (
+						<p className="text-muted">Đang tải khung giờ...</p>
+					) : availableSlots.length === 0 ? (
+						<p className="text-muted">Không có khung giờ khả dụng cho ngày này</p>
+					) : (
+						<div>
+							{(() => {
+								const morningSlots = availableSlots.filter(slot => slot.startTime >= '08:00' && slot.startTime < '12:00');
+								const afternoonSlots = availableSlots.filter(slot => slot.startTime < '08:00' || slot.startTime >= '12:00');
+								return (
+									<>
+										{morningSlots.length > 0 && (
+											<div className="mb-3">
+												<label className="form-label fw-bold">Buổi sáng (8:00 - 12:00)</label>
+												<div className="d-flex flex-wrap gap-2">
+													{morningSlots.map(slot => {
+														const slotDateTime = new Date(`${slot.slotDate}T${slot.startTime}`);
+														const now = new Date();
+														const isPast = slot.slotDate === form.appointmentDate && slotDateTime <= now;
+														return (
+															<button
+																key={slot.id}
+																type="button"
+																className={`btn ${selectedSlotId === slot.id ? 'btn-primary' : 'btn-outline-primary'} btn-sm ${isPast ? 'disabled' : ''}`}
+																onClick={() => {
+																	if (!isPast) {
+																		setSelectedSlotId(slot.id);
+																		setForm(prev => ({ ...prev, appointmentTime: slot.startTime }));
+																	}
+																}}
+																disabled={slot.availableCount === 0 || isPast}
+															>
+																{slot.startTime} - {slot.endTime}<br />trống {slot.availableCount} chỗ
+															</button>
+														);
+													})}
+												</div>
+											</div>
+										)}
+										{afternoonSlots.length > 0 && (
+											<div className="mb-3">
+												<label className="form-label fw-bold">Buổi chiều</label>
+												<div className="d-flex flex-wrap gap-2">
+													{afternoonSlots.map(slot => {
+														const slotDateTime = new Date(`${slot.slotDate}T${slot.startTime}`);
+														const now = new Date();
+														const isPast = slot.slotDate === form.appointmentDate && slotDateTime <= now;
+														return (
+															<button
+																key={slot.id}
+																type="button"
+																className={`btn ${selectedSlotId === slot.id ? 'btn-primary' : 'btn-outline-primary'} btn-sm ${isPast ? 'disabled' : ''}`}
+																onClick={() => {
+																	if (!isPast) {
+																		setSelectedSlotId(slot.id);
+																		setForm(prev => ({ ...prev, appointmentTime: slot.startTime }));
+																	}
+																}}
+																disabled={slot.availableCount === 0 || isPast}
+															>
+																{slot.startTime} - {slot.endTime}<br />trống {slot.availableCount} chỗ
+															</button>
+														);
+													})}
+												</div>
+											</div>
+										)}
+									</>
+								);
+							})()}
+						</div>
+					)}
 				</div>
 				<div className="mb-3">
 					<label className="form-label">Ghi chú</label>

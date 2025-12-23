@@ -10,7 +10,7 @@ const ServicesPage = () => {
   const routerLocation = useLocation();
   const servicesRef = useRef(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedServiceKey, setSelectedServiceKey] = useState("");
+  const [selectedServiceId, setSelectedServiceId] = useState("");
 
   const [services, setServices] = useState([]);
   const [loadingServices, setLoadingServices] = useState(true);
@@ -38,16 +38,16 @@ const ServicesPage = () => {
 
   // 🟢 Auto chọn dịch vụ khi được navigate từ HomePage
   useEffect(() => {
-    if (routerLocation.state?.key) {
-      setSelectedServiceKey(routerLocation.state.key);
+    if (routerLocation.state?.id) {
+      setSelectedServiceId(routerLocation.state.id);
     }
   }, [routerLocation.state]);
 
-  const handleBookFromCard = (serviceKey) => {
+  const handleBookFromCard = (serviceId) => {
     if (routerLocation.pathname === "/") {
-      navigate("/services", { state: { key: serviceKey } });
+      navigate("/services", { state: { id: serviceId } });
     } else {
-      setSelectedServiceKey(serviceKey);
+      setSelectedServiceId(serviceId);
       setIsModalOpen(true);
     }
   };
@@ -76,7 +76,7 @@ const ServicesPage = () => {
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           services={services}
-          initialServiceKey={selectedServiceKey}
+          initialServiceId={selectedServiceId}
         />
       </div>
     </div>

@@ -35,6 +35,10 @@ const OrdersPage = () => {
   const [cancellingOrderId, setCancellingOrderId] = useState(null);
   const [selectedStatus, setSelectedStatus] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedOrderForPaymentChange, setSelectedOrderForPaymentChange] = useState(null);
+  const [updatingPaymentOrderId, setUpdatingPaymentOrderId] = useState(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("COD");
 
   // 🔥 PAGE BẮT ĐẦU TỪ 1 (THEO API)
   const [pageNumber, setPageNumber] = useState(1);
@@ -91,6 +95,38 @@ const OrdersPage = () => {
       showToast("Lỗi khi hủy đơn hàng", "error");
     } finally {
       setCancellingOrderId(null);
+    }
+  };
+
+  const handleChangePaymentMethod = (order) => {
+    setSelectedOrderForPaymentChange(order);
+    setSelectedPaymentMethod("COD");
+    setShowPaymentModal(true);
+  };
+
+  const handleSelectPaymentMethod = async (method) => {
+    if (!selectedOrderForPaymentChange?.id) return;
+
+    setUpdatingPaymentOrderId(selectedOrderForPaymentChange.id);
+    try {
+      const res = await orderAPI.updatePaymentMethod(
+        selectedOrderForPaymentChange.id,
+        method.toLowerCase(),
+        token
+      );
+      if (res?.success) {
+        showToast(`Đổi phương thức thanh toán thành công (${method})`, "success");
+        setRefreshKey((prev) => prev + 1);
+        setShowPaymentModal(false);
+        setSelectedOrderForPaymentChange(null);
+      } else {
+        showToast(res?.message || "Đổi phương thức thanh toán thất bại", "error");
+      }
+    } catch (error) {
+      console.error(error);
+      showToast("Lỗi khi đổi phương thức thanh toán", "error");
+    } finally {
+      setUpdatingPaymentOrderId(null);
     }
   };
 
@@ -189,20 +225,30 @@ const OrdersPage = () => {
                       )}
 
                       {order.status === "WAITING_PAYMENT" && (
-                        <Button
-                          variant="outline-warning"
-                          className="btn-sm ms-2"
-                          onClick={() =>
-                            navigate("/checkout", {
-                              state: {
-                                order, // gửi nguyên object order
-                                from: "orders",
-                              },
-                            })
-                          }
-                        >
-                          Thanh toán
-                        </Button>
+                        <>
+                          <Button
+                            variant="outline-warning"
+                            className="btn-sm ms-2"
+                            onClick={() =>
+                              navigate("/checkout", {
+                                state: {
+                                  order, // gửi nguyên object order
+                                  from: "orders",
+                                },
+                              })
+                            }
+                          >
+                            Thanh toán lại
+                          </Button>
+                          <Button
+                            variant="outline-info"
+                            className="btn-sm ms-2"
+                            onClick={() => handleChangePaymentMethod(order)}
+                            isLoading={updatingPaymentOrderId === order.id}
+                          >
+                            Thay đổi phương thức
+                          </Button>
+                        </>
                       )}
                     </td>
                   </tr>
@@ -262,6 +308,65 @@ const OrdersPage = () => {
           )}
         </div>
       </div>
+
+      {/* Payment Method Modal */}
+      {showPaymentModal && (
+        <div
+          className="modal d-block"
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
+        >
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Thay đổi phương thức thanh toán</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => {
+                    setShowPaymentModal(false);
+                    setSelectedOrderForPaymentChange(null);
+                  }}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <div className="form-check">
+                  <input
+                    type="radio"
+                    className="form-check-input"
+                    id="paymentCOD"
+                    name="paymentMethod"
+                    value="COD"
+                    checked={selectedPaymentMethod === "COD"}
+                    onChange={(e) => setSelectedPaymentMethod(e.target.value)}
+                    disabled={updatingPaymentOrderId === selectedOrderForPaymentChange?.id}
+                  />
+                  <label className="form-check-label" htmlFor="paymentCOD">
+                    Thanh toán khi nhận hàng (COD)
+                  </label>
+                </div>
+              </div>
+              <div className="modal-footer">
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setShowPaymentModal(false);
+                    setSelectedOrderForPaymentChange(null);
+                  }}
+                >
+                  Hủy
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={() => handleSelectPaymentMethod(selectedPaymentMethod)}
+                  isLoading={updatingPaymentOrderId === selectedOrderForPaymentChange?.id}
+                >
+                  Xác nhận
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

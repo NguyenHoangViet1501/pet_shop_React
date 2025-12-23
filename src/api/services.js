@@ -111,5 +111,13 @@ export const servicesAPI = {
       body:  appointmentId ,
       token
     });
+  },
+
+  // Lấy danh sách thời gian đặt lịch khả dụng
+  getAvailableBookingTimes: async (serviceId, date) => {
+    return await apiFetch('/v1/booking-times/available', {
+      method: 'POST',
+      body: { serviceId, date }
+    });
   }
 };

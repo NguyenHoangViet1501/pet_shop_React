@@ -28,7 +28,7 @@ const ServicesList = ({ services, onBook }) => (
                     {service.price?.toLocaleString('vi-VN')} VND
                   </span>
                 </div>
-                <button className="btn btn-warning w-100 mt-auto" onClick={() => onBook(service.key)}>
+                <button className="btn btn-warning w-100 mt-auto" onClick={() => onBook(service.id)}>
                   Đặt lịch
                 </button>
               </div>
