@@ -3,11 +3,11 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { servicesAPI } from '../../api';
 
-const BookingModal = ({ isOpen, onClose, services, initialServiceKey }) => {
+const BookingModal = ({ isOpen, onClose, services, initialServiceId }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [hasAnimatedIn, setHasAnimatedIn] = useState(false);
   const [formData, setFormData] = useState({
-    serviceType: initialServiceKey || '',
+    serviceId: initialServiceId || '',
     petType: '',
     appointmentDate: '',
     appointmentTime: '',
@@ -17,6 +17,9 @@ const BookingModal = ({ isOpen, onClose, services, initialServiceKey }) => {
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [availableSlots, setAvailableSlots] = useState([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [selectedSlotId, setSelectedSlotId] = useState(null);
   const { user, token } = useAuth();
   const { showToast } = useToast();
 
@@ -32,9 +35,21 @@ const BookingModal = ({ isOpen, onClose, services, initialServiceKey }) => {
 
   useEffect(() => {
     if (isVisible) {
-      setFormData(prev => ({ ...prev, serviceType: initialServiceKey || '' }));
+      setFormData(prev => ({ ...prev, serviceId: initialServiceId || '' }));
     }
-  }, [isVisible, initialServiceKey]);
+  }, [isVisible, initialServiceId]);
+
+  useEffect(() => {
+    if (formData.appointmentDate && formData.serviceId) {
+      const selectedService = services.find(s => s.id === formData.serviceId);
+      if (selectedService) {
+        fetchSlots(selectedService.id, formData.appointmentDate);
+      }
+    } else {
+      setAvailableSlots([]);
+      setSelectedSlotId(null);
+    }
+  }, [formData.appointmentDate, formData.serviceId, services]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -48,11 +63,46 @@ const BookingModal = ({ isOpen, onClose, services, initialServiceKey }) => {
         [name]: ''
       }));
     }
+    if (name === 'serviceId') {
+      setFormData(prev => ({ ...prev, serviceId: value ? Number(value) : '', appointmentDate: '', appointmentTime: '' }));
+      setAvailableSlots([]);
+      setSelectedSlotId(null);
+    } else if (name === 'appointmentDate') {
+      if (value) {
+        const selectedDate = new Date(value);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const maxDate = new Date(today);
+        maxDate.setDate(today.getDate() + 14);
+        if (selectedDate < today || selectedDate > maxDate) {
+          setErrors(prev => ({ ...prev, appointmentDate: 'Ngày đặt lịch không hợp lệ, phải trong khoảng từ hôm nay đến 14 ngày tới' }));
+          showToast('Ngày đặt lịch không hợp lệ, phải trong khoảng từ hôm nay đến 14 ngày tới', 'error');
+        } else {
+          setErrors(prev => ({ ...prev, appointmentDate: '' }));
+        }
+      } else {
+        setErrors(prev => ({ ...prev, appointmentDate: '' }));
+      }
+      setSelectedSlotId(null);
+      setFormData(prev => ({ ...prev, appointmentTime: '' }));
+    }
   };
-
+  
+  const fetchSlots = async (serviceId, date) => {
+    setLoadingSlots(true);
+    try {
+      const response = await servicesAPI.getAvailableBookingTimes(serviceId, date);
+      setAvailableSlots(response.result || []);
+    } catch (error) {
+      console.error(error);
+      setAvailableSlots([]);
+    } finally {
+      setLoadingSlots(false);
+    }
+  };
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.serviceType) newErrors.serviceType = 'Vui lòng chọn loại dịch vụ';
+    if (!formData.serviceId) newErrors.serviceId = 'Vui lòng chọn loại dịch vụ';
     if (!formData.petType) newErrors.petType = 'Vui lòng chọn loại thú cưng';
     if (!formData.appointmentDate) {
       newErrors.appointmentDate = 'Vui lòng chọn ngày hẹn';
@@ -60,7 +110,11 @@ const BookingModal = ({ isOpen, onClose, services, initialServiceKey }) => {
       const selectedDate = new Date(formData.appointmentDate);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      if (selectedDate < today) newErrors.appointmentDate = 'Ngày hẹn không thể là ngày trong quá khứ';
+      const maxDate = new Date(today);
+      maxDate.setDate(today.getDate() + 14);
+      if (selectedDate < today || selectedDate > maxDate) {
+        newErrors.appointmentDate = 'Ngày đặt lịch không hợp lệ, phải trong khoảng từ hôm nay đến 14 ngày tới';
+      }
     }
     if (!formData.appointmentTime) newErrors.appointmentTime = 'Vui lòng chọn giờ hẹn';
     if (!formData.petName.trim()) newErrors.petName = 'Vui lòng nhập tên thú cưng';
@@ -80,22 +134,15 @@ const BookingModal = ({ isOpen, onClose, services, initialServiceKey }) => {
 
     setIsSubmitting(true);
     try {
-      const selectedService = services.find(s => s.key === formData.serviceType);
-      const serviceId = selectedService?.id;
-
-      if (!serviceId) {
-        throw new Error('Không xác định được dịch vụ. Vui lòng chọn lại.');
+      if (!selectedSlotId) {
+        throw new Error('Vui lòng chọn khung giờ hẹn.');
       }
 
-      const isoDateTime = `${formData.appointmentDate}T${formData.appointmentTime}:00`;
-
       const payload = {
-        serviceId: serviceId,
+        bookingTimeId: selectedSlotId,
         userId: user?.id,
         namePet: formData.petName,
         speciePet: formData.petType,
-        appointmentStart: isoDateTime,
-        status: 'SCHEDULED',
         notes: formData.notes || ''
       };
 
@@ -140,19 +187,19 @@ const BookingModal = ({ isOpen, onClose, services, initialServiceKey }) => {
               <div className="mb-3">
                 <label className="form-label">Loại dịch vụ</label>
                 <select
-                  className={`form-select ${errors.serviceType ? 'is-invalid' : ''}`}
-                  name="serviceType"
-                  value={formData.serviceType}
+                  className={`form-select ${errors.serviceId ? 'is-invalid' : ''}`}
+                  name="serviceId"
+                  value={formData.serviceId}
                   onChange={handleInputChange}
                   required
                 >
                   <option value="">Chọn dịch vụ</option>
                   {services.map((s) => (
-                    <option key={s.key} value={s.key}>{s.title}</option>
+                    <option key={s.id} value={s.id}>{s.title}</option>
                   ))}
                 </select>
-                {errors.serviceType && (
-                  <div className="invalid-feedback">{errors.serviceType}</div>
+                {errors.serviceId && (
+                  <div className="invalid-feedback">{errors.serviceId}</div>
                 )}
               </div>
 
@@ -177,7 +224,7 @@ const BookingModal = ({ isOpen, onClose, services, initialServiceKey }) => {
               </div>
 
               <div className="row">
-                <div className="col-md-6 mb-3">
+                <div className="col-12 mb-3">
                   <label className="form-label">Ngày hẹn</label>
                   <input
                     type="date"
@@ -191,27 +238,90 @@ const BookingModal = ({ isOpen, onClose, services, initialServiceKey }) => {
                     <div className="invalid-feedback">{errors.appointmentDate}</div>
                   )}
                 </div>
-                <div className="col-md-6 mb-3">
-                  <label className="form-label">Giờ hẹn</label>
-                  <select
-                    className={`form-select ${errors.appointmentTime ? 'is-invalid' : ''}`}
-                    name="appointmentTime"
-                    value={formData.appointmentTime}
-                    onChange={handleInputChange}
-                    required
-                  >
-                    <option value="">Chọn giờ</option>
-                    <option value="08:00">08:00</option>
-                    <option value="09:00">09:00</option>
-                    <option value="10:00">10:00</option>
-                    <option value="11:00">11:00</option>
-                    <option value="14:00">14:00</option>
-                    <option value="15:00">15:00</option>
-                    <option value="16:00">16:00</option>
-                    <option value="17:00">17:00</option>
-                  </select>
+                <div className="col-12 mb-3">
+                  <label className="form-label">Khung giờ hẹn</label>
+                  {!formData.appointmentDate ? (
+                    <p className="text-muted">Vui lòng chọn ngày hẹn trước</p>
+                  ) : loadingSlots ? (
+                    <p className="text-muted">Đang tải khung giờ...</p>
+                  ) : availableSlots.length === 0 ? (
+                    <p className="text-muted">Không có khung giờ khả dụng cho ngày này</p>
+                  ) : (
+                    <div>
+                      {(() => {
+                        const morningSlots = availableSlots.filter(slot => slot.startTime >= '08:00' && slot.startTime < '12:00');
+                        const afternoonSlots = availableSlots.filter(slot => slot.startTime < '08:00' || slot.startTime >= '12:00');
+                        return (
+                          <>
+                            {morningSlots.length > 0 && (
+                              <div className="mb-3">
+                                <label className="form-label fw-bold">Buổi sáng (8:00 - 12:00)</label>
+                                <div className="d-flex flex-wrap gap-2">
+                                  {morningSlots.map(slot => {
+                                    const slotDateTime = new Date(`${slot.slotDate}T${slot.startTime}`);
+                                    const now = new Date();
+                                    const isPast = slot.slotDate === formData.appointmentDate && slotDateTime <= now;
+                                    return (
+                                      <button
+                                        key={slot.id}
+                                        type="button"
+                                        className={`btn ${selectedSlotId === slot.id ? 'btn-primary' : 'btn-outline-primary'} btn-sm ${isPast ? 'disabled' : ''}`}
+                                        onClick={() => {
+                                          if (!isPast) {
+                                            setSelectedSlotId(slot.id);
+                                            setFormData(prev => ({ ...prev, appointmentTime: slot.startTime }));
+                                            if (errors.appointmentTime) {
+                                              setErrors(prev => ({ ...prev, appointmentTime: '' }));
+                                            }
+                                          }
+                                        }}
+                                        disabled={slot.availableCount === 0 || isPast}
+                                      >
+                                        {slot.startTime} - {slot.endTime}<br />trống {slot.availableCount} chỗ
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+                            {afternoonSlots.length > 0 && (
+                              <div className="mb-3">
+                                <label className="form-label fw-bold">Buổi chiều (12:00 - 16:00)</label>
+                                <div className="d-flex flex-wrap gap-2">
+                                  {afternoonSlots.map(slot => {
+                                    const slotDateTime = new Date(`${slot.slotDate}T${slot.startTime}`);
+                                    const now = new Date();
+                                    const isPast = slot.slotDate === formData.appointmentDate && slotDateTime <= now;
+                                    return (
+                                      <button
+                                        key={slot.id}
+                                        type="button"
+                                        className={`btn ${selectedSlotId === slot.id ? 'btn-primary' : 'btn-outline-primary'} btn-sm ${isPast ? 'disabled' : ''}`}
+                                        onClick={() => {
+                                          if (!isPast) {
+                                            setSelectedSlotId(slot.id);
+                                            setFormData(prev => ({ ...prev, appointmentTime: slot.startTime }));
+                                            if (errors.appointmentTime) {
+                                              setErrors(prev => ({ ...prev, appointmentTime: '' }));
+                                            }
+                                          }
+                                        }}
+                                        disabled={slot.availableCount === 0 || isPast}
+                                      >
+                                        {slot.startTime} - {slot.endTime}<br />trống {slot.availableCount} chỗ
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </div>
+                  )}
                   {errors.appointmentTime && (
-                    <div className="invalid-feedback">{errors.appointmentTime}</div>
+                    <div className="invalid-feedback d-block">{errors.appointmentTime}</div>
                   )}
                 </div>
               </div>
