@@ -188,12 +188,24 @@ const RegisterPage = () => {
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [showOtpModal, setShowOtpModal] = useState(false);
   const [otp, setOtp] = useState("");
+  const [step, setStep] = useState(1); // 1: Register Form, 2: OTP
+  const [countdown, setCountdown] = useState(0);
 
   const { register } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
+
+  // Countdown timer
+  useEffect(() => {
+    let timer;
+    if (countdown > 0) {
+      timer = setInterval(() => {
+        setCountdown((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [countdown]);
 
   // Real-time validation
   useEffect(() => {
@@ -275,7 +287,8 @@ const RegisterPage = () => {
     }));
   };
 
-  const handleRegisterWithOtp = async () => {
+  const handleRegisterWithOtp = async (e) => {
+    e.preventDefault();
     if (!otp) {
       showToast("Vui lòng nhập mã OTP", "error");
       return;
@@ -307,6 +320,21 @@ const RegisterPage = () => {
     }
   };
 
+  const handleResendOtp = async () => {
+    if (countdown > 0) return;
+    
+    setIsSubmitting(true);
+    try {
+      await userAPI.sendOtp(formData.email);
+      showToast("Mã OTP mới đã được gửi", "success");
+      setCountdown(60);
+    } catch (error) {
+      showToast(error.message || "Gửi lại OTP thất bại", "error");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -330,7 +358,8 @@ const RegisterPage = () => {
       await userAPI.sendOtp(formData.email);
       
       showToast("Mã OTP đã được gửi đến email của bạn", "success");
-      setShowOtpModal(true);
+      setStep(2);
+      setCountdown(60);
     } catch (error) {
       showToast(error.message || "Lỗi khi gửi OTP. Vui lòng thử lại.", "error");
     } finally {
@@ -360,233 +389,294 @@ const RegisterPage = () => {
 
             <div className="card shadow-sm">
               <div className="card-body p-4">
-                <h2 className="text-center mb-4">Đăng ký</h2>
-                <form onSubmit={handleSubmit} noValidate>
-                  <div className="row">
+                <h2 className="text-center mb-4">{step === 1 ? "Đăng ký" : "Xác thực OTP"}</h2>
+                {step === 2 && (
+                  <p className="text-center text-muted mb-4">
+                    Mã OTP đã được gửi đến email: <b>{formData.email}</b>. Mã sẽ hết hạn sau 5 phút
+                  </p>
+                )}
+
+                {step === 1 ? (
+                  <form onSubmit={handleSubmit} noValidate>
+                    <div className="row">
+                      <div className="mb-3">
+                        <label className="form-label">Tên đăng nhập</label>
+                        <input
+                          type="text"
+                          className={`form-control ${
+                            errors.username && (touched.username || formData.username)
+                              ? "is-invalid"
+                              : ""
+                          }`}
+                          name="username"
+                          value={formData.username}
+                          onChange={handleInputChange}
+                          onBlur={handleBlur}
+                          required
+                        />
+                        {errors.username &&
+                          (touched.username || formData.username) && (
+                            <div className="invalid-feedback">
+                              {errors.username}
+                            </div>
+                          )}
+                      </div>
+                      <div className="col-md-6 mb-3">
+                        <label className="form-label">Họ và tên</label>
+                        <input
+                          type="text"
+                          className={`form-control ${
+                            errors.fullName && (touched.fullName || formData.fullName)
+                              ? "is-invalid"
+                              : ""
+                          }`}
+                          name="fullName"
+                          value={formData.fullName}
+                          onChange={handleInputChange}
+                          onBlur={handleBlur}
+                          required
+                        />
+                        {errors.fullName &&
+                          (touched.fullName || formData.fullName) && (
+                            <div className="invalid-feedback">
+                              {errors.fullName}
+                            </div>
+                          )}
+                      </div>
+                      <div className="col-md-6 mb-3">
+                        <label className="form-label">Số điện thoại</label>
+                        <input
+                          type="tel"
+                          className={`form-control ${
+                            errors.phone && (touched.phone || formData.phone)
+                              ? "is-invalid"
+                              : ""
+                          }`}
+                          name="phone"
+                          value={formData.phone}
+                          onChange={handleInputChange}
+                          onBlur={handleBlur}
+                          required
+                        />
+                        {errors.phone && (touched.phone || formData.phone) && (
+                          <div className="invalid-feedback">{errors.phone}</div>
+                        )}
+                      </div>
+                    </div>
+
                     <div className="mb-3">
-                      <label className="form-label">Tên đăng nhập</label>
+                      <label className="form-label">Email</label>
                       <input
-                        type="text"
+                        type="email"
                         className={`form-control ${
-                          errors.username && (touched.username || formData.username)
+                          errors.email && (touched.email || formData.email)
                             ? "is-invalid"
                             : ""
                         }`}
-                        name="username"
-                        value={formData.username}
+                        name="email"
+                        value={formData.email}
                         onChange={handleInputChange}
                         onBlur={handleBlur}
                         required
                       />
-                      {errors.username &&
-                        (touched.username || formData.username) && (
-                          <div className="invalid-feedback">
-                            {errors.username}
-                          </div>
-                        )}
-                    </div>
-                    <div className="col-md-6 mb-3">
-                      <label className="form-label">Họ và tên</label>
-                      <input
-                        type="text"
-                        className={`form-control ${
-                          errors.fullName && (touched.fullName || formData.fullName)
-                            ? "is-invalid"
-                            : ""
-                        }`}
-                        name="fullName"
-                        value={formData.fullName}
-                        onChange={handleInputChange}
-                        onBlur={handleBlur}
-                        required
-                      />
-                      {errors.fullName &&
-                        (touched.fullName || formData.fullName) && (
-                          <div className="invalid-feedback">
-                            {errors.fullName}
-                          </div>
-                        )}
-                    </div>
-                    <div className="col-md-6 mb-3">
-                      <label className="form-label">Số điện thoại</label>
-                      <input
-                        type="tel"
-                        className={`form-control ${
-                          errors.phone && (touched.phone || formData.phone)
-                            ? "is-invalid"
-                            : ""
-                        }`}
-                        name="phone"
-                        value={formData.phone}
-                        onChange={handleInputChange}
-                        onBlur={handleBlur}
-                        required
-                      />
-                      {errors.phone && (touched.phone || formData.phone) && (
-                        <div className="invalid-feedback">{errors.phone}</div>
+                      {errors.email && (touched.email || formData.email) && (
+                        <div className="invalid-feedback">{errors.email}</div>
                       )}
                     </div>
-                  </div>
 
-                  <div className="mb-3">
-                    <label className="form-label">Email</label>
-                    <input
-                      type="email"
-                      className={`form-control ${
-                        errors.email && (touched.email || formData.email)
-                          ? "is-invalid"
-                          : ""
-                      }`}
-                      name="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      onBlur={handleBlur}
-                      required
-                    />
-                    {errors.email && (touched.email || formData.email) && (
-                      <div className="invalid-feedback">{errors.email}</div>
-                    )}
-                  </div>
-
-                  <div className="row">
-                    <div className="col-md-6 mb-3 position-relative">
-                      <label className="form-label">Mật khẩu</label>
-                      <input
-                        type={showPassword ? "text" : "password"}
-                        className={`form-control pe-5 ${
-                          errors.password && (touched.password || formData.password)
-                            ? "is-invalid"
-                            : ""
-                        }`}
-                        name="password"
-                        value={formData.password}
-                        onChange={handleInputChange}
-                        onBlur={handleBlur}
-                        required
-                        minLength="6"
-                      />
-                      <span
-                        onClick={() => setShowPassword(!showPassword)}
-                        style={{
-                          position: "absolute",
-                          right:
-                            errors.password &&
-                            (touched.password || formData.password)
-                              ? "45px"
-                              : "25px",
-                          top: "33px",
-                          cursor: "pointer",
-                          color: "#6c757d",
-                          fontSize: "1.25rem",
-                          zIndex: 2,
-                        }}
-                      >
-                        {showPassword ? <FaEyeSlash /> : <FaEye />}
-                      </span>
-                      {errors.password &&
-                        (touched.password || formData.password) && (
-                          <div className="invalid-feedback">
-                            {errors.password}
-                          </div>
-                        )}
-                    </div>
-                    <div className="col-md-6 mb-3 position-relative">
-                      <label className="form-label">Xác nhận mật khẩu</label>
-                      <input
-                        type={showConfirmPassword ? "text" : "password"}
-                        className={`form-control pe-5 ${
-                          errors.confirmPassword &&
-                          (touched.confirmPassword || formData.confirmPassword)
-                            ? "is-invalid"
-                            : ""
-                        }`}
-                        name="confirmPassword"
-                        value={formData.confirmPassword}
-                        onChange={handleInputChange}
-                        onBlur={handleBlur}
-                        required
-                      />
-                      <span
-                        onClick={() =>
-                          setShowConfirmPassword(!showConfirmPassword)
-                        }
-                        style={{
-                          position: "absolute",
-                          right:
-                            errors.confirmPassword &&
-                            (touched.confirmPassword ||
-                              formData.confirmPassword)
-                              ? "45px"
-                              : "25px",
-                          top: "33px",
-                          cursor: "pointer",
-                          color: "#6c757d",
-                          fontSize: "1.25rem",
-                          zIndex: 2,
-                        }}
-                      >
-                        {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
-                      </span>
-                      {errors.confirmPassword &&
-                        (touched.confirmPassword ||
-                          formData.confirmPassword) && (
-                          <div className="invalid-feedback">
-                            {errors.confirmPassword}
-                          </div>
-                        )}
-                    </div>
-                  </div>
-
-                  <div className="mb-3 form-check">
-                    <input
-                      type="checkbox"
-                      className={`form-check-input ${
-                        errors.agreeTerms && touched.agreeTerms
-                          ? "is-invalid"
-                          : ""
-                      }`}
-                      id="agreeTerms"
-                      name="agreeTerms"
-                      checked={formData.agreeTerms}
-                      onChange={handleInputChange}
-                      onBlur={handleBlur}
-                      required
-                    />
-                    <label className="form-check-label" htmlFor="agreeTerms">
-                      Tôi đồng ý với{" "}
-                      <span
-                        style={{
-                          color: "#007bff",
-                          textDecoration: "underline",
-                          cursor: "pointer",
-                        }}
-                        onClick={() => setShowTermsModal(true)}
-                      >
-                        điều khoản sử dụng
-                      </span>
-                    </label>
-                    {errors.agreeTerms && touched.agreeTerms && (
-                      <div className="invalid-feedback">
-                        {errors.agreeTerms}
+                    <div className="row">
+                      <div className="col-md-6 mb-3 position-relative">
+                        <label className="form-label">Mật khẩu</label>
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          className={`form-control pe-5 ${
+                            errors.password && (touched.password || formData.password)
+                              ? "is-invalid"
+                              : ""
+                          }`}
+                          name="password"
+                          value={formData.password}
+                          onChange={handleInputChange}
+                          onBlur={handleBlur}
+                          required
+                          minLength="6"
+                        />
+                        <span
+                          onClick={() => setShowPassword(!showPassword)}
+                          style={{
+                            position: "absolute",
+                            right:
+                              errors.password &&
+                              (touched.password || formData.password)
+                                ? "45px"
+                                : "25px",
+                            top: "33px",
+                            cursor: "pointer",
+                            color: "#6c757d",
+                            fontSize: "1.25rem",
+                            zIndex: 2,
+                          }}
+                        >
+                          {showPassword ? <FaEyeSlash /> : <FaEye />}
+                        </span>
+                        {errors.password &&
+                          (touched.password || formData.password) && (
+                            <div className="invalid-feedback">
+                              {errors.password}
+                            </div>
+                          )}
                       </div>
+                      <div className="col-md-6 mb-3 position-relative">
+                        <label className="form-label">Xác nhận mật khẩu</label>
+                        <input
+                          type={showConfirmPassword ? "text" : "password"}
+                          className={`form-control pe-5 ${
+                            errors.confirmPassword &&
+                            (touched.confirmPassword || formData.confirmPassword)
+                              ? "is-invalid"
+                              : ""
+                          }`}
+                          name="confirmPassword"
+                          value={formData.confirmPassword}
+                          onChange={handleInputChange}
+                          onBlur={handleBlur}
+                          required
+                        />
+                        <span
+                          onClick={() =>
+                            setShowConfirmPassword(!showConfirmPassword)
+                          }
+                          style={{
+                            position: "absolute",
+                            right:
+                              errors.confirmPassword &&
+                              (touched.confirmPassword ||
+                                formData.confirmPassword)
+                                ? "45px"
+                                : "25px",
+                            top: "33px",
+                            cursor: "pointer",
+                            color: "#6c757d",
+                            fontSize: "1.25rem",
+                            zIndex: 2,
+                          }}
+                        >
+                          {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                        </span>
+                        {errors.confirmPassword &&
+                          (touched.confirmPassword ||
+                            formData.confirmPassword) && (
+                            <div className="invalid-feedback">
+                              {errors.confirmPassword}
+                            </div>
+                          )}
+                      </div>
+                    </div>
+
+                    <div className="mb-3 form-check">
+                      <input
+                        type="checkbox"
+                        className={`form-check-input ${
+                          errors.agreeTerms && touched.agreeTerms
+                            ? "is-invalid"
+                            : ""
+                        }`}
+                        id="agreeTerms"
+                        name="agreeTerms"
+                        checked={formData.agreeTerms}
+                        onChange={handleInputChange}
+                        onBlur={handleBlur}
+                        required
+                      />
+                      <label className="form-check-label" htmlFor="agreeTerms">
+                        Tôi đồng ý với{" "}
+                        <span
+                          style={{
+                            color: "#007bff",
+                            textDecoration: "underline",
+                            cursor: "pointer",
+                          }}
+                          onClick={() => setShowTermsModal(true)}
+                        >
+                          điều khoản sử dụng
+                        </span>
+                      </label>
+                      {errors.agreeTerms && touched.agreeTerms && (
+                        <div className="invalid-feedback">
+                          {errors.agreeTerms}
+                        </div>
+                      )}
+                    </div>
+
+                    <Button
+                      type="submit"
+                      className="w-100 mb-3"
+                      disabled={isSubmitting}
+                      isLoading={isSubmitting}
+                    >
+                      {isSubmitting ? "Đang đăng ký..." : "Đăng ký"}
+                    </Button>
+
+                    <div className="text-center">
+                      <Link to="/login" className="text-decoration-none">
+                        Đã có tài khoản? Đăng nhập
+                      </Link>
+                    </div>
+                  </form>
+                ) : (
+                  <form onSubmit={handleRegisterWithOtp}>
+                    <div className="mb-3">
+                      <label className="form-label">Mã OTP</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value)}
+                        placeholder="Nhập mã OTP"
+                        required
+                      />
+                    </div>
+
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+                        <button 
+                            type="button" 
+                            className={`btn btn-link text-decoration-none p-0 ${countdown > 0 ? 'text-muted' : ''}`}
+                            onClick={handleResendOtp}
+                            disabled={countdown > 0 || isSubmitting}
+                            style={{ fontSize: '0.9rem' }}
+                        >
+                            {countdown > 0 ? `Gửi lại sau ${countdown}s` : "Gửi lại OTP"}
+                        </button>
+                        
+                        <button 
+                            type="button" 
+                            className="btn btn-link text-decoration-none p-0"
+                            onClick={() => setStep(1)}
+                            style={{ fontSize: '0.9rem' }}
+                        >
+                            Quay lại đăng ký
+                        </button>
+                    </div>
+                    {countdown > 0 && (
+                        <div className="text-center mb-3">
+                            <small className="text-muted fst-italic">
+                                Bạn có thể yêu cầu gửi lại mã OTP sau 1 phút
+                            </small>
+                        </div>
                     )}
-                  </div>
 
-                  <Button
-                    type="submit"
-                    className="w-100 mb-3"
-                    disabled={isSubmitting}
-                    isLoading={isSubmitting}
-                  >
-                    {isSubmitting ? "Đang đăng ký..." : "Đăng ký"}
-                  </Button>
-
-                  <div className="text-center">
-                    <Link to="/login" className="text-decoration-none">
-                      Đã có tài khoản? Đăng nhập
-                    </Link>
-                  </div>
-                </form>
+                    <div className="d-flex justify-content-center mb-3">
+                        <Button
+                          type="submit"
+                          className="px-5"
+                          disabled={isSubmitting}
+                          isLoading={isSubmitting}
+                        >
+                          {isSubmitting ? "Đang xác thực..." : "Xác nhận"}
+                        </Button>
+                    </div>
+                  </form>
+                )}
               </div>
             </div>
           </div>
@@ -628,52 +718,7 @@ const RegisterPage = () => {
         </div>
       )}
 
-      {/* Modal OTP */}
-      {showOtpModal && (
-        <div
-          className="modal fade show"
-          style={{ display: "block", background: "rgba(0,0,0,0.5)" }}
-        >
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">Xác thực OTP</h5>
-                <button
-                  type="button"
-                  className="btn-close"
-                  onClick={() => setShowOtpModal(false)}
-                ></button>
-              </div>
-              <div className="modal-body">
-                <p>Vui lòng nhập mã OTP đã được gửi đến email: <b>{formData.email}</b></p>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Nhập mã OTP"
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
-                />
-              </div>
-              <div className="modal-footer">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setShowOtpModal(false)}
-                >
-                  Hủy
-                </button>
-                <Button
-                  onClick={handleRegisterWithOtp}
-                  isLoading={isSubmitting}
-                  disabled={isSubmitting}
-                >
-                  Xác nhận
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+
     </div>
   );
 };
