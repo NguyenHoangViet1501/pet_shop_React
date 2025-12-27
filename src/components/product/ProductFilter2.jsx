@@ -23,6 +23,7 @@ const ProductFilter2 = ({
     const [selectedCats, setSelectedCats] = useState([]);
     const [selectedBrands, setSelectedBrands] = useState([]);
     const [priceRange, setPriceRange] = useState({ min: minPrice, max: maxPrice });
+    const STEP = 20000; // fixed step in VND
 
     // Handle Category Change
     const handleCategoryChange = (id) => {
@@ -54,15 +55,19 @@ const ProductFilter2 = ({
 
     // Handle Price Change
     const handlePriceChange = (e) => {
-        const value = parseInt(e.target.value);
+        const raw = parseInt(e.target.value, 10);
         const name = e.target.name;
-        
+        if (isNaN(raw)) return;
+
+        // Snap to nearest STEP
+        const snapped = Math.round(raw / STEP) * STEP;
+
         if (name === 'min') {
-            if (value > priceRange.max) return; // Prevent crossing
-            setPriceRange({ ...priceRange, min: value });
+            if (snapped > priceRange.max) return; // Prevent crossing
+            setPriceRange({ ...priceRange, min: Math.max(minPrice, Math.min(snapped, maxPrice)) });
         } else {
-            if (value < priceRange.min) return; // Prevent crossing
-            setPriceRange({ ...priceRange, max: value });
+            if (snapped < priceRange.min) return; // Prevent crossing
+            setPriceRange({ ...priceRange, max: Math.max(minPrice, Math.min(snapped, maxPrice)) });
         }
     };
 
@@ -129,6 +134,7 @@ const ProductFilter2 = ({
                         name="min"
                         min={minPrice}
                         max={maxPrice}
+                        step={STEP}
                         value={priceRange.min}
                         onChange={handlePriceChange}
                         className="range-input"
@@ -138,6 +144,7 @@ const ProductFilter2 = ({
                         name="max"
                         min={minPrice}
                         max={maxPrice}
+                        step={STEP}
                         value={priceRange.max}
                         onChange={handlePriceChange}
                         className="range-input"
@@ -145,7 +152,7 @@ const ProductFilter2 = ({
                 </div>
                 <div className="price-values">
                     <span>
-                        {formatCurrency(priceRange.min)} - {priceRange.max === maxPrice ? '1.000.000 đ' : formatCurrency(priceRange.max)}
+                        {formatCurrency(priceRange.min)} - {priceRange.max === maxPrice ? formatCurrency(maxPrice) : formatCurrency(priceRange.max)}
                     </span>
                     <button className="btn-apply" onClick={handleApply}>Apply</button>
                 </div>

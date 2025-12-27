@@ -354,9 +354,18 @@ const RegisterPage = () => {
     setIsSubmitting(true);
 
     try {
-      // Step 1: Send OTP
-      await userAPI.sendOtp(formData.email);
-      
+      // Step 1: Send OTP with full user data for backend validation before sending
+      await userAPI.sendOtp(
+        {
+          username: formData.username,
+          password: formData.password,
+          email: formData.email,
+          fullName: formData.fullName,
+          phone: formData.phone,
+        },
+        formData.email
+      );
+
       showToast("Mã OTP đã được gửi đến email của bạn", "success");
       setStep(2);
       setCountdown(60);
