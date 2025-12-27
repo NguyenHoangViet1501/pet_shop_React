@@ -71,6 +71,10 @@ const ProductDetailPage = () => {
               setSimilarProducts(
                 similarRes.result.content
                   .filter((p) => p.id !== productData.id)
+                  .filter(
+                    (p) =>
+                      String(p.isDeleted) === "0" 
+                  )
                   .slice(0, 5)
               );
             }
@@ -361,14 +365,7 @@ const ProductDetailPage = () => {
             )}
           </div>
 
-          <div className="mb-4">
-            <div className="fw-bold mb-2">Mô tả ngắn</div>
-            <p className="text-muted mb-0 small">
-              {product.description
-                ? product.description.substring(0, 100) + "..."
-                : "Đang cập nhật"}
-            </p>
-          </div>
+          {/* short description removed as requested */}
 
           {product.productVariant && product.productVariant.length > 0 && (
             <div className="mb-4">

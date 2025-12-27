@@ -76,12 +76,13 @@ export const PetDetailModal = ({ isOpen, pet, onClose, onApply }) => {
   );
 };
 
-export const AdoptionApplicationModal = ({ isOpen, onClose, onSubmit }) => {
+export const AdoptionApplicationModal = ({ isOpen, onClose, onSubmit, onShowAddressModal, pet, submitting }) => {
   const { user } = useAuth();
-  const [form, setForm] = useState({
+  const buildInitialForm = () => ({
     fullName: user?.name || '',
     phone: '',
     address: '',
+    addressId: null,
     job: '',
     income: '',
     experience: '',
@@ -90,11 +91,31 @@ export const AdoptionApplicationModal = ({ isOpen, onClose, onSubmit }) => {
     agree: false
   });
 
+  const [form, setForm] = useState(buildInitialForm());
+
+  // Reset form each time the modal opens or a different pet is selected
   useEffect(() => {
     if (isOpen) {
-      setForm((prev) => ({ ...prev, fullName: user?.name || prev.fullName }));
+      setForm(buildInitialForm());
     }
-  }, [isOpen, user]);
+  }, [isOpen, pet, user]);
+
+  // Lắng nghe sự kiện chọn địa chỉ (truyền từ AddressModal)
+  useEffect(() => {
+    const handler = (e) => {
+      const addr = e.detail;
+      if (!addr) return;
+      setForm(form => ({
+        ...form,
+        fullName: addr.contactName,
+        phone: addr.phone,
+        address: [addr.detailAddress, addr.ward, addr.state, addr.city].filter(Boolean).join(', '),
+        addressId: addr.id || addr.addressId || null
+      }));
+    };
+    window.addEventListener("address-selected-adoption", handler);
+    return () => window.removeEventListener("address-selected-adoption", handler);
+  }, []);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -103,22 +124,41 @@ export const AdoptionApplicationModal = ({ isOpen, onClose, onSubmit }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(form);
+    const payload = {
+      ...form,
+      is_own_pet: form.experience === '1' ? '1' : '0'
+    };
+    onSubmit(payload);
   };
 
   return (
     <ModalShell
       isOpen={isOpen}
-      title="Đơn xin nhận nuôi"
+      title={pet ? `Đơn xin nhận nuôi - ${pet.name}` : 'Đơn xin nhận nuôi'}
       onClose={onClose}
       footer={(
         <>
-          <button type="button" className="btn btn-secondary" onClick={onClose}>Hủy</button>
-          <button type="submit" form="adoptionApplicationForm" className="btn btn-primary">Gửi đơn</button>
+          <button type="button" className="btn btn-secondary" onClick={onClose} disabled={submitting}>Hủy</button>
+          <button type="submit" form="adoptionApplicationForm" className="btn btn-primary" disabled={submitting}>
+            {submitting ? (
+              <>
+                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                Đang gửi...
+              </>
+            ) : (
+              'Gửi đơn'
+            )}
+          </button>
         </>
       )}
     >
       <form id="adoptionApplicationForm" onSubmit={handleSubmit}>
+        {pet && (
+          <div className="mb-3">
+            <label className="form-label">Thú cưng</label>
+            <div className="form-control-plaintext">{pet.name}</div>
+          </div>
+        )}
         <div className="row">
           <div className="col-md-6 mb-3">
             <label className="form-label">Họ và tên *</label>
@@ -129,10 +169,15 @@ export const AdoptionApplicationModal = ({ isOpen, onClose, onSubmit }) => {
             <input name="phone" className="form-control" value={form.phone} onChange={handleChange} required />
           </div>
         </div>
-        <div className="mb-3">
-          <label className="form-label">Địa chỉ *</label>
-          <textarea name="address" className="form-control" rows={2} value={form.address} onChange={handleChange} required />
-        </div>
+    <div className="mb-3">
+      <div className="d-flex align-items-center justify-content-between">
+        <label className="form-label mb-0">Địa chỉ *</label>
+        <button type="button" className="btn btn-sm btn-warning ms-3" onClick={onShowAddressModal}>
+          Chọn
+        </button>
+      </div>
+      <textarea name="address" className="form-control" rows={2} value={form.address} onChange={handleChange} required />
+    </div>
         <div className="row">
           <div className="col-md-6 mb-3">
             <label className="form-label">Nghề nghiệp</label>
@@ -152,11 +197,11 @@ export const AdoptionApplicationModal = ({ isOpen, onClose, onSubmit }) => {
         <div className="mb-3">
           <label className="form-label">Bạn đã từng nuôi thú cưng chưa? *</label>
           <div className="form-check">
-            <input className="form-check-input" type="radio" name="experience" value="yes" checked={form.experience === 'yes'} onChange={handleChange} required />
+            <input className="form-check-input" type="radio" name="experience" value="1" checked={form.experience === '1'} onChange={handleChange} required />
             <label className="form-check-label">Có</label>
           </div>
           <div className="form-check">
-            <input className="form-check-input" type="radio" name="experience" value="no" checked={form.experience === 'no'} onChange={handleChange} required />
+            <input className="form-check-input" type="radio" name="experience" value="0" checked={form.experience === '0'} onChange={handleChange} required />
             <label className="form-check-label">Không</label>
           </div>
         </div>

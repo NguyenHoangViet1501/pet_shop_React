@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
 
 const ToastContext = createContext();
 
@@ -13,7 +13,7 @@ export const useToast = () => {
 export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
 
-  const showToast = (message, type = 'info') => {
+  const showToast = useCallback((message, type = 'info') => {
     const id = Date.now();
     const newToast = { id, message, type };
     setToasts(prev => [...prev, newToast]);
@@ -21,17 +21,17 @@ export const ToastProvider = ({ children }) => {
     setTimeout(() => {
       setToasts(prev => prev.filter(toast => toast.id !== id));
     }, 2000);
-  };
+  }, []);
 
   const removeToast = (id) => {
     setToasts(prev => prev.filter(toast => toast.id !== id));
   };
 
-  const value = {
+  const value = useMemo(() => ({
     toasts,
     showToast,
     removeToast
-  };
+  }), [toasts, showToast]);
 
   return (
     <ToastContext.Provider value={value}>

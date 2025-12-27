@@ -20,6 +20,7 @@ import AdoptionRequestsPage from "./pages/adoption/AdoptionRequestsPage";
 import ProductDetailPage from "./pages/product/ProductDetailPage";
 import OrderDetailPage from "./pages/order/OrderDetailPage";
 import AdoptionRequestDetailPage from "./pages/adoption/AdoptionRequestDetailPage";
+import PetDetail from "./pages/adoption/PetDetail";
 import HomePageNew from "./pages/home/HomePageNew";
 import Headernew from "./components/common/Headernew";
 import PaymentFailedPage from "./pages/payment/PaymentFailedPage";
@@ -48,6 +49,7 @@ function App() {
           <Route path="/appointments" element={<AppointmentsPage />} />
           <Route path="/services" element={<ServicesPage />} />
           <Route path="/adoption" element={<AdoptionPage />} />
+          <Route path="/pets/:id" element={<PetDetail />} />
           <Route path="/adoption-requests" element={<AdoptionRequestsPage />} />
           <Route
             path="/adoption-requests/:id"

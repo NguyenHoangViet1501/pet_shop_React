@@ -24,9 +24,24 @@ export const userAPI = {
   },
 
   // Gửi OTP xác thực email
-  sendOtp: async (email) => {
-    return await apiFetch(`/v1/users/send-otp?email=${email}`, {
+  // Can be called as sendOtp(userData, email) to validate user data before sending
+  // or sendOtp(email) to just send by email (backwards compatible).
+  sendOtp: async (payloadOrEmail, email) => {
+    let body = undefined;
+    let queryEmail = email;
+
+    if (typeof payloadOrEmail === 'string' && !email) {
+      // called as sendOtp(email)
+      queryEmail = payloadOrEmail;
+    } else {
+      // called as sendOtp(userData, email)
+      body = payloadOrEmail;
+    }
+
+    const query = queryEmail ? `?email=${encodeURIComponent(queryEmail)}` : "";
+    return await apiFetch(`/v1/users/send-otp${query}`, {
       method: 'POST',
+      body,
     });
   },
 
