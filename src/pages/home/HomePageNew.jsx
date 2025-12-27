@@ -19,7 +19,7 @@ const HomePageNew = () => {
       : Array.isArray(featuredProductsData?.result)
       ? featuredProductsData.result
       : []
-  ).filter((p) => Number(p.isDelete) !== 1);
+  ).filter((p) => p.isDeleted !== "1");
 
   const navigate = useNavigate();
   return (

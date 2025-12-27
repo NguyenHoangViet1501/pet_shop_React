@@ -14,6 +14,7 @@ import AppointmentsPage from '../pages/AppointmentsPage';
 import ServicesPage from '../pages/ServicesPage';
 import AdoptionPage from '../pages/AdoptionPage';
 import AdoptionRequestsPage from '../pages/AdoptionRequestsPage';
+import PetDetail from '../pages/adoption/PetDetail';
 import ProductDetailPage from '../pages/ProductDetailPage';
 import OrderDetailPage from '../pages/OrderDetailPage';
 import AdoptionRequestDetailPage from '../pages/AdoptionRequestDetailPage';
@@ -37,6 +38,7 @@ function AppRoutes() {
       <Route path="/appointments" element={<AppointmentsPage />} />
       <Route path="/services" element={<ServicesPage />} />
       <Route path="/adoption" element={<AdoptionPage />} />
+      <Route path="/pets/:id" element={<PetDetail />} />
       <Route path="/adoption-requests" element={<AdoptionRequestsPage />} />
       <Route path="/adoption-requests/:id" element={<AdoptionRequestDetailPage />} />
     </Routes>

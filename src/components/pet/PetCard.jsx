@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 const PetCard = ({ pet, onAdoptClick }) => {
   // Lấy ảnh chính
@@ -73,11 +74,14 @@ const PetCard = ({ pet, onAdoptClick }) => {
 
   const healthStatus = getHealthStatus();
 
+  const navigate = useNavigate();
+
   return (
     <div className="col-lg-4 col-md-6 mb-3">
       <div
         className="card h-100 shadow-sm"
-        style={{ borderRadius: "12px", overflow: "hidden" }}
+        style={{ borderRadius: "12px", overflow: "hidden", cursor: 'pointer' }}
+        onClick={() => navigate(`/pets/${pet.id}`)}
       >
         {/* Pet Image */}
         <div style={{ position: "relative", height: "240px", overflow: "hidden" }}>
@@ -148,7 +152,10 @@ const PetCard = ({ pet, onAdoptClick }) => {
           {/* Adopt Button */}
           <button
             className="btn btn-warning w-100 fw-bold mt-auto"
-            onClick={() => onAdoptClick(pet)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onAdoptClick(pet);
+            }}
             style={{
               borderRadius: "8px",
               padding: "10px",

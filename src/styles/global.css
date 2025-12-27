@@ -168,3 +168,18 @@ body {
 .service-link:hover {
     color: var(--text-muted) !important;
 }
+
+/* Adoption modal — keep layout unchanged; only style the small "Chọn" button */
+.modal .btn-sm.btn-warning {
+    background: #ffc857;
+    border-color: #ffc857;
+    color: #222;
+    padding: 6px 10px;
+    border-radius: 8px;
+    box-shadow: 0 6px 18px rgba(255,200,87,0.12);
+}
+.choose-address-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}

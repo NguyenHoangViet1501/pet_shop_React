@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { petsApi } from "../../api";
+import { petsApi, adoptApi, addressAPI } from "../../api";
+import AddressModal from "../../components/checkout/AddressModal";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import PetCard from "../../components/pet/PetCard";
@@ -9,6 +10,9 @@ import {
 } from "../../components/adoption/AdoptionModal";
 
 const AdoptionPage = () => {
+  const [addresses, setAddresses] = useState([]);
+  const [showAddressModal, setShowAddressModal] = useState(false);
+  const [loadingAddresses, setLoadingAddresses] = useState(false);
   const [filters, setFilters] = useState({
     type: "",
     age: "",
@@ -19,12 +23,42 @@ const AdoptionPage = () => {
   const [loading, setLoading] = useState(true);
   const [animals, setAnimals] = useState([]);
 
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const { showToast } = useToast();
 
   const [selectedPet, setSelectedPet] = useState(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isApplicationOpen, setIsApplicationOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Load địa chỉ user
+  useEffect(() => {
+    const fetchAddresses = async () => {
+      if (token) {
+        setLoadingAddresses(true);
+        try {
+          const res = await addressAPI.getUserAddresses(token, 10, 0);
+          if (res?.success && Array.isArray(res.result)) {
+            const mapped = res.result.map((addr) => ({
+              id: addr.id,
+              contactName: addr.contactName,
+              phone: addr.phone,
+              detailAddress: addr.detailAddress,
+              city: addr.city,
+              state: addr.state,
+              ward: addr.ward,
+              isDefault: addr.isDefault === "1",
+            }));
+            setAddresses(mapped);
+          }
+        } catch (e) {
+          showToast("Không lấy được địa chỉ", "error");
+        }
+        setLoadingAddresses(false);
+      }
+    };
+    fetchAddresses();
+  }, [user]);
 
   // Load animals for filter
   useEffect(() => {
@@ -43,6 +77,7 @@ const AdoptionPage = () => {
   // Load pets from API
   useEffect(() => {
     const loadPets = async () => {
+      console.log('[Adoption] loadPets start', { filters, time: new Date().toISOString() });
       setLoading(true);
       try {
         // Map filter values từ frontend sang backend
@@ -93,11 +128,12 @@ const AdoptionPage = () => {
         setPets([]);
       } finally {
         setLoading(false);
+        console.log('[Adoption] loadPets end', { time: new Date().toISOString() });
       }
     };
 
     loadPets();
-  }, [filters, showToast]);
+  }, [filters]);
 
   const handleFilterChange = (field, value) => {
     setFilters((prev) => ({
@@ -112,21 +148,81 @@ const AdoptionPage = () => {
       return;
     }
     setSelectedPet(pet);
-    setIsDetailOpen(true);
+    setIsApplicationOpen(true); // Mở trực tiếp form đăng ký
+    // setIsDetailOpen(true); // Bỏ qua modal chi tiết, nhảy thẳng vào form
   };
+
 
   const openApplication = () => {
     setIsDetailOpen(false);
     setIsApplicationOpen(true);
   };
 
-  const submitApplication = (form) => {
-    setIsApplicationOpen(false);
-    showToast(
-      `Đã gửi đơn nhận nuôi ${selectedPet?.name}. Chúng tôi sẽ liên hệ sớm!`,
-      "success"
-    );
-    setSelectedPet(null);
+  const submitApplication = async (form) => {
+    if (isSubmitting) return; // prevent duplicate submissions
+    setIsSubmitting(true);
+    console.log('[Adoption] submitApplication start', { time: new Date().toISOString() });
+    try {
+      // Debug: ensure user and selectedPet are present and numeric
+      console.log("[Adoption] user:", user);
+      console.log("[Adoption] selectedPet:", selectedPet);
+
+      // Build payload matching backend AdoptCreationRequest (coerce ids to numbers)
+      const payload = {
+        userId: user?.id ? Number(user.id) : null,
+        petId: selectedPet?.id ? Number(selectedPet.id) : null,
+        addressId: form.addressId ? Number(form.addressId) : null,
+        note: form.reason || "",
+        job: form.job || "",
+        income: (function() {
+          const map = {
+            'under-10m': 'Dưới 10 triệu',
+            '10-20m': '10-20 triệu',
+            '20-30m': '20-30 triệu',
+            'above-30m': 'Trên 30 triệu'
+          };
+          return form.income ? (map[form.income] || form.income) : "";
+        })(),
+        liveCondition: form.conditions || "",
+        // include isOwnPet to match backend AdoptCreationRequest (string '1' or '0')
+        isOwnPet: (function(){
+          if (typeof form.isOwnPet !== 'undefined') return String(form.isOwnPet);
+          if (typeof form.is_own_pet !== 'undefined') return String(form.is_own_pet);
+          if (typeof form.experience !== 'undefined') return form.experience === '1' ? '1' : '0';
+          return '0';
+        })(),
+      };
+
+      // Basic client-side validation / logging to help debug backend 400s
+      console.log("[Adoption] payload:", payload);
+      if (!payload.userId) {
+        showToast("Lỗi: userId trống. Vui lòng đăng nhập lại.", "error");
+        return;
+      }
+      if (!payload.petId) {
+        showToast("Lỗi: petId trống.", "error");
+        return;
+      }
+
+      const res = await adoptApi.createAdoptRequest(payload, token);
+      console.log("[Adoption] response:", res);
+      showToast(
+        `Đã gửi đơn nhận nuôi ${selectedPet?.name}. Chúng tôi sẽ liên hệ sớm!`,
+        "success"
+      );
+    } catch (err) {
+      showToast(
+        err?.message || "Gửi đơn nhận nuôi thất bại",
+        "error"
+      );
+    }
+    finally {
+      setIsSubmitting(false);
+      console.log('[Adoption] submitApplication end', { time: new Date().toISOString() });
+      // Ensure modal is closed regardless of result
+      setIsApplicationOpen(false);
+      setSelectedPet(null);
+    }
   };
 
   return (
@@ -243,9 +339,24 @@ const AdoptionPage = () => {
       />
 
       <AdoptionApplicationModal
+        pet={selectedPet}
         isOpen={isApplicationOpen}
         onClose={() => setIsApplicationOpen(false)}
         onSubmit={submitApplication}
+        submitting={isSubmitting}
+        onShowAddressModal={() => setShowAddressModal(true)}
+      />
+      <AddressModal
+        show={showAddressModal}
+        addresses={addresses}
+        loading={loadingAddresses}
+        onClose={() => setShowAddressModal(false)}
+        onSelect={(addr) => {
+          window.dispatchEvent(
+            new CustomEvent("address-selected-adoption", { detail: addr })
+          );
+          setShowAddressModal(false);
+        }}
       />
     </div>
   );
