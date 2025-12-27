@@ -1,4 +1,4 @@
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { productsApi } from "../api/products";
 
 export function useProductsQuery(params = {}) {
@@ -8,7 +8,8 @@ export function useProductsQuery(params = {}) {
   return useQuery({
     queryKey: ["products", queryParams],
     queryFn: () => productsApi.getProducts(queryParams),
-    placeholderData: keepPreviousData,
+    // Keep previous data while fetching new page so UI doesn't jump.
+    keepPreviousData: true,
   });
 }
 

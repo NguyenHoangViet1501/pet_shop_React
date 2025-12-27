@@ -62,13 +62,18 @@ const PetCard = ({ pet, onAdoptClick }) => {
 
   // Xác định health status
   const getHealthStatus = () => {
-    const status = pet.healthStatus?.toLowerCase() || "";
-    if (status.includes("good") || status.includes("tốt") || status === "good") {
+    const raw = pet.healthStatus || "";
+    const status = String(raw).trim().toUpperCase();
+    if (status === "GOOD" || status === "TỐT" || status.includes("GOOD")) {
       return { text: "Sức khỏe tốt", color: "bg-success" };
     }
-    if (status.includes("fair") || status.includes("khá") || status === "fair") {
+    if (status === "BAD" || status === "KÉM" || status === "YẾU" || status.includes("BAD")) {
+      return { text: "Sức khỏe kém", color: "bg-danger" };
+    }
+    if (status.includes("FAIR") || status.includes("KHÁ")) {
       return { text: "Sức khỏe khá", color: "bg-warning" };
     }
+    // default
     return { text: "Sức khỏe tốt", color: "bg-success" };
   };
 

@@ -12,6 +12,7 @@ const ProductsPage = () => {
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get("search") || "";
   const navigate = useNavigate();
+  // UI `currentPage` is 1-based for users; we'll send `currentPage - 1` to the API
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedAnimal, setSelectedAnimal] = useState(null);
@@ -30,7 +31,7 @@ const ProductsPage = () => {
 
   const { data: brandsData } = useBrandsQuery();
 
-  // Reset page when search query changes
+  // Reset page when search query changes (reset to page 1)
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery]);
@@ -69,7 +70,8 @@ const ProductsPage = () => {
     isLoading: productsLoading,
     isError: productsError,
   } = useProductsQuery({
-    pageNumber: currentPage,
+    // Spring Pageable is 0-based; send currentPage - 1
+    pageNumber: Math.max(1, currentPage),
     size: pageSize,
     ...(selectedCategory && { categoryId: selectedCategory }),
     ...(selectedAnimal && selectedAnimal !== 'all' && { animal: selectedAnimal }),
@@ -90,7 +92,11 @@ const ProductsPage = () => {
   // ...existing code...
 
   const goTo = (page) => {
-    const p = Math.min(Math.max(totalPages, 1), Math.max(1, page));
+    // Clamp between 1 and totalPages when available. If totalPages not loaded,
+    // allow requested page (but minimum is 1).
+    const minPage = Math.max(1, page);
+    const maxPage = totalPages && totalPages > 0 ? totalPages : minPage;
+    const p = Math.min(minPage, maxPage);
     setCurrentPage(p);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -98,7 +104,7 @@ const ProductsPage = () => {
     if (currentPage > 1) goTo(currentPage - 1);
   };
   const next = () => {
-    if (currentPage < totalPages) goTo(currentPage + 1);
+    if (totalPages && currentPage < totalPages) goTo(currentPage + 1);
   };
 
   return (

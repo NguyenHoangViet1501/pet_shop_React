@@ -1,6 +1,8 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const AddressModal = ({ show, addresses, loading, onClose, onSelect }) => {
+  const navigate = useNavigate();
   if (!show) return null;
 
   const renderLine = (addr) => {
@@ -18,7 +20,19 @@ const AddressModal = ({ show, addresses, loading, onClose, onSelect }) => {
         <div className="modal-content">
           <div className="modal-header">
             <h5>Chọn địa chỉ</h5>
-            <button className="btn-close" onClick={onClose} />
+            <div>
+              <button
+                type="button"
+                className="btn btn-sm btn-outline-primary me-2"
+                onClick={() => {
+                  try { onClose && onClose(); } catch (e) {}
+                  navigate('/profile?tab=addresses');
+                }}
+              >
+                Thêm địa chỉ
+              </button>
+              <button className="btn-close" onClick={onClose} />
+            </div>
           </div>
 
           <div className="modal-body">
@@ -43,7 +57,20 @@ const AddressModal = ({ show, addresses, loading, onClose, onSelect }) => {
                 </div>
               ))
             ) : (
-              <p>Không có địa chỉ nào. Vui lòng thêm địa chỉ trong trang cá nhân.</p>
+              <div>
+                <p>Không có địa chỉ nào. Vui lòng thêm địa chỉ trong trang cá nhân.</p>
+                <div className="mt-3">
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => {
+                      try { onClose && onClose(); } catch (e) {}
+                      navigate('/profile?tab=addresses');
+                    }}
+                  >
+                    Thêm địa chỉ
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         </div>
