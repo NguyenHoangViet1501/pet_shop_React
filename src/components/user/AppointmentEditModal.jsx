@@ -214,13 +214,13 @@ const AppointmentEditModal = ({ isOpen, onClose, initial, onSave }) => {
 					) : (
 						<div>
 							{(() => {
-								const morningSlots = availableSlots.filter(slot => slot.startTime >= '08:00' && slot.startTime < '12:00');
-								const afternoonSlots = availableSlots.filter(slot => slot.startTime < '08:00' || slot.startTime >= '12:00');
+								const morningSlots = availableSlots.filter(slot => slot.startTime < '12:00').sort((a, b) => a.startTime.localeCompare(b.startTime));
+								const afternoonSlots = availableSlots.filter(slot => slot.startTime >= '12:00').sort((a, b) => a.startTime.localeCompare(b.startTime));
 								return (
 									<>
 										{morningSlots.length > 0 && (
 											<div className="mb-3">
-												<label className="form-label fw-bold">Buổi sáng (8:00 - 12:00)</label>
+												<label className="form-label fw-bold">Buổi sáng</label>
 												<div className="d-flex flex-wrap gap-2">
 													{morningSlots.map(slot => {
 														const slotDateTime = new Date(`${slot.slotDate}T${slot.startTime}`);
