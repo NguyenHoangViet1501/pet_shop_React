@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import AppointmentEditModal from "../../components/user/AppointmentEditModal";
+import CancelAppointmentModal from "../../components/user/CancelAppointmentModal";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import { servicesAPI } from "../../api/services";
@@ -11,6 +12,8 @@ const AppointmentsPage = () => {
   const { showToast } = useToast();
   const [items, setItems] = useState([]);
   const [editing, setEditing] = useState(null);
+  const [viewing, setViewing] = useState(null);
+  const [cancelling, setCancelling] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -46,18 +49,20 @@ const AppointmentsPage = () => {
 
   const openEdit = (apt) => setEditing(apt);
   const closeEdit = () => setEditing(null);
+  const openView = (apt) => setViewing(apt);
+  const closeView = () => setViewing(null);
+  const openCancel = (apt) => setCancelling(apt);
+  const closeCancel = () => setCancelling(null);
 
   const handleSave = (form) => {
     fetchAppointments();
     closeEdit();
   };
 
-  const handleCancel = async (id) => {
-    if (!window.confirm("Bạn có chắc chắn muốn hủy lịch hẹn này không?")) {
-      return;
-    }
+  const handleCancel = async () => {
+    if (!cancelling) return;
     try {
-      const response = await servicesAPI.cancelAppointment(id, token);
+      const response = await servicesAPI.cancelAppointment(cancelling.id, token);
       if (response.success) {
         showToast("Hủy lịch hẹn thành công", "success");
         fetchAppointments(); // Tải lại danh sách sau khi hủy thành công
@@ -74,6 +79,7 @@ const AppointmentsPage = () => {
         "error"
       );
     }
+    closeCancel();
   };
 
   return (
@@ -145,7 +151,7 @@ const AppointmentsPage = () => {
                             : ""}
                         </td>
                         <td>{appointment.notes || ""}</td>
-                        <td>
+                        <td className="align-middle">
                           <span
                             className={
                               appointment.status === "SCHEDULED"
@@ -172,22 +178,22 @@ const AppointmentsPage = () => {
                             const isPast = appointment.appointmentEnd && new Date(appointment.appointmentEnd) < now;
                             if (isPast) {
                               return (
-                                <button className="btn btn-sm btn-outline-primary">
-                                  Đánh giá
+                                <button className="btn btn-sm btn-outline-primary text-nowrap" onClick={() => openView(appointment)}>
+                                  Chi tiết
                                 </button>
                               );
                             } else if (appointment.status === "SCHEDULED") {
                               return (
                                 <div className="d-flex gap-1">
                                   <button
-                                    className="btn btn-sm btn-outline-primary"
+                                    className="btn btn-sm btn-outline-primary text-nowrap"
                                     onClick={() => openEdit(appointment)}
                                   >
                                     Sửa
                                   </button>
                                   <button
-                                    className="btn btn-sm btn-outline-danger"
-                                    onClick={() => handleCancel(appointment.id)}
+                                    className="btn btn-sm btn-outline-danger text-nowrap"
+                                    onClick={() => openCancel(appointment)}
                                   >
                                     Hủy
                                   </button>
@@ -195,8 +201,8 @@ const AppointmentsPage = () => {
                               );
                             } else {
                               return (
-                                <button className="btn btn-sm btn-outline-primary">
-                                  Đánh giá
+                                <button className="btn btn-sm btn-outline-primary text-nowrap" onClick={() => openView(appointment)}>
+                                  Chi tiết
                                 </button>
                               );
                             }
@@ -272,6 +278,18 @@ const AppointmentsPage = () => {
         onClose={closeEdit}
         initial={editing}
         onSave={handleSave}
+      />
+      <AppointmentEditModal
+        isOpen={Boolean(viewing)}
+        onClose={closeView}
+        initial={viewing}
+        isViewOnly={true}
+      />
+      <CancelAppointmentModal
+        isOpen={Boolean(cancelling)}
+        onClose={closeCancel}
+        onConfirm={handleCancel}
+        appointmentDetails={`${cancelling?.serviceName || cancelling?.service || ""} cho ${cancelling?.namePet || cancelling?.petName || ""}`}
       />
     </div>
   );

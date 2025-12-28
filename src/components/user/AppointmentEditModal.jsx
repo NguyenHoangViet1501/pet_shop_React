@@ -27,7 +27,7 @@ const ModalShell = ({ isOpen, title, onClose, children, footer }) => {
 	);
 };
 
-const AppointmentEditModal = ({ isOpen, onClose, initial, onSave }) => {
+const AppointmentEditModal = ({ isOpen, onClose, initial, onSave, isViewOnly = false }) => {
 	const { showToast } = useToast();
 	const [form, setForm] = useState({
 		serviceId: '',
@@ -161,9 +161,11 @@ const AppointmentEditModal = ({ isOpen, onClose, initial, onSave }) => {
 	return (
 		<ModalShell
 			isOpen={isOpen}
-			title="Sửa lịch hẹn"
+			title={isViewOnly ? "Chi tiết lịch hẹn" : "Sửa lịch hẹn"}
 			onClose={onClose}
-			footer={(
+			footer={isViewOnly ? (
+				<button type="button" className="btn btn-secondary" onClick={onClose}>Đóng</button>
+			) : (
 				<>
 					<button type="button" className="btn btn-secondary" onClick={onClose}>Hủy</button>
 					<button type="submit" form="appointmentEditForm" className="btn btn-primary">Lưu</button>
@@ -173,7 +175,7 @@ const AppointmentEditModal = ({ isOpen, onClose, initial, onSave }) => {
 			<form id="appointmentEditForm" onSubmit={handleSubmit}>
 				<div className="mb-3">
 					<label className="form-label">Loại dịch vụ</label>
-					<select className="form-select" name="serviceId" value={form.serviceId} onChange={handleChange}>
+					<select className="form-select" name="serviceId" value={form.serviceId} onChange={handleChange} disabled={isViewOnly}>
 						<option value="">Chọn dịch vụ</option>
 						{services.map(s => (
 							<option key={s.id} value={s.id}>{s.title}</option>
@@ -183,7 +185,7 @@ const AppointmentEditModal = ({ isOpen, onClose, initial, onSave }) => {
 				<div className="row">
 					<div className="col-md-6 mb-3">
 						<label className="form-label">Loại thú cưng</label>
-						<select className="form-select" name="petType" value={form.petType} onChange={handleChange}>
+						<select className="form-select" name="petType" value={form.petType} onChange={handleChange} disabled={isViewOnly}>
 							<option value="">Chọn loại thú cưng</option>
 							<option value="dog">Chó</option>
 							<option value="cat">Mèo</option>
@@ -193,96 +195,102 @@ const AppointmentEditModal = ({ isOpen, onClose, initial, onSave }) => {
 					</div>
 					<div className="col-md-6 mb-3">
 						<label className="form-label">Tên thú cưng</label>
-						<input className="form-control" name="petName" value={form.petName} onChange={handleChange} />
+						<input className="form-control" name="petName" value={form.petName} onChange={handleChange} readOnly={isViewOnly} />
 					</div>
 				</div>
 				<div className="mb-3">
 					<label className="form-label">Ngày hẹn</label>
-					<input type="date" className={`form-control ${errors.appointmentDate ? 'is-invalid' : ''}`} name="appointmentDate" value={form.appointmentDate} onChange={handleChange} />
+					<input type="date" className={`form-control ${errors.appointmentDate ? 'is-invalid' : ''}`} name="appointmentDate" value={form.appointmentDate} onChange={handleChange} disabled={isViewOnly} />
 					{errors.appointmentDate && (
 						<div className="invalid-feedback">{errors.appointmentDate}</div>
 					)}
 				</div>
 				<div className="mb-3">
 					<label className="form-label">Khung giờ hẹn</label>
-					{!form.appointmentDate ? (
-						<p className="text-muted">Vui lòng chọn ngày hẹn trước</p>
-					) : loadingSlots ? (
-						<p className="text-muted">Đang tải khung giờ...</p>
-					) : availableSlots.length === 0 ? (
-						<p className="text-muted">Không có khung giờ khả dụng cho ngày này</p>
+					{isViewOnly ? (
+						<p className="form-control-plaintext">{form.appointmentTime ? `${form.appointmentTime.slice(0,5)}` : 'Chưa chọn'}</p>
 					) : (
-						<div>
-							{(() => {
-								const morningSlots = availableSlots.filter(slot => slot.startTime < '12:00').sort((a, b) => a.startTime.localeCompare(b.startTime));
-								const afternoonSlots = availableSlots.filter(slot => slot.startTime >= '12:00').sort((a, b) => a.startTime.localeCompare(b.startTime));
-								return (
-									<>
-										{morningSlots.length > 0 && (
-											<div className="mb-3">
-												<label className="form-label fw-bold">Buổi sáng</label>
-												<div className="d-flex flex-wrap gap-2">
-													{morningSlots.map(slot => {
-														const slotDateTime = new Date(`${slot.slotDate}T${slot.startTime}`);
-														const now = new Date();
-														const isPast = slot.slotDate === form.appointmentDate && slotDateTime <= now;
-														return (
-															<button
-																key={slot.id}
-																type="button"
-																className={`btn ${selectedSlotId === slot.id ? 'btn-primary' : 'btn-outline-primary'} btn-sm ${isPast ? 'disabled' : ''}`}
-																onClick={() => {
-																	if (!isPast) {
-																		setSelectedSlotId(slot.id);
-																		setForm(prev => ({ ...prev, appointmentTime: slot.startTime }));
-																	}
-																}}
-																disabled={slot.availableCount === 0 || isPast}
-															>
-																{slot.startTime} - {slot.endTime}<br />trống {slot.availableCount} chỗ
-															</button>
-														);
-													})}
-												</div>
-											</div>
-										)}
-										{afternoonSlots.length > 0 && (
-											<div className="mb-3">
-												<label className="form-label fw-bold">Buổi chiều</label>
-												<div className="d-flex flex-wrap gap-2">
-													{afternoonSlots.map(slot => {
-														const slotDateTime = new Date(`${slot.slotDate}T${slot.startTime}`);
-														const now = new Date();
-														const isPast = slot.slotDate === form.appointmentDate && slotDateTime <= now;
-														return (
-															<button
-																key={slot.id}
-																type="button"
-																className={`btn ${selectedSlotId === slot.id ? 'btn-primary' : 'btn-outline-primary'} btn-sm ${isPast ? 'disabled' : ''}`}
-																onClick={() => {
-																	if (!isPast) {
-																		setSelectedSlotId(slot.id);
-																		setForm(prev => ({ ...prev, appointmentTime: slot.startTime }));
-																	}
-																}}
-																disabled={slot.availableCount === 0 || isPast}
-															>
-																{slot.startTime} - {slot.endTime}<br />trống {slot.availableCount} chỗ
-															</button>
-														);
-													})}
-												</div>
-											</div>
-										)}
-									</>
-								);
-							})()}
-						</div>
+						<>
+							{!form.appointmentDate ? (
+								<p className="text-muted">Vui lòng chọn ngày hẹn trước</p>
+							) : loadingSlots ? (
+								<p className="text-muted">Đang tải khung giờ...</p>
+							) : availableSlots.length === 0 ? (
+								<p className="text-muted">Không có khung giờ khả dụng cho ngày này</p>
+							) : (
+								<div>
+									{(() => {
+										const morningSlots = availableSlots.filter(slot => slot.startTime < '12:00').sort((a, b) => a.startTime.localeCompare(b.startTime));
+										const afternoonSlots = availableSlots.filter(slot => slot.startTime >= '12:00').sort((a, b) => a.startTime.localeCompare(b.startTime));
+										return (
+											<>
+												{morningSlots.length > 0 && (
+													<div className="mb-3">
+														<label className="form-label fw-bold">Buổi sáng</label>
+														<div className="d-flex flex-wrap gap-2">
+															{morningSlots.map(slot => {
+																const slotDateTime = new Date(`${slot.slotDate}T${slot.startTime}`);
+																const now = new Date();
+																const isPast = slot.slotDate === form.appointmentDate && slotDateTime <= now;
+																return (
+																	<button
+																		key={slot.id}
+																		type="button"
+																		className={`btn ${selectedSlotId === slot.id ? 'btn-primary' : 'btn-outline-primary'} btn-sm ${isPast ? 'disabled' : ''}`}
+																		onClick={() => {
+																			if (!isPast) {
+																				setSelectedSlotId(slot.id);
+																				setForm(prev => ({ ...prev, appointmentTime: slot.startTime }));
+																			}
+																		}}
+																		disabled={slot.availableCount === 0 || isPast}
+																	>
+																		{slot.startTime} - {slot.endTime}<br />trống {slot.availableCount} chỗ
+																	</button>
+																);
+															})}
+														</div>
+													</div>
+												)}
+												{afternoonSlots.length > 0 && (
+													<div className="mb-3">
+														<label className="form-label fw-bold">Buổi chiều</label>
+														<div className="d-flex flex-wrap gap-2">
+															{afternoonSlots.map(slot => {
+																const slotDateTime = new Date(`${slot.slotDate}T${slot.startTime}`);
+																const now = new Date();
+																const isPast = slot.slotDate === form.appointmentDate && slotDateTime <= now;
+																return (
+																	<button
+																		key={slot.id}
+																		type="button"
+																		className={`btn ${selectedSlotId === slot.id ? 'btn-primary' : 'btn-outline-primary'} btn-sm ${isPast ? 'disabled' : ''}`}
+																		onClick={() => {
+																			if (!isPast) {
+																				setSelectedSlotId(slot.id);
+																				setForm(prev => ({ ...prev, appointmentTime: slot.startTime }));
+																			}
+																		}}
+																		disabled={slot.availableCount === 0 || isPast}
+																	>
+																		{slot.startTime} - {slot.endTime}<br />trống {slot.availableCount} chỗ
+																	</button>
+																);
+															})}
+														</div>
+													</div>
+												)}
+											</>
+										);
+									})()}
+								</div>
+							)}
+						</>
 					)}
 				</div>
 				<div className="mb-3">
 					<label className="form-label">Ghi chú</label>
-					<textarea className="form-control" name="notes" value={form.notes} onChange={handleChange} rows={3} placeholder="Ghi chú thêm (nếu có)" />
+					<textarea className="form-control" name="notes" value={form.notes} onChange={handleChange} rows={3} placeholder="Ghi chú thêm (nếu có)" readOnly={isViewOnly} />
 				</div>
 			</form>
 		</ModalShell>
