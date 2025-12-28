@@ -8,6 +8,8 @@ import {
   PetDetailModal,
   AdoptionApplicationModal,
 } from "../../components/adoption/AdoptionModal";
+import { use } from "react";  
+import { useNavigate } from "react-router-dom";
 
 const AdoptionPage = () => {
   const [addresses, setAddresses] = useState([]);
@@ -18,7 +20,7 @@ const AdoptionPage = () => {
     age: "",
     size: "",
   });
-
+  const navigate = useNavigate();
   const [pets, setPets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [animals, setAnimals] = useState([]);
@@ -210,6 +212,7 @@ const AdoptionPage = () => {
         `Đã gửi đơn nhận nuôi ${selectedPet?.name}. Chúng tôi sẽ liên hệ sớm!`,
         "success"
       );
+      navigate("/adoption-requests");
     } catch (err) {
       showToast(
         err?.message || "Gửi đơn nhận nuôi thất bại",
@@ -246,23 +249,12 @@ const AdoptionPage = () => {
                   onChange={(e) => handleFilterChange("type", e.target.value)}
                 >
                   <option value="">Tất cả</option>
-                  {animals.map((animal) => {
-                    // Map animal name sang tiếng Việt để hiển thị
-                    const animalNameMap = {
-                      Dog: "Chó",
-                      Cat: "Mèo",
-                      Bird: "Chim",
-                      Rabbit: "Thỏ",
-                      Hamster: "Chuột Hamster",
-                      Turtle: "Rùa",
-                    };
-                    const displayName = animalNameMap[animal] || animal;
-                    return (
-                      <option key={animal} value={animal}>
-                        {displayName}
-                      </option>
-                    );
-                  })}
+                  <option value="Dog">Chó</option>
+                  <option value="Cat">Mèo</option>
+                  <option value="Bird">Chim</option>
+                  <option value="Rabbit">Thỏ</option>
+                  <option value="Other">Khác</option>
+
                 </select>
               </div>
 
@@ -274,10 +266,10 @@ const AdoptionPage = () => {
                   onChange={(e) => handleFilterChange("age", e.target.value)}
                 >
                   <option value="">Tất cả</option>
-                  <option value="puppy">Con (&lt; 1 tuổi)</option>
-                  <option value="young">Trẻ (1-3 tuổi)</option>
-                  <option value="adult">Trưởng thành (3-7 tuổi)</option>
-                  <option value="senior">Già (&gt; 7 tuổi)</option>
+                  <option value="puppy">&lt; 1 tuổi</option>
+                  <option value="young">1-3 tuổi</option>
+                  <option value="adult">3-7 tuổi</option>
+                  <option value="senior">&gt; 7 tuổi</option>
                 </select>
               </div>
 

@@ -162,11 +162,11 @@ export const AdoptionApplicationModal = ({ isOpen, onClose, onSubmit, onShowAddr
         <div className="row">
           <div className="col-md-6 mb-3">
             <label className="form-label">Họ và tên *</label>
-            <input name="fullName" className="form-control" value={form.fullName} onChange={handleChange} required />
+            <input name="fullName" className="form-control" value={form.fullName} onChange={handleChange} required readOnly/>
           </div>
           <div className="col-md-6 mb-3">
             <label className="form-label">Số điện thoại *</label>
-            <input name="phone" className="form-control" value={form.phone} onChange={handleChange} required />
+            <input name="phone" className="form-control" value={form.phone} onChange={handleChange} required readOnly/>
           </div>
         </div>
     <div className="mb-3">
@@ -176,7 +176,7 @@ export const AdoptionApplicationModal = ({ isOpen, onClose, onSubmit, onShowAddr
           Chọn
         </button>
       </div>
-      <textarea name="address" className="form-control" rows={2} value={form.address} onChange={handleChange} required />
+      <textarea name="address" className="form-control" rows={2} value={form.address} onChange={handleChange} required readOnly/>
     </div>
         <div className="row">
           <div className="col-md-6 mb-3">
@@ -198,11 +198,11 @@ export const AdoptionApplicationModal = ({ isOpen, onClose, onSubmit, onShowAddr
           <label className="form-label">Bạn đã từng nuôi thú cưng chưa? *</label>
           <div className="form-check">
             <input className="form-check-input" type="radio" name="experience" value="1" checked={form.experience === '1'} onChange={handleChange} required />
-            <label className="form-check-label">Có</label>
+            <label className="form-check-label">Rồi</label>
           </div>
           <div className="form-check">
             <input className="form-check-input" type="radio" name="experience" value="0" checked={form.experience === '0'} onChange={handleChange} required />
-            <label className="form-check-label">Không</label>
+            <label className="form-check-label">Chưa</label>
           </div>
         </div>
         <div className="mb-3">

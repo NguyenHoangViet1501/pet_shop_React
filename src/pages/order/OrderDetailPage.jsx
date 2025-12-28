@@ -171,13 +171,13 @@ const OrderDetailPage = () => {
               <h5 className="card-title mb-3">Thanh toán</h5>
               <div className="d-flex justify-content-between mb-2">
                 <span className="text-muted">Tạm tính:</span>
-                <span>{formatMoney(orderInfo.totalAmount)}</span> 
+                <span>{formatMoney(orderInfo.totalPrice)}</span> 
                 {/* Lưu ý: JSON trả về totalAmount là tổng cuối cùng, nếu có phí ship hay giảm giá thì cần tính toán lại để hiển thị chi tiết hơn. 
                     Ở đây tạm dùng totalAmount cho tổng cộng. */}
               </div>
               <div className="d-flex justify-content-between mb-2">
                 <span className="text-muted">Phí vận chuyển:</span>
-                <span>0 đ</span> {/* JSON chưa có field shippingFee riêng, tạm để 0 hoặc ẩn */}
+                <span>{formatMoney(orderInfo.shippingAmount)}</span> {/* JSON chưa có field shippingFee riêng, tạm để 0 hoặc ẩn */}
               </div>
               <hr />
               <div className="d-flex justify-content-between align-items-center">

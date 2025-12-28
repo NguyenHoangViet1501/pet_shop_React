@@ -127,7 +127,6 @@ export default function PetDetail() {
             <button className="btn btn-warning btn-lg px-4 fw-bold" onClick={() => {
               if (!user) {
                 showToast('Vui lòng đăng nhập để đăng ký nhận nuôi', 'warning');
-                navigate('/login');
                 return;
               }
               setIsApplicationOpen(true);
@@ -196,6 +195,7 @@ export default function PetDetail() {
           await adoptApi.createAdoptRequest(payload, token);
           showToast(`Đã gửi đơn nhận nuôi ${pet?.name}`, 'success');
           setIsApplicationOpen(false);
+          navigate('/adoption-requests');
         } catch (err) {
           console.error('Adopt submit failed', err);
           showToast(err?.message || 'Gửi đơn thất bại', 'error');
