@@ -39,10 +39,10 @@ const CartItem = ({ item, isSelected, onToggleSelect }) => {
 
   const handleChange = (e) => {
     const value = e.target.value;
-    
+
     // Update local input state ngay (user thấy số mình nhập)
     setInputValue(value);
-    
+
     // Cho phép input rỗng tạm thời (user đang xóa)
     if (value === "") {
       return;
@@ -134,6 +134,9 @@ const CartItem = ({ item, isSelected, onToggleSelect }) => {
               <span className="fw-semibold">Phân loại:</span> {item.variantName}
             </div>
           )}
+          <div className="text-muted mt-1">
+            <span className="fw-semibold">Kho:</span> {item.stockQuantity ?? 0}
+          </div>
         </div>
 
         {/* Quantity */}

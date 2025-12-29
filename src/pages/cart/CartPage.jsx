@@ -18,7 +18,7 @@ const CartPage = () => {
 
   const fetchAddresses = useCallback(async () => {
     if (!token) return;
-    
+
     try {
       const response = await addressAPI.getUserAddresses(token, 10, 0);
 
@@ -42,7 +42,7 @@ const CartPage = () => {
 
           setAddress(formattedAddress);
 
-        
+
         }
       }
     } catch (error) {
@@ -215,7 +215,8 @@ const CartPage = () => {
                   key={item.productVariantId}
                   item={{
                     id: item.id,
-                    productVariantId: item.productVariantId, // Thêm productVariantId
+                    productVariantId: item.productVariantId,
+                    stockQuantity: item.stockQuantity, // Thêm productVariantId
                     name: item.productName,
                     variantName: item.variantName,
                     image: item.imageUrl,
