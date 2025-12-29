@@ -25,6 +25,7 @@ import HomePageNew from "./pages/home/HomePageNew";
 import Headernew from "./components/common/Headernew";
 import PaymentFailedPage from "./pages/payment/PaymentFailedPage";
 import PaymentSuccessPage from "./pages/payment/PaymentSuccessPage";
+import Chatbot from "./components/chatbot/Chatbot";
 
 function App() {
   return (
@@ -59,6 +60,7 @@ function App() {
       </main>
       <Footer />
       <Toast />
+      <Chatbot />
     </div>
   );
 }
