@@ -97,8 +97,8 @@ const AppointmentsPage = () => {
                     <th>STT</th>
                     <th>Dịch vụ</th>
                     <th>Thú cưng</th>
-                    <th>Ngày giờ bắt đầu</th>
-                    <th>Ngày giờ kết thúc</th>
+                    <th style={{ minWidth: '180px' }}>Ngày giờ bắt đầu</th>
+                    <th style={{ minWidth: '180px' }}>Ngày giờ kết thúc</th>
                     <th>Ghi chú</th>
                     <th>Trạng thái</th>
                     <th>Thao tác</th>
