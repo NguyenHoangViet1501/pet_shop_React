@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { addressAPI } from "../../api";
 import { useToast } from "../../context/ToastContext";
+import SearchableSelect from "../common/SearchableSelect";
+import { useLocation } from "../../hooks/useLocation";
 
 const ModalShell = ({ isOpen, title, onClose, children, footer }) => {
   useEffect(() => {
@@ -56,13 +58,17 @@ const AddressFormModal = ({ isOpen, onClose, onSave }) => {
     fullName: "",
     phone: "",
     addressLine: "",
-    city: "",
-    district: "",
-    ward: "",
     isDefault: false,
   });
   const [errors, setErrors] = useState({});
   const [isUsingLoginInfo, setIsUsingLoginInfo] = useState(false);
+
+  // Use location hook (initially empty)
+  const {
+    provinces, districts, wards,
+    selectedCity, selectedDistrict, selectedWard,
+    setCity, setDistrict, setWard
+  } = useLocation(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -70,11 +76,10 @@ const AddressFormModal = ({ isOpen, onClose, onSave }) => {
         fullName: "",
         phone: "",
         addressLine: "",
-        city: "",
-        district: "",
-        ward: "",
         isDefault: false,
       });
+      // Reset location
+      setCity(null); // This will clear others too
       setErrors({});
       setIsUsingLoginInfo(false);
     }
@@ -86,7 +91,6 @@ const AddressFormModal = ({ isOpen, onClose, onSave }) => {
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
-    // Clear error for this field when user starts typing
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
@@ -94,33 +98,21 @@ const AddressFormModal = ({ isOpen, onClose, onSave }) => {
 
   const handleUseLoginInfo = () => {
     if (isUsingLoginInfo) {
-      // Clear the fields and reset to inactive state
       setForm((prev) => ({
         ...prev,
         fullName: "",
         phone: "",
       }));
       setIsUsingLoginInfo(false);
-      // Clear errors for name and phone fields
-      setErrors((prev) => ({
-        ...prev,
-        fullName: "",
-        phone: "",
-      }));
+      setErrors((prev) => ({ ...prev, fullName: "", phone: "" }));
     } else {
-      // Populate with login info and set to active state
       setForm((prev) => ({
         ...prev,
         fullName: user?.fullName || user?.name || "",
         phone: user?.phone || "",
       }));
       setIsUsingLoginInfo(true);
-      // Clear errors for name and phone fields
-      setErrors((prev) => ({
-        ...prev,
-        fullName: "",
-        phone: "",
-      }));
+      setErrors((prev) => ({ ...prev, fullName: "", phone: "" }));
     }
   };
 
@@ -135,10 +127,11 @@ const AddressFormModal = ({ isOpen, onClose, onSave }) => {
     }
     if (!form.addressLine.trim())
       newErrors.addressLine = "Địa chỉ không được để trống";
-    if (!form.city.trim()) newErrors.city = "Tỉnh/Thành không được để trống";
-    if (!form.district.trim())
-      newErrors.district = "Quận/Huyện không được để trống";
-    // ward is optional
+
+    if (!selectedCity) newErrors.city = "Vui lòng chọn Tỉnh/Thành";
+    if (!selectedDistrict) newErrors.district = "Vui lòng chọn Quận/Huyện";
+    if (!selectedWard) newErrors.ward = "Vui lòng chọn Phường/Xã";
+
     return newErrors;
   };
 
@@ -157,16 +150,15 @@ const AddressFormModal = ({ isOpen, onClose, onSave }) => {
         contactName: form.fullName,
         phone: form.phone,
         detailAddress: form.addressLine,
-        city: form.city,
-        state: form.district,
-        ward: form.ward,
+        city: selectedCity.name,
+        state: selectedDistrict.name,
+        ward: selectedWard.name,
         isDefault: form.isDefault ? "1" : "0",
       };
 
       const res = await addressAPI.createAddress(addressData, token);
       showToast("Đã thêm địa chỉ mới!", "success");
-      // prefer API-returned address object if available
-      const created = res?.result || res || form;
+      const created = res?.result || res || addressData;
       onSave?.(created);
       onClose();
     } catch (error) {
@@ -227,9 +219,8 @@ const AddressFormModal = ({ isOpen, onClose, onSave }) => {
           <div className="col-12">
             <button
               type="button"
-              className={`btn btn-sm ${
-                isUsingLoginInfo ? "btn-warning" : "btn-outline-primary"
-              }`}
+              className={`btn btn-sm ${isUsingLoginInfo ? "btn-warning" : "btn-outline-primary"
+                }`}
               onClick={handleUseLoginInfo}
             >
               {isUsingLoginInfo
@@ -238,11 +229,46 @@ const AddressFormModal = ({ isOpen, onClose, onSave }) => {
             </button>
           </div>
           <div className="col-12">
-            <label className="form-label">Địa chỉ</label>
+            <label className="form-label">Tỉnh/Thành</label>
+            <div style={{ zIndex: 1003 }}>
+              <SearchableSelect
+                options={provinces}
+                value={selectedCity?.code}
+                onChange={setCity}
+                placeholder="Chọn Tỉnh/Thành"
+                error={errors.city}
+              />
+            </div>
+          </div>
+          <div className="col-6">
+            <label className="form-label">Quận/Huyện</label>
+            <div style={{ zIndex: 1002 }}>
+              <SearchableSelect
+                options={districts}
+                value={selectedDistrict?.code}
+                onChange={setDistrict}
+                placeholder="Chọn Quận/Huyện"
+                error={errors.district}
+              />
+            </div>
+          </div>
+          <div className="col-6">
+            <label className="form-label">Phường/Xã</label>
+            <div style={{ zIndex: 1001 }}>
+              <SearchableSelect
+                options={wards}
+                value={selectedWard?.code}
+                onChange={setWard}
+                placeholder="Chọn Phường/Xã"
+                error={errors.ward}
+              />
+            </div>
+          </div>
+          <div className="col-12">
+            <label className="form-label">Địa chỉ cụ thể (Số nhà, đường...)</label>
             <input
-              className={`form-control ${
-                errors.addressLine ? "is-invalid" : ""
-              }`}
+              className={`form-control ${errors.addressLine ? "is-invalid" : ""
+                }`}
               name="addressLine"
               value={form.addressLine}
               onChange={handleChange}
@@ -251,39 +277,7 @@ const AddressFormModal = ({ isOpen, onClose, onSave }) => {
               <div className="invalid-feedback">{errors.addressLine}</div>
             )}
           </div>
-          <div className="col-md-4">
-            <label className="form-label">Tỉnh/Thành</label>
-            <input
-              className={`form-control ${errors.city ? "is-invalid" : ""}`}
-              name="city"
-              value={form.city}
-              onChange={handleChange}
-            />
-            {errors.city && (
-              <div className="invalid-feedback">{errors.city}</div>
-            )}
-          </div>
-          <div className="col-md-4">
-            <label className="form-label">Quận/Huyện</label>
-            <input
-              className={`form-control ${errors.district ? "is-invalid" : ""}`}
-              name="district"
-              value={form.district}
-              onChange={handleChange}
-            />
-            {errors.district && (
-              <div className="invalid-feedback">{errors.district}</div>
-            )}
-          </div>
-          <div className="col-md-4">
-            <label className="form-label">Phường/Xã</label>
-            <input
-              className="form-control"
-              name="ward"
-              value={form.ward}
-              onChange={handleChange}
-            />
-          </div>
+
           <div className="col-12 form-check mt-2">
             <input
               className="form-check-input"

@@ -10,3 +10,4 @@ export { paymentAPI } from "./payment";
 export { petsApi } from "./pets";
 export { adoptApi } from "./adopt";
 export { chatbotAPI } from "./chatbot";
+export { locationApi } from "./location";
