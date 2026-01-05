@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "./ServicesIntroSlider.css";
 
 const slides = [
@@ -46,18 +46,74 @@ const slides = [
   }
 ];
 
-const ServicesIntroSlider = () => {
+const ServicesIntroSlider = ({ onBookNow }) => {
   const [active, setActive] = useState(0);
   const [direction, setDirection] = useState(0); // -1: left, 1: right
+  const [isPaused, setIsPaused] = useState(false);
 
-  const handlePrev = () => {
-    setDirection(-1);
-    setActive((a) => (a === 0 ? slides.length - 1 : a - 1));
-  };
-  const handleNext = () => {
+  const intervalRef = useRef(null);
+  const isPausedRef = useRef(isPaused);
+
+  // Keep ref in sync with state
+  useEffect(() => {
+    isPausedRef.current = isPaused;
+  }, [isPaused]);
+
+  // Core slide transition functions (no timer logic)
+  const goNext = () => {
     setDirection(1);
     setActive((a) => (a === slides.length - 1 ? 0 : a + 1));
   };
+
+  const goPrev = () => {
+    setDirection(-1);
+    setActive((a) => (a === 0 ? slides.length - 1 : a - 1));
+  };
+
+  const stopInterval = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  };
+
+  const startInterval = () => {
+    stopInterval();
+    if (isPausedRef.current) return; // Don't start if paused
+    intervalRef.current = setInterval(() => {
+      if (!isPausedRef.current) {
+        goNext();
+      }
+    }, 3000);
+  };
+
+  // User click handlers - reset timer to full 3 seconds
+  const handlePrev = () => {
+    stopInterval();
+    goPrev();
+    startInterval();
+  };
+
+  const handleNext = () => {
+    stopInterval();
+    goNext();
+    startInterval();
+  };
+
+  // Handle hover pause/resume
+  useEffect(() => {
+    if (isPaused) {
+      stopInterval();
+    } else {
+      startInterval();
+    }
+  }, [isPaused]);
+
+  // Initial start
+  useEffect(() => {
+    startInterval();
+    return () => stopInterval();
+  }, []);
 
   return (
     <section className="services-intro-slider py-3">
@@ -66,6 +122,8 @@ const ServicesIntroSlider = () => {
           <div
             className={`intro-slider-track${direction === 1 ? ' slide-right' : direction === -1 ? ' slide-left' : ''}`}
             key={active}
+            onMouseEnter={() => setIsPaused(true)}
+            onMouseLeave={() => setIsPaused(false)}
           >
             <div className="row align-items-center justify-content-center intro-slider-slide">
               <div className="col-12 col-md-6 mb-4 mb-md-0 d-flex justify-content-center">
@@ -79,14 +137,14 @@ const ServicesIntroSlider = () => {
                 <h2 className="fw-bold mb-3">{slides[active].title}</h2>
                 <div className="text-muted mb-4" style={{ minHeight: 80 }}>{slides[active].desc1}</div>
                 <div className="text-muted mb-4" style={{ minHeight: 80 }}>{slides[active].desc2}</div>
-                <button className="btn btn-warning btn-lg px-4 mb-4">
+                <button className="btn btn-warning btn-lg px-4 mb-4" onClick={onBookNow}>
                   {slides[active].button}
                 </button>
               </div>
             </div>
           </div>
         </div>
-        <div className="d-flex justify-content-center mt-5" style={{gap: '32px'}}>
+        <div className="d-flex justify-content-center mt-5" style={{ gap: '32px' }}>
           <button className="btn-dark rounded-circle intro-nav-btn" onClick={handlePrev} aria-label="Trước">
             <i className="fas fa-chevron-left"></i>
           </button>

@@ -55,7 +55,10 @@ const ServicesPage = () => {
   return (
     <div className="page" id="services">
       <div className="container page-content">
-        <ServicesIntroSlider />
+        <ServicesIntroSlider onBookNow={() => {
+          setSelectedServiceId("");
+          setIsModalOpen(true);
+        }} />
         <div className="mb-5">
           {loadingServices && (
             <div className="text-muted text-center">Đang tải dịch vụ...</div>
