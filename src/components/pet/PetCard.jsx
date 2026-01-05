@@ -136,7 +136,7 @@ const PetCard = ({ pet, onAdoptClick }) => {
           <div className="mb-2" style={{ marginTop: "0.25rem" }}>
             <small className="text-muted d-block mb-1" style={{ fontSize: "0.8rem" }}>
               <i className="fas fa-info-circle me-1"></i>
-              Kích thước: {getSizeText(pet.size)} • Giới tính:{" "}
+              Cân nặng: {pet.weight ? `${pet.weight} kg` : "N/A"} • Giới tính:{" "}
               {getGenderText(pet.gender)}
             </small>
           </div>

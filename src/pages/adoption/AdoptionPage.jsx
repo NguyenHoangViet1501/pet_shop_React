@@ -18,13 +18,20 @@ const AdoptionPage = () => {
   const [filters, setFilters] = useState({
     type: "",
     age: "",
-    size: "",
+    minWeight: "",
+    maxWeight: "",
   });
   const navigate = useNavigate();
   const location = useLocation();
   const [pets, setPets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [animals, setAnimals] = useState([]);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+  const pageSize = 6;
 
   const { user, token } = useAuth();
   const { showToast } = useToast();
@@ -80,12 +87,14 @@ const AdoptionPage = () => {
   // Load pets from API
   useEffect(() => {
     const loadPets = async () => {
-      console.log('[Adoption] loadPets start', { filters, time: new Date().toISOString() });
+      console.log('[Adoption] loadPets start', { filters, currentPage, time: new Date().toISOString() });
       setLoading(true);
       try {
         // Map filter values từ frontend sang backend
         const params = {
           isDeleted: "0", // Chỉ lấy pets chưa bị xóa
+          page: currentPage,
+          limit: pageSize,
         };
 
         if (filters.type) {
@@ -104,14 +113,11 @@ const AdoptionPage = () => {
           params.ageGroup = ageGroupMap[filters.age] || filters.age;
         }
 
-        if (filters.size) {
-          // Map size filter: "small" -> "Small", "medium" -> "Medium", "large" -> "Big"
-          const sizeMap = {
-            small: "Small",
-            medium: "Medium",
-            large: "Big",
-          };
-          params.size = sizeMap[filters.size] || filters.size;
+        if (filters.minWeight) {
+          params.minWeight = filters.minWeight;
+        }
+        if (filters.maxWeight) {
+          params.maxWeight = filters.maxWeight;
         }
 
         const res = await petsApi.getPets(params);
@@ -120,10 +126,16 @@ const AdoptionPage = () => {
         // Nếu data là object có content (pagination), lấy content
         if (data.content) {
           setPets(data.content);
+          setTotalPages(data.totalPages || 0);
+          setTotalElements(data.totalElements || 0);
         } else if (Array.isArray(data)) {
           setPets(data);
+          setTotalPages(1);
+          setTotalElements(data.length);
         } else {
           setPets([]);
+          setTotalPages(0);
+          setTotalElements(0);
         }
       } catch (error) {
         console.error("Failed to load pets:", error);
@@ -136,13 +148,30 @@ const AdoptionPage = () => {
     };
 
     loadPets();
-  }, [filters]);
+  }, [filters, currentPage]);
 
   const handleFilterChange = (field, value) => {
     setFilters((prev) => ({
       ...prev,
       [field]: value,
     }));
+    setCurrentPage(1);
+  };
+
+  const goTo = (page) => {
+    const minPage = Math.max(1, page);
+    const maxPage = totalPages && totalPages > 0 ? totalPages : minPage;
+    const p = Math.min(minPage, maxPage);
+    setCurrentPage(p);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const prev = () => {
+    if (currentPage > 1) goTo(currentPage - 1);
+  };
+
+  const next = () => {
+    if (totalPages && currentPage < totalPages) goTo(currentPage + 1);
   };
 
   const handleAdoptionClick = (pet) => {
@@ -304,17 +333,25 @@ const AdoptionPage = () => {
               </div>
 
               <div className="mb-3">
-                <label className="form-label">Kích thước</label>
-                <select
-                  className="form-select"
-                  value={filters.size}
-                  onChange={(e) => handleFilterChange("size", e.target.value)}
-                >
-                  <option value="">Tất cả</option>
-                  <option value="small">Nhỏ</option>
-                  <option value="medium">Trung bình</option>
-                  <option value="large">Lớn</option>
-                </select>
+                <label className="form-label">Cân nặng (kg)</label>
+                <div className="d-flex gap-2">
+                  <input
+                    type="number"
+                    className="form-control"
+                    placeholder="Từ"
+                    value={filters.minWeight}
+                    onChange={(e) => handleFilterChange("minWeight", e.target.value)}
+                    min="0"
+                  />
+                  <input
+                    type="number"
+                    className="form-control"
+                    placeholder="Đến"
+                    value={filters.maxWeight}
+                    onChange={(e) => handleFilterChange("maxWeight", e.target.value)}
+                    min="0"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -347,6 +384,50 @@ const AdoptionPage = () => {
                     </div>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Pagination */}
+            {!loading && totalPages > 0 && (
+              <div className="d-flex justify-content-center mt-5">
+                <div className="d-flex gap-2">
+                  <button
+                    className="bg-white border rounded-3 d-flex align-items-center justify-content-center"
+                    style={{ width: 40, height: 40, color: '#6c757d' }}
+                    onClick={prev}
+                    disabled={currentPage === 1}
+                  >
+                    <i className="fas fa-chevron-left"></i>
+                  </button>
+
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                    (p) => (
+                      <button
+                        key={p}
+                        className={`rounded-3 d-flex align-items-center justify-content-center fw-bold`}
+                        style={{
+                          width: 40,
+                          height: 40,
+                          backgroundColor: currentPage === p ? "#ffc107" : "white",
+                          color: currentPage === p ? "white" : "#6c757d",
+                          borderColor: currentPage === p ? "#ffc107" : "#dee2e6",
+                        }}
+                        onClick={() => goTo(p)}
+                      >
+                        {p}
+                      </button>
+                    )
+                  )}
+
+                  <button
+                    className="bg-white border rounded-3 d-flex align-items-center justify-content-center"
+                    style={{ width: 40, height: 40, color: '#6c757d' }}
+                    onClick={next}
+                    disabled={currentPage === totalPages}
+                  >
+                    <i className="fas fa-chevron-right"></i>
+                  </button>
+                </div>
               </div>
             )}
           </div>

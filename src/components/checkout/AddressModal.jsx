@@ -6,9 +6,12 @@ const AddressModal = ({ show, addresses, loading, onClose, onSelect }) => {
   if (!show) return null;
 
   const renderLine = (addr) => {
-    // Support both shapes: { line } or { detailAddress, ward, state, city }
-    if (addr.line) return addr.line;
-    const parts = [addr.detailAddress, addr.ward, addr.state, addr.city].filter(Boolean);
+    const parts = [
+      addr.line || addr.detailAddress,
+      addr.ward,
+      addr.district || addr.state,
+      addr.city
+    ].filter(Boolean);
     return parts.join(', ');
   };
 

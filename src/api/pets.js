@@ -7,8 +7,18 @@ export const petsApi = {
     
     // Thêm filter params
     if (params.animal) queryParams.append("animal", params.animal);
-    if (params.size) queryParams.append("size", params.size);
+    if (params.minWeight) queryParams.append("minWeight", params.minWeight);
+    if (params.maxWeight) queryParams.append("maxWeight", params.maxWeight);
     if (params.ageGroup) queryParams.append("ageGroup", params.ageGroup);
+    
+    // Pagination
+    if (params.page !== undefined) {
+      queryParams.append("page", params.page);
+    }
+    if (params.limit !== undefined) {
+      queryParams.append("size", params.limit);
+    }
+
     if (params.isDeleted !== undefined) {
       queryParams.append("isDeleted", params.isDeleted);
     } else {
