@@ -204,7 +204,7 @@ const BookingModal = ({ isOpen, onClose, services, initialServiceId }) => {
               </div>
 
               <div className="mb-3">
-                <label className="form-label">Loại thú cưng</label>
+                <label className="form-label">Loại thú cưng *</label>
                 <select
                   className={`form-select ${errors.petType ? 'is-invalid' : ''}`}
                   name="petType"
@@ -327,7 +327,7 @@ const BookingModal = ({ isOpen, onClose, services, initialServiceId }) => {
               </div>
 
               <div className="mb-3">
-                <label className="form-label">Tên thú cưng</label>
+                <label className="form-label">Tên thú cưng *</label>
                 <input
                   type="text"
                   className={`form-control ${errors.petName ? 'is-invalid' : ''}`}
