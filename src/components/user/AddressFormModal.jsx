@@ -163,9 +163,11 @@ const AddressFormModal = ({ isOpen, onClose, onSave }) => {
         isDefault: form.isDefault ? "1" : "0",
       };
 
-      await addressAPI.createAddress(addressData, token);
+      const res = await addressAPI.createAddress(addressData, token);
       showToast("Đã thêm địa chỉ mới!", "success");
-      onSave?.(form);
+      // prefer API-returned address object if available
+      const created = res?.result || res || form;
+      onSave?.(created);
       onClose();
     } catch (error) {
       showToast("Có lỗi xảy ra khi thêm địa chỉ. Vui lòng thử lại.", "error");

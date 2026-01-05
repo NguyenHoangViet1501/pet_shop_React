@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import './AdoptionModal.css';
 
-const ModalShell = ({ isOpen, title, onClose, children, footer }) => {
+export const PetDetailModal = ({ isOpen, pet, onClose, onApply }) => {
   useEffect(() => {
     if (isOpen) {
       document.body.classList.add('modal-open');
@@ -11,26 +12,53 @@ const ModalShell = ({ isOpen, title, onClose, children, footer }) => {
     return () => document.body.classList.remove('modal-open');
   }, [isOpen]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !pet) return null;
 
   return (
     <>
-      <div className="modal-backdrop fade show" style={{ zIndex: 1050 }} onClick={onClose}></div>
-      <div className="modal fade show" style={{ display: 'block', zIndex: 1055 }}>
-        <div className="modal-dialog modal-lg" onClick={(e) => e.stopPropagation()}>
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">{title}</h5>
-              <button type="button" className="btn-close" onClick={onClose}></button>
-            </div>
-            <div className="modal-body">
-              {children}
-            </div>
-            {footer && (
-              <div className="modal-footer">
-                {footer}
+      <div className="adoption-modal-backdrop" onClick={onClose} />
+      <div className="adoption-modal-wrapper" onClick={onClose}>
+        <div className="adoption-modal-card" onClick={(e) => e.stopPropagation()}>
+          <div className="adoption-modal-header">
+            <div className="adoption-modal-header-content">
+              {pet.image && (
+                <img src={pet.image} alt={pet.name} className="adoption-modal-pet-avatar" />
+              )}
+              <div>
+                <h2 className="adoption-modal-title">Chi tiết thú cưng</h2>
+                <p className="adoption-modal-subtitle">{pet.name}</p>
               </div>
-            )}
+            </div>
+            <button className="adoption-modal-close" onClick={onClose}>×</button>
+          </div>
+          <div className="adoption-modal-body">
+            <div className="row g-3">
+              <div className="col-md-5">
+                <img src={pet.image} alt={pet.name} className="img-fluid rounded" />
+              </div>
+              <div className="col-md-7">
+                <h5 className="mb-1">{pet.name}</h5>
+                <div className="text-muted mb-2">
+                  {pet.type === 'dog' ? 'Chó' : pet.type === 'cat' ? 'Mèo' : 'Chim'} {pet.breed}
+                </div>
+                <ul className="list-unstyled mb-3">
+                  <li><strong>Tuổi:</strong> {pet.age} tuổi</li>
+                  <li><strong>Kích thước:</strong> {pet.size}</li>
+                  <li><strong>Giới tính:</strong> {pet.gender === 'male' ? 'Đực' : 'Cái'}</li>
+                </ul>
+                <p>{pet.description}</p>
+                <div>
+                  {pet.vaccinated && <span className="badge bg-info me-2">Đã tiêm phòng</span>}
+                  {pet.spayed && <span className="badge bg-secondary">Đã triệt sản</span>}
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="adoption-modal-footer">
+            <button className="adoption-modal-btn-cancel" onClick={onClose}>Đóng</button>
+            <button className="adoption-modal-btn-submit" onClick={onApply}>
+              🐾 Gửi đơn nhận nuôi
+            </button>
           </div>
         </div>
       </div>
@@ -38,46 +66,9 @@ const ModalShell = ({ isOpen, title, onClose, children, footer }) => {
   );
 };
 
-export const PetDetailModal = ({ isOpen, pet, onClose, onApply }) => {
-  if (!pet) return null;
-
-  return (
-    <ModalShell
-      isOpen={isOpen}
-      title="Chi tiết thú cưng"
-      onClose={onClose}
-      footer={(
-        <>
-          <button type="button" className="btn btn-secondary" onClick={onClose}>Đóng</button>
-          <button type="button" className="btn btn-primary" onClick={onApply}>Gửi đơn nhận nuôi</button>
-        </>
-      )}
-    >
-      <div className="row g-3">
-        <div className="col-md-5">
-          <img src={pet.image} alt={pet.name} className="img-fluid rounded" />
-        </div>
-        <div className="col-md-7">
-          <h5 className="mb-1">{pet.name}</h5>
-          <div className="text-muted mb-2">{pet.type === 'dog' ? 'Chó' : pet.type === 'cat' ? 'Mèo' : 'Chim'} {pet.breed}</div>
-          <ul className="list-unstyled mb-3">
-            <li><strong>Tuổi:</strong> {pet.age} tuổi</li>
-            <li><strong>Kích thước:</strong> {pet.size}</li>
-            <li><strong>Giới tính:</strong> {pet.gender === 'male' ? 'Đực' : 'Cái'}</li>
-          </ul>
-          <p>{pet.description}</p>
-          <div>
-            {pet.vaccinated && <span className="badge bg-info me-2">Đã tiêm phòng</span>}
-            {pet.spayed && <span className="badge bg-secondary">Đã triệt sản</span>}
-          </div>
-        </div>
-      </div>
-    </ModalShell>
-  );
-};
-
 export const AdoptionApplicationModal = ({ isOpen, onClose, onSubmit, onShowAddressModal, pet, submitting }) => {
   const { user } = useAuth();
+  
   const buildInitialForm = () => ({
     fullName: user?.name || '',
     phone: '',
@@ -93,14 +84,16 @@ export const AdoptionApplicationModal = ({ isOpen, onClose, onSubmit, onShowAddr
 
   const [form, setForm] = useState(buildInitialForm());
 
-  // Reset form each time the modal opens or a different pet is selected
   useEffect(() => {
     if (isOpen) {
+      document.body.classList.add('modal-open');
       setForm(buildInitialForm());
+    } else {
+      document.body.classList.remove('modal-open');
     }
+    return () => document.body.classList.remove('modal-open');
   }, [isOpen, pet, user]);
 
-  // Lắng nghe sự kiện chọn địa chỉ (truyền từ AddressModal)
   useEffect(() => {
     const handler = (e) => {
       const addr = e.detail;
@@ -131,93 +124,235 @@ export const AdoptionApplicationModal = ({ isOpen, onClose, onSubmit, onShowAddr
     onSubmit(payload);
   };
 
+  if (!isOpen) return null;
+
+  const petImage = pet?.images?.[0]?.imageUrl || pet?.imageUrl || pet?.image;
+
   return (
-    <ModalShell
-      isOpen={isOpen}
-      title={pet ? `Đơn xin nhận nuôi - ${pet.name}` : 'Đơn xin nhận nuôi'}
-      onClose={onClose}
-      footer={(
-        <>
-          <button type="button" className="btn btn-secondary" onClick={onClose} disabled={submitting}>Hủy</button>
-          <button type="submit" form="adoptionApplicationForm" className="btn btn-primary" disabled={submitting}>
-            {submitting ? (
-              <>
-                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                Đang gửi...
-              </>
-            ) : (
-              'Gửi đơn'
-            )}
-          </button>
-        </>
-      )}
-    >
-      <form id="adoptionApplicationForm" onSubmit={handleSubmit}>
-        {pet && (
-          <div className="mb-3">
-            <label className="form-label">Thú cưng</label>
-            <div className="form-control-plaintext">{pet.name}</div>
+    <>
+      <div className="adoption-modal-backdrop" onClick={!submitting ? onClose : undefined} />
+      <div className="adoption-modal-wrapper" onClick={!submitting ? onClose : undefined}>
+        <div className="adoption-modal-card" onClick={(e) => e.stopPropagation()}>
+          {/* Header */}
+          <div className="adoption-modal-header">
+            <div className="adoption-modal-header-content">
+              {petImage && (
+                <img src={petImage} alt={pet?.name} className="adoption-modal-pet-avatar" />
+              )}
+              <div>
+                <h2 className="adoption-modal-title">Đơn xin nhận nuôi</h2>
+                {pet && <p className="adoption-modal-subtitle">{pet.name} • {pet.animal}</p>}
+              </div>
+            </div>
+            <button 
+              className="adoption-modal-close" 
+              onClick={onClose}
+              disabled={submitting}
+            >
+              ×
+            </button>
           </div>
-        )}
-        <div className="row">
-          <div className="col-md-6 mb-3">
-            <label className="form-label">Họ và tên *</label>
-            <input name="fullName" className="form-control" value={form.fullName} onChange={handleChange} required readOnly/>
-          </div>
-          <div className="col-md-6 mb-3">
-            <label className="form-label">Số điện thoại *</label>
-            <input name="phone" className="form-control" value={form.phone} onChange={handleChange} required readOnly/>
-          </div>
+
+          {/* Body */}
+          <form id="adoptionApplicationForm" onSubmit={handleSubmit}>
+            <div className="adoption-modal-body">
+              {/* Personal Info Section */}
+              <div className="adoption-modal-section">
+                <h3 className="adoption-modal-section-title">Thông tin cá nhân</h3>
+                
+                <div className="adoption-modal-row">
+                  <div className="adoption-modal-form-group">
+                    <label className="adoption-modal-label">
+                      Họ và tên <span className="required">*</span>
+                    </label>
+                    <input
+                      name="fullName"
+                      className="adoption-modal-input"
+                      value={form.fullName}
+                      onChange={handleChange}
+                      required
+                      readOnly
+                      placeholder="Nhập họ và tên"
+                    />
+                  </div>
+                  <div className="adoption-modal-form-group">
+                    <label className="adoption-modal-label">
+                      Số điện thoại <span className="required">*</span>
+                    </label>
+                    <input
+                      name="phone"
+                      className="adoption-modal-input"
+                      value={form.phone}
+                      onChange={handleChange}
+                      required
+                      readOnly
+                      placeholder="Nhập số điện thoại"
+                    />
+                  </div>
+                </div>
+
+                <div className="adoption-modal-form-group">
+                  <label className="adoption-modal-label">
+                    Địa chỉ <span className="required">*</span>
+                  </label>
+                  <div className="adoption-modal-address-row">
+                    <textarea
+                      name="address"
+                      className="adoption-modal-textarea"
+                      rows={2}
+                      value={form.address}
+                      onChange={handleChange}
+                      required
+                      readOnly
+                      placeholder="Chọn địa chỉ từ danh sách"
+                    />
+                    <button 
+                      type="button" 
+                      className="adoption-modal-btn-choose"
+                      onClick={onShowAddressModal}
+                    >
+                      📍 Chọn
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Work Info Section */}
+              <div className="adoption-modal-section">
+                <h3 className="adoption-modal-section-title">Thông tin công việc</h3>
+                
+                <div className="adoption-modal-row">
+                  <div className="adoption-modal-form-group">
+                    <label className="adoption-modal-label">Nghề nghiệp</label>
+                    <input
+                      name="job"
+                      className="adoption-modal-input"
+                      value={form.job}
+                      onChange={handleChange}
+                      placeholder="VD: Nhân viên văn phòng"
+                    />
+                  </div>
+                  <div className="adoption-modal-form-group">
+                    <label className="adoption-modal-label">Thu nhập hàng tháng</label>
+                    <select
+                      name="income"
+                      className="adoption-modal-select"
+                      value={form.income}
+                      onChange={handleChange}
+                    >
+                      <option value="">Chọn mức thu nhập</option>
+                      <option value="under-10m">Dưới 10 triệu</option>
+                      <option value="10-20m">10 - 20 triệu</option>
+                      <option value="20-30m">20 - 30 triệu</option>
+                      <option value="above-30m">Trên 30 triệu</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Experience Section */}
+              <div className="adoption-modal-section">
+                <h3 className="adoption-modal-section-title">Kinh nghiệm nuôi thú cưng</h3>
+                
+                <div className="adoption-modal-form-group">
+                  <label className="adoption-modal-label">
+                    Bạn đã từng nuôi thú cưng chưa? <span className="required">*</span>
+                  </label>
+                  <div className="adoption-modal-radio-group">
+                    <label className="adoption-modal-radio">
+                      <input
+                        type="radio"
+                        name="experience"
+                        value="1"
+                        checked={form.experience === '1'}
+                        onChange={handleChange}
+                        required
+                      />
+                      <span className="adoption-modal-radio-custom"></span>
+                      <span className="adoption-modal-radio-label">✅ Rồi, tôi có kinh nghiệm</span>
+                    </label>
+                    <label className="adoption-modal-radio">
+                      <input
+                        type="radio"
+                        name="experience"
+                        value="0"
+                        checked={form.experience === '0'}
+                        onChange={handleChange}
+                        required
+                      />
+                      <span className="adoption-modal-radio-custom"></span>
+                      <span className="adoption-modal-radio-label">❌ Chưa, đây là lần đầu</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="adoption-modal-form-group">
+                  <label className="adoption-modal-label">
+                    Lý do muốn nhận nuôi <span className="required">*</span>
+                  </label>
+                  <textarea
+                    name="reason"
+                    className="adoption-modal-textarea"
+                    rows={3}
+                    value={form.reason}
+                    onChange={handleChange}
+                    required
+                    placeholder="Chia sẻ lý do bạn muốn nhận nuôi bé..."
+                  />
+                </div>
+
+                <div className="adoption-modal-form-group">
+                  <label className="adoption-modal-label">Điều kiện chăm sóc</label>
+                  <textarea
+                    name="conditions"
+                    className="adoption-modal-textarea"
+                    rows={3}
+                    value={form.conditions}
+                    onChange={handleChange}
+                    placeholder="Mô tả không gian sống, thời gian chăm sóc, điều kiện nuôi dưỡng..."
+                  />
+                </div>
+              </div>
+
+              {/* Agreement */}
+              <label className="adoption-modal-checkbox">
+                <input
+                  type="checkbox"
+                  name="agree"
+                  checked={form.agree}
+                  onChange={handleChange}
+                  required
+                />
+                <span className="adoption-modal-checkbox-custom"></span>
+                <span className="adoption-modal-checkbox-text">
+                  🐾 Tôi đồng ý với các điều khoản nhận nuôi và cam kết chăm sóc thú cưng tốt nhất có thể
+                </span>
+              </label>
+            </div>
+
+            {/* Footer */}
+            <div className="adoption-modal-footer">
+              <button 
+                type="button" 
+                className="adoption-modal-btn-cancel" 
+                onClick={onClose}
+                disabled={submitting}
+              >
+                Hủy bỏ
+              </button>
+              <button 
+                type="submit" 
+                className="adoption-modal-btn-submit"
+                disabled={submitting}
+              >
+                {submitting && <span className="adoption-modal-spinner" />}
+                {submitting ? 'Đang gửi...' : '🐾 Gửi đơn đăng ký'}
+              </button>
+            </div>
+          </form>
         </div>
-    <div className="mb-3">
-      <div className="d-flex align-items-center justify-content-between">
-        <label className="form-label mb-0">Địa chỉ *</label>
-        <button type="button" className="btn btn-sm btn-warning ms-3" onClick={onShowAddressModal}>
-          Chọn
-        </button>
       </div>
-      <textarea name="address" className="form-control" rows={2} value={form.address} onChange={handleChange} required readOnly/>
-    </div>
-        <div className="row">
-          <div className="col-md-6 mb-3">
-            <label className="form-label">Nghề nghiệp</label>
-            <input name="job" className="form-control" value={form.job} onChange={handleChange} />
-          </div>
-          <div className="col-md-6 mb-3">
-            <label className="form-label">Thu nhập hàng tháng</label>
-            <select name="income" className="form-select" value={form.income} onChange={handleChange}>
-              <option value="">Chọn mức thu nhập</option>
-              <option value="under-10m">Dưới 10 triệu</option>
-              <option value="10-20m">10-20 triệu</option>
-              <option value="20-30m">20-30 triệu</option>
-              <option value="above-30m">Trên 30 triệu</option>
-            </select>
-          </div>
-        </div>
-        <div className="mb-3">
-          <label className="form-label">Bạn đã từng nuôi thú cưng chưa? *</label>
-          <div className="form-check">
-            <input className="form-check-input" type="radio" name="experience" value="1" checked={form.experience === '1'} onChange={handleChange} required />
-            <label className="form-check-label">Rồi</label>
-          </div>
-          <div className="form-check">
-            <input className="form-check-input" type="radio" name="experience" value="0" checked={form.experience === '0'} onChange={handleChange} required />
-            <label className="form-check-label">Chưa</label>
-          </div>
-        </div>
-        <div className="mb-3">
-          <label className="form-label">Lý do muốn nhận nuôi *</label>
-          <textarea name="reason" className="form-control" rows={3} value={form.reason} onChange={handleChange} required />
-        </div>
-        <div className="mb-3">
-          <label className="form-label">Điều kiện chăm sóc</label>
-          <textarea name="conditions" className="form-control" rows={3} placeholder="Mô tả không gian sống, thời gian chăm sóc..." value={form.conditions} onChange={handleChange} />
-        </div>
-        <div className="form-check mb-3">
-          <input className="form-check-input" type="checkbox" id="agreeTermsAdoption" name="agree" checked={form.agree} onChange={handleChange} required />
-          <label className="form-check-label" htmlFor="agreeTermsAdoption">Tôi đồng ý với các điều khoản nhận nuôi và cam kết chăm sóc thú cưng tốt nhất</label>
-        </div>
-      </form>
-    </ModalShell>
+    </>
   );
 };
+
