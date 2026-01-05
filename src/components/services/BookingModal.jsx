@@ -185,7 +185,7 @@ const BookingModal = ({ isOpen, onClose, services, initialServiceId }) => {
           <div className="modal-body">
             <form onSubmit={handleSubmit} noValidate>
               <div className="mb-3">
-                <label className="form-label">Loại dịch vụ</label>
+                <label className="form-label">Loại dịch vụ<span style={{ color: 'red' }}>*</span></label>
                 <select
                   className={`form-select ${errors.serviceId ? 'is-invalid' : ''}`}
                   name="serviceId"
@@ -225,7 +225,7 @@ const BookingModal = ({ isOpen, onClose, services, initialServiceId }) => {
 
               <div className="row">
                 <div className="col-12 mb-3">
-                  <label className="form-label">Ngày hẹn</label>
+                  <label className="form-label">Ngày hẹn<span style={{ color: 'red' }}>*</span></label>
                   <input
                     type="date"
                     className={`form-control ${errors.appointmentDate ? 'is-invalid' : ''}`}
