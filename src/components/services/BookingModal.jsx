@@ -87,7 +87,7 @@ const BookingModal = ({ isOpen, onClose, services, initialServiceId }) => {
       setFormData(prev => ({ ...prev, appointmentTime: '' }));
     }
   };
-  
+
   const fetchSlots = async (serviceId, date) => {
     setLoadingSlots(true);
     try {
@@ -204,7 +204,7 @@ const BookingModal = ({ isOpen, onClose, services, initialServiceId }) => {
               </div>
 
               <div className="mb-3">
-                <label className="form-label">Loại thú cưng *</label>
+                <label className="form-label">Loại thú cưng <span style={{ color: 'red' }}>*</span></label>
                 <select
                   className={`form-select ${errors.petType ? 'is-invalid' : ''}`}
                   name="petType"
@@ -327,7 +327,7 @@ const BookingModal = ({ isOpen, onClose, services, initialServiceId }) => {
               </div>
 
               <div className="mb-3">
-                <label className="form-label">Tên thú cưng *</label>
+                <label className="form-label">Tên thú cưng <span style={{ color: 'red' }}>*</span></label>
                 <input
                   type="text"
                   className={`form-control ${errors.petName ? 'is-invalid' : ''}`}

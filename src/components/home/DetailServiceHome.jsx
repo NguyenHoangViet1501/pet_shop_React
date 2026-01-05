@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './DetailServiceHome.css';
 
 const services = [
@@ -39,10 +40,77 @@ const ITEMS_PER_PAGE = 3;
 
 const DetailServiceHome = () => {
   const [activeIdx, setActiveIdx] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const navigate = useNavigate();
   const maxPage = Math.max(0, services.length - ITEMS_PER_PAGE);
 
-  const handlePrev = () => setActiveIdx((idx) => Math.max(0, idx - 1));
-  const handleNext = () => setActiveIdx((idx) => Math.min(maxPage, idx + 1));
+  const intervalRef = useRef(null);
+  const isPausedRef = useRef(isPaused);
+
+  // Keep ref in sync with state
+  useEffect(() => {
+    isPausedRef.current = isPaused;
+  }, [isPaused]);
+
+  // Core slide transition function (no timer logic)
+  const goNext = () => {
+    setActiveIdx((idx) => (idx === maxPage ? 0 : idx + 1));
+  };
+
+  const goPrev = () => {
+    setActiveIdx((idx) => (idx === 0 ? maxPage : idx - 1));
+  };
+
+  const stopInterval = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  };
+
+  const startInterval = () => {
+    stopInterval();
+    if (isPausedRef.current) return;
+    intervalRef.current = setInterval(() => {
+      if (!isPausedRef.current) {
+        goNext();
+      }
+    }, 3000);
+  };
+
+  // User click handlers - reset timer to full 3 seconds
+  const handlePrev = () => {
+    stopInterval();
+    goPrev();
+    startInterval();
+  };
+
+  const handleNext = () => {
+    stopInterval();
+    goNext();
+    startInterval();
+  };
+
+  // Handle hover pause/resume
+  useEffect(() => {
+    if (isPaused) {
+      stopInterval();
+    } else {
+      startInterval();
+    }
+  }, [isPaused]);
+
+  // Initial start
+  useEffect(() => {
+    startInterval();
+    return () => stopInterval();
+  }, []);
+
+  // Navigate to services page when clicking arrow
+  const handleArrowClick = () => {
+    navigate('/services');
+    window.scrollTo(0, 0);
+  };
 
   // Hiển thị 3 dịch vụ liên tiếp, bắt đầu từ activeIdx
   const visibleServices = services.slice(activeIdx, activeIdx + ITEMS_PER_PAGE);
@@ -55,15 +123,19 @@ const DetailServiceHome = () => {
             <h2 className="fw-bold mb-0 text-center">Dịch vụ nổi bật</h2>
           </div>
           <div className="d-flex gap-2" style={{ position: 'absolute', right: 0 }}>
-            <button className="btn-dark rounded-circle nav-btn me-2" onClick={handlePrev} disabled={activeIdx === 0} aria-label="Trước">
+            <button className="btn-dark rounded-circle nav-btn me-2" onClick={handlePrev} aria-label="Trước">
               <i className="fas fa-chevron-left" style={{ color: '#fff' }}></i>
             </button>
-            <button className="btn-dark rounded-circle nav-btn" onClick={handleNext} disabled={activeIdx === maxPage} aria-label="Sau">
+            <button className="btn-dark rounded-circle nav-btn" onClick={handleNext} aria-label="Sau">
               <i className="fas fa-chevron-right" style={{ color: '#fff' }}></i>
             </button>
           </div>
         </div>
-        <div className="row justify-content-center service-slider-row">
+        <div
+          className="row justify-content-center service-slider-row"
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
+        >
           {visibleServices.map((service, idx) => (
             <div className="col-12 col-sm-6 col-lg-4 mb-4 d-flex service-slider-item" key={activeIdx + idx}>
               <div className="card h-100 shadow-sm service-card">
@@ -75,7 +147,7 @@ const DetailServiceHome = () => {
                       <p className="card-text text-muted mb-0">{service.desc}</p>
                     </div>
                     <div className="ms-3">
-                      <span className="btn-warning rounded-circle arrow-btn">
+                      <span className="btn-warning rounded-circle arrow-btn" onClick={handleArrowClick} style={{ cursor: 'pointer' }}>
                         <i className="fas fa-arrow-right" style={{ color: '#fff' }}></i>
                       </span>
                     </div>
