@@ -9,7 +9,7 @@ import {
   AdoptionApplicationModal,
 } from "../../components/adoption/AdoptionModal";
 import { use } from "react";  
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const AdoptionPage = () => {
   const [addresses, setAddresses] = useState([]);
@@ -21,6 +21,7 @@ const AdoptionPage = () => {
     size: "",
   });
   const navigate = useNavigate();
+  const location = useLocation();
   const [pets, setPets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [animals, setAnimals] = useState([]);
@@ -159,6 +160,35 @@ const AdoptionPage = () => {
     setIsDetailOpen(false);
     setIsApplicationOpen(true);
   };
+
+  // When opening address modal from the application form, persist the selected pet
+  const handleShowAddressModal = () => {
+    try {
+      if (selectedPet) localStorage.setItem('adoption_selected_pet', JSON.stringify(selectedPet));
+    } catch (e) {}
+    setShowAddressModal(true);
+  };
+
+  // If URL has openAdoption or localStorage contains adoption_selected_pet, open the form and restore selectedPet
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(location.search);
+      if (params.get('openAdoption')) {
+        // open the application form
+        setIsApplicationOpen(true);
+        // attempt to restore selectedPet from localStorage
+        try {
+          const raw = localStorage.getItem('adoption_selected_pet');
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            setSelectedPet(parsed);
+            // remove the temp storage after restoring
+            try { localStorage.removeItem('adoption_selected_pet'); } catch (e) {}
+          }
+        } catch (e) { /* ignore */ }
+      }
+    } catch (e) {}
+  }, [location.search]);
 
   const submitApplication = async (form) => {
     if (isSubmitting) return; // prevent duplicate submissions
@@ -336,7 +366,7 @@ const AdoptionPage = () => {
         onClose={() => setIsApplicationOpen(false)}
         onSubmit={submitApplication}
         submitting={isSubmitting}
-        onShowAddressModal={() => setShowAddressModal(true)}
+        onShowAddressModal={handleShowAddressModal}
       />
       <AddressModal
         show={showAddressModal}

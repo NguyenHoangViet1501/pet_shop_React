@@ -196,12 +196,15 @@ const CheckoutPage = () => {
 
         const defaultAddr = mapped.find((a) => a.isDefault);
         if (defaultAddr) {
-          const formatted =
-            `${defaultAddr.fullName} - ${defaultAddr.phone} - ${defaultAddr.line}, ` +
-            `${defaultAddr.ward}, ${defaultAddr.district}, ${defaultAddr.city}`;
+          const formatted = `${defaultAddr.line}, ${defaultAddr.ward}, ${defaultAddr.district}, ${defaultAddr.city}`;
 
           setFormData((prev) =>
-            prev.address ? prev : { ...prev, address: formatted }
+            prev.address ? prev : {
+              ...prev,
+              address: formatted,
+              fullName: defaultAddr.fullName,
+              phone: defaultAddr.phone
+            }
           );
         }
       }
@@ -224,11 +227,14 @@ const CheckoutPage = () => {
   };
 
   const selectAddress = (addr) => {
-    const formatted =
-      `${addr.fullName} - ${addr.phone} - ${addr.line}, ` +
-      `${addr.ward}, ${addr.district}, ${addr.city}`;
+    const formatted = `${addr.line}, ${addr.ward}, ${addr.district}, ${addr.city}`;
 
-    setFormData((prev) => ({ ...prev, address: formatted }));
+    setFormData((prev) => ({
+      ...prev,
+      address: formatted,
+      fullName: addr.fullName,
+      phone: addr.phone
+    }));
     setShowAddressModal(false);
   };
 

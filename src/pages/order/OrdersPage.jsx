@@ -5,6 +5,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import { orderAPI } from "../../api/order";
 import Button from "../../components/ui/button/Button";
+import ConfirmModal from "../../components/common/ConfirmModal";
 
 const ORDER_STATUS_MAP = {
   WAITING_PAYMENT: { label: "Chờ thanh toán", className: "bg-warning" },
@@ -22,7 +23,6 @@ const FILTER_TABS = [
   { value: "SHIPPED", label: "Đang giao" },
   { value: "DELIVERED", label: "Đã giao" },
   { value: "CANCELLED", label: "Đã hủy" },
-  { value: "REFUNDED", label: "Đã hoàn tiền" },
 ];
 
 const OrdersPage = () => {
@@ -33,6 +33,8 @@ const OrdersPage = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cancellingOrderId, setCancellingOrderId] = useState(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [orderToCancelCode, setOrderToCancelCode] = useState(null);
   const [selectedStatus, setSelectedStatus] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -78,15 +80,24 @@ const OrdersPage = () => {
     fetchOrders();
   }, [token, pageNumber, size, selectedStatus, refreshKey]);
 
-  const handleCancelOrder = async (orderCode) => {
-    if (!window.confirm("Bạn có chắc chắn muốn hủy đơn hàng này?")) return;
+  // Opens confirm modal (user clicks Hủy)
+  const handleCancelOrder = (orderCode) => {
+    setOrderToCancelCode(orderCode);
+    setConfirmOpen(true);
+  };
 
+  // Performs cancellation (after user confirms)
+  const performCancelOrder = async () => {
+    const orderCode = orderToCancelCode;
+    if (!orderCode) return;
     setCancellingOrderId(orderCode);
     try {
       const res = await orderAPI.cancelOrder(orderCode, token);
       if (res?.success) {
         showToast("Hủy đơn hàng thành công", "success");
         setRefreshKey((prev) => prev + 1);
+        setConfirmOpen(false);
+        setOrderToCancelCode(null);
       } else {
         showToast(res?.message || "Hủy đơn hàng thất bại", "error");
       }
@@ -198,9 +209,11 @@ const OrdersPage = () => {
                     <td>#{order.orderCode}</td>
                     <td>{formatDate(order.createdDate)}</td>
                     <td>
-                      <span className={`badge ${statusInfo.className}`}>
-                        {statusInfo.label || order.status}
-                      </span>
+                      {order.status !== 'REFUNDED' ? (
+                        <span className={`badge ${statusInfo.className}`}>
+                          {statusInfo.label || order.status}
+                        </span>
+                      ) : null}
                     </td>
                     <td>{formatMoney(order.totalAmount)}</td>
                     <td>
@@ -367,6 +380,20 @@ const OrdersPage = () => {
           </div>
         </div>
       )}
+      {/* Confirm cancel modal */}
+      <ConfirmModal
+        isOpen={confirmOpen}
+        title="Xác nhận hủy đơn"
+        message="Bạn có chắc chắn muốn hủy đơn hàng này?"
+        onClose={() => {
+          if (cancellingOrderId) return; // prevent closing while loading
+          setConfirmOpen(false);
+          setOrderToCancelCode(null);
+        }}
+        onConfirm={performCancelOrder}
+        confirmLabel="Hủy đơn"
+        loading={Boolean(cancellingOrderId === orderToCancelCode)}
+      />
     </div>
   );
 };

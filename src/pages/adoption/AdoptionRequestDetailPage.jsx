@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { adoptApi } from "../../api";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
+import ConfirmModal from "../../components/common/ConfirmModal";
 
 const statusMap = {
   PENDING: { text: "Đang xét duyệt", className: "bg-warning" },
@@ -19,6 +20,7 @@ const AdoptionRequestDetailPage = () => {
   const { token } = useAuth();
   const { showToast } = useToast();
   const [isCancelling, setIsCancelling] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
 useEffect(() => {
   adoptApi
@@ -186,27 +188,35 @@ useEffect(() => {
             <div className="d-grid mt-2">
               <button
                 className="btn btn-outline-danger"
-                onClick={async () => {
-                  if (!window.confirm('Bạn có chắc muốn hủy đơn nhận nuôi này?')) return;
-                  try {
-                    setIsCancelling(true);
-                    await adoptApi.cancelAdopt(id, token);
-                    showToast('Hủy đơn thành công', 'success');
-                    // Update local state to reflect canceled status
-                    setReq(prev => prev ? { ...prev, status: 'CANCELED' } : prev);
-                  } catch (err) {
-                    console.error('Failed to cancel adopt', err);
-                    showToast('Không thể hủy đơn, vui lòng thử lại', 'error');
-                  } finally {
-                    setIsCancelling(false);
-                  }
-                }}
+                onClick={() => setShowCancelConfirm(true)}
                 disabled={isCancelling}
               >
                 {isCancelling ? 'Đang hủy...' : 'Hủy đăng ký nhận nuôi'}
               </button>
             </div>
           )}
+          <ConfirmModal
+            isOpen={showCancelConfirm}
+            title="Xác nhận hủy đơn"
+            message="Bạn có chắc muốn hủy đơn nhận nuôi này?"
+            onClose={() => setShowCancelConfirm(false)}
+            onConfirm={async () => {
+              try {
+                setIsCancelling(true);
+                await adoptApi.cancelAdopt(id, token);
+                showToast('Hủy đơn thành công', 'success');
+                setReq(prev => prev ? { ...prev, status: 'CANCELED' } : prev);
+                setShowCancelConfirm(false);
+              } catch (err) {
+                console.error('Failed to cancel adopt', err);
+                showToast('Không thể hủy đơn, vui lòng thử lại', 'error');
+              } finally {
+                setIsCancelling(false);
+              }
+            }}
+            confirmLabel="Xóa"
+            loading={isCancelling}
+          />
         </div>
       </div>
     </div>

@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import AddressFormModal from "../../components/user/AddressFormModal";
 import AddressEditModal from "../../components/user/AddressEditModal";
 import ChangePasswordTab from "../../components/user/ChangePasswordTab";
@@ -13,6 +13,7 @@ const ProfilePage = () => {
   const { user, token } = useAuth();
   const { showToast } = useToast();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState("profile-info");
   const [isEditing, setIsEditing] = useState(false);
@@ -33,12 +34,15 @@ const ProfilePage = () => {
   const [editingAddress, setEditingAddress] = useState(null);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [returnTo, setReturnTo] = useState(null);
 
   // Sync tab from query ?tab=addresses
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const tab = params.get("tab");
     if (tab) setActiveTab(tab);
+    const rt = params.get('returnTo');
+    if (rt) setReturnTo(decodeURIComponent(rt));
   }, [location.search]);
 
   // Update profile form when user data changes
@@ -184,6 +188,71 @@ const ProfilePage = () => {
   const handleAddressSaved = async (data) => {
     // Refresh addresses from API after adding new address
     await fetchAddresses(currentPage);
+    // If user came from another page (returnTo present), try to send the new address back and navigate.
+    if (returnTo) {
+      try {
+        const res = await addressAPI.getUserAddresses(token, 10, 0);
+        let payload = data;
+        if (res?.success && Array.isArray(res.result)) {
+          const mapped = res.result.map((addr) => ({
+            id: addr.id,
+            contactName: addr.contactName,
+            phone: addr.phone,
+            detailAddress: addr.detailAddress,
+            city: addr.city,
+            state: addr.state,
+            ward: addr.ward,
+            isDefault: addr.isDefault === "1",
+          }));
+          const match = mapped.find(a => (a.phone === data.phone && a.detailAddress === data.addressLine) || a.phone === data.phone) || mapped[0];
+          if (match) payload = match;
+        }
+        window.dispatchEvent(new CustomEvent('address-selected-adoption', { detail: payload }));
+        // navigate SPA-style
+        try {
+          navigate(returnTo);
+        } catch (e) {
+          window.location.href = returnTo;
+        }
+        try { localStorage.removeItem('adoption_return_pet'); } catch (e) {}
+      } catch (e) {
+        // fallback: do nothing
+      }
+    } else {
+      // fallback: check localStorage saved return info
+      try {
+        const raw = localStorage.getItem('adoption_return_pet');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed?.returnTo) {
+            // try to fetch latest addresses and match
+            const res = await addressAPI.getUserAddresses(token, 10, 0);
+            let payload = data;
+            if (res?.success && Array.isArray(res.result)) {
+              const mapped = res.result.map((addr) => ({
+                id: addr.id,
+                contactName: addr.contactName,
+                phone: addr.phone,
+                detailAddress: addr.detailAddress,
+                city: addr.city,
+                state: addr.state,
+                ward: addr.ward,
+                isDefault: addr.isDefault === "1",
+              }));
+              const match = mapped.find(a => (a.phone === data.phone && a.detailAddress === data.addressLine) || a.phone === data.phone) || mapped[0];
+              if (match) payload = match;
+            }
+            window.dispatchEvent(new CustomEvent('address-selected-adoption', { detail: payload }));
+            try {
+              navigate(parsed.returnTo);
+            } catch (e) {
+              window.location.href = parsed.returnTo;
+            }
+            localStorage.removeItem('adoption_return_pet');
+          }
+        }
+      } catch (e) { /* ignore */ }
+    }
   };
 
   const handleAddressEdited = async (data) => {
