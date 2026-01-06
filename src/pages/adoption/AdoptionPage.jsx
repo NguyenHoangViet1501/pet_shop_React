@@ -93,8 +93,8 @@ const AdoptionPage = () => {
         // Map filter values từ frontend sang backend
         const params = {
           isDeleted: "0", // Chỉ lấy pets chưa bị xóa
-          page: currentPage,
-          limit: pageSize,
+          pageNumber: currentPage,
+          size: pageSize,
         };
 
         if (filters.type) {

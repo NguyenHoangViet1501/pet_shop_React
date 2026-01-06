@@ -6,89 +6,120 @@ import { useAuth } from "../../context/AuthContext";
 import { adoptApi, addressAPI } from "../../api";
 import { AdoptionApplicationModal } from "../../components/adoption/AdoptionModal";
 import AddressModal from "../../components/checkout/AddressModal";
+import Button from "../../components/ui/button/Button";
 import "./PetDetail.css";
 
-export default function PetDetail() {
+const PetDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user, token } = useAuth();
+  const { showToast } = useToast();
 
   const [pet, setPet] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [activeImage, setActiveImage] = useState(null);
   const [similar, setSimilar] = useState([]);
-  const descRef = useRef(null);
-  const [expanded, setExpanded] = useState(false);
+  
+  // UI States
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [showExpandButton, setShowExpandButton] = useState(false);
+  const [isZoomed, setIsZoomed] = useState(false);
+  const descriptionRef = useRef(null);
+  
+  // Adoption Logic
   const [isApplicationOpen, setIsApplicationOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [addresses, setAddresses] = useState([]);
   const [showAddressModal, setShowAddressModal] = useState(false);
   const [loadingAddresses, setLoadingAddresses] = useState(false);
-  const { user, token } = useAuth();
-  const { showToast } = useToast();
 
   useEffect(() => {
-    const fetch = async () => {
+    const fetchPet = async () => {
       try {
         setLoading(true);
         const res = await petsApi.getPetById(id);
         const data = res?.result ?? res?.data ?? null;
-        setPet(data);
-        if (data) {
-          const imgs = data.images || (data.petImage ? data.petImage : []);
-          const first = imgs && imgs.length > 0 ? (imgs[0].imageUrl || imgs[0]) : data.imageUrl;
-          setActiveImage(first || "https://via.placeholder.com/600x400?text=No+Image");
 
-          // similar: fetch by animal
+        if (!data) {
+          setError('Không tìm thấy thú cưng.');
+          setLoading(false);
+          return;
+        }
+
+        setPet(data);
+
+        // Images logic
+        const imgs = data.petImage || (data.images ? data.images : []);
+        let firstImg = "https://via.placeholder.com/600x400?text=No+Image";
+        
+        if (imgs && imgs.length > 0) {
+           const primary = imgs.find(img => img.isPrimary === 1 || img.isPrimary === '1');
+           firstImg = primary ? (primary.imageUrl || primary.url) : (imgs[0].imageUrl || imgs[0].url || imgs[0]);
+        } else if (data.imageUrl) {
+            firstImg = data.imageUrl;
+        } else if (data.image) {
+            firstImg = data.image;
+        }
+        setActiveImage(firstImg);
+
+        // Similar pets
+        if (data.animal) {
           try {
             const sim = await petsApi.getPets({ animal: data.animal, isDeleted: "0", size: 6 });
             const list = (sim?.result?.content ?? sim?.data ?? [])
               .filter((p) => String(p.id) !== String(data.id))
-              .slice(0, 6);
+              .slice(0, 5);
             setSimilar(list);
           } catch (e) {
-            setSimilar([]);
+            console.error("Error fetching similar pets:", e);
           }
         }
       } catch (err) {
-        console.error("Failed to load pet detail", err);
-        setPet(null);
+        setError("Không thể tải thông tin thú cưng");
+        console.error(err);
       } finally {
         setLoading(false);
       }
     };
 
-    if (id) fetch();
-    window.scrollTo(0, 0);
+    if (id) {
+      fetchPet();
+      window.scrollTo(0, 0);
+    }
   }, [id]);
 
-  // If the URL contains ?openAdoption=1, open the application modal when page loads
-  const location = useLocation();
+  useEffect(() => {
+    if (descriptionRef.current) {
+      if (descriptionRef.current.scrollHeight > 250) {
+        setShowExpandButton(true);
+      } else {
+        setShowExpandButton(false);
+      }
+    }
+  }, [pet]);
+
+  // Handle auto-open adoption modal
   useEffect(() => {
     try {
       const params = new URLSearchParams(location.search);
       if (params.get('openAdoption')) {
-        // open the modal; user must be logged in to submit — if not, the form will prompt
         setIsApplicationOpen(true);
       } else {
-        // fallback: if localStorage has adoption_return_pet for this page, open modal
-        try {
-          const raw = localStorage.getItem('adoption_return_pet');
-          if (raw) {
-            const parsed = JSON.parse(raw);
-            if (parsed && parsed.returnTo && parsed.returnTo.includes(window.location.pathname)) {
-              setIsApplicationOpen(true);
-              // remove after used
-              localStorage.removeItem('adoption_return_pet');
-            }
-          }
-        } catch (e) { /* ignore */ }
+        const raw = localStorage.getItem('adoption_return_pet');
+        if (raw) {
+           const parsed = JSON.parse(raw);
+           if (parsed && parsed.returnTo && parsed.returnTo.includes(window.location.pathname)) {
+             setIsApplicationOpen(true);
+             localStorage.removeItem('adoption_return_pet');
+           }
+        }
       }
-    } catch (e) {
-      // ignore
-    }
+    } catch (e) { }
   }, [location.search]);
 
-  // Load địa chỉ user
+  // Address logic
   useEffect(() => {
     const fetchAddresses = async () => {
       if (token) {
@@ -109,70 +140,37 @@ export default function PetDetail() {
             setAddresses(mapped);
           }
         } catch (e) {
-          console.error("Không lấy được địa chỉ", e);
+          console.error("Error fetching addresses", e);
+        } finally {
+          setLoadingAddresses(false);
         }
-        setLoadingAddresses(false);
       }
     };
-    fetchAddresses();
-  }, [token]);
-
-  // Loading state
-  if (loading) {
-    return (
-      <div className="pet-detail-page">
-        <div className="container page-content py-5">
-          <div className="pet-detail-loading">
-            <div className="pet-detail-loading-spinner"></div>
-            <span className="pet-detail-loading-text">Đang tải thông tin...</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Not found state
-  if (!pet) {
-    return (
-      <div className="pet-detail-page">
-        <div className="container page-content py-5">
-          <div className="pet-detail-not-found">
-            <div className="pet-detail-not-found-icon">🐾</div>
-            <p className="pet-detail-not-found-text">Không tìm thấy thú cưng này</p>
-            <button
-              className="pet-detail-btn-secondary"
-              onClick={() => navigate('/adoption')}
-            >
-              ← Quay lại danh sách
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const thumbnails = pet.images || pet.petImage || [];
-  const isHealthGood = pet.healthStatus?.toLowerCase().includes('good') ||
-    pet.healthStatus?.toLowerCase().includes('tốt');
+    if (isApplicationOpen && token) fetchAddresses();
+  }, [isApplicationOpen, token]);
 
   const handleAdoptClick = () => {
     if (!user) {
-      showToast('Vui lòng đăng nhập để đăng ký nhận nuôi', 'warning');
+      showToast("Vui lòng đăng nhập để gửi yêu cầu nhận nuôi!", "warning");
+      localStorage.setItem("adoption_return_pet", JSON.stringify({
+         returnTo: location.pathname + "?openAdoption=1"
+      }));
+      navigate("/login");
       return;
     }
     setIsApplicationOpen(true);
   };
 
-  const handleSubmit = async (form) => {
-    if (isSubmitting) return;
+  const handleApplicationSubmit = async (formData) => {
+    if (!pet || !user) return;
     setIsSubmitting(true);
     try {
       const payload = {
         userId: user?.id ? Number(user.id) : null,
         petId: pet?.id ? Number(pet.id) : null,
-        addressId: form.addressId ? Number(form.addressId) : null,
-        note: form.reason || "",
-        job: form.job || "",
+        addressId: formData.addressId ? Number(formData.addressId) : null,
+        note: formData.reason || "",
+        job: formData.job || "",
         income: (function () {
           const map = {
             'under-10m': 'Dưới 10 triệu',
@@ -180,219 +178,373 @@ export default function PetDetail() {
             '20-30m': '20-30 triệu',
             'above-30m': 'Trên 30 triệu'
           };
-          return form.income ? (map[form.income] || form.income) : "";
+          return formData.income ? (map[formData.income] || formData.income) : "";
         })(),
-        liveCondition: form.conditions || "",
+        liveCondition: formData.conditions || "",
         isOwnPet: (function () {
-          if (typeof form.isOwnPet !== 'undefined') return String(form.isOwnPet);
-          if (typeof form.is_own_pet !== 'undefined') return String(form.is_own_pet);
-          if (typeof form.experience !== 'undefined') return form.experience === '1' ? '1' : '0';
+          if (typeof formData.isOwnPet !== 'undefined') return String(formData.isOwnPet);
+          if (typeof formData.is_own_pet !== 'undefined') return String(formData.is_own_pet);
+          if (typeof formData.experience !== 'undefined') return formData.experience === '1' ? '1' : '0';
           return '0';
         })(),
       };
-
-      if (!payload.userId) {
-        showToast('Lỗi: Vui lòng đăng nhập lại', 'error');
-        return;
-      }
-      if (!payload.petId) {
-        showToast('Lỗi: Không tìm thấy thông tin thú cưng', 'error');
-        return;
-      }
-
-      await adoptApi.createAdoptRequest(payload, token);
-      showToast(`Đã gửi đơn nhận nuôi ${pet?.name}`, 'success');
+      
+      const res = await adoptApi.createAdoptRequest(payload, token);
+      
+      showToast("Gửi yêu cầu nhận nuôi thành công!", "success");
       setIsApplicationOpen(false);
-      navigate('/adoption-requests');
     } catch (err) {
-      console.error('Adopt submit failed', err);
-      showToast(err?.message || 'Gửi đơn thất bại', 'error');
+      console.error(err);
+      showToast(err.message || "Không thể gửi yêu cầu.", "error");
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  if (loading) {
+    return (
+      <div className="container page-content text-center py-5">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !pet) {
+    return (
+      <div className="container page-content">
+        <div className="alert alert-warning d-flex justify-content-between align-items-center">
+          <div>{error || "Không tìm thấy thú cưng."}</div>
+          <button className="btn btn-primary btn-sm" onClick={() => navigate("/adoption")}>
+            Quay lại danh sách
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // --- Helpers for Display ---
+  const getGenderLabel = (g) => {
+      const lower = String(g).toLowerCase();
+      if (lower.includes('male') || lower === 'đực') return 'Đực';
+      if (lower.includes('female') || lower === 'cái') return 'Cái';
+      return g;
+  };
+
+  const getAgeLabel = (a) => {
+      if (!a) return 'N/A';
+      if (!isNaN(a)) return `${a} tuổi`;
+      return a;
+  }
+  
+  const isAvailable = pet.status === 'AVAILABLE';
+
+  // Extract images
+  const petImages = pet.petImage || (pet.images ? pet.images : []);
+  const imageList = petImages.length > 0 ? petImages : (pet.imageUrl ? [{ imageUrl: pet.imageUrl }] : []);
+
   return (
-    <>
-      <div className="pet-detail-page">
-        <div className="container page-content py-5">
-          <div className="row g-5">
-            {/* Left column - Images */}
-            <div className="col-lg-6">
-              {/* Main image */}
-              <div className="pet-detail-main-image">
-                <img src={activeImage} alt={pet.name} />
-                {pet.status && (
-                  <span className="pet-detail-status-badge">
-                    {pet.status}
-                  </span>
-                )}
-              </div>
+    <div className="container page-content py-4">
+      {/* Zoom Modal */}
+      {isZoomed && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            backgroundColor: "rgba(0,0,0,0.8)",
+            zIndex: 1050,
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            cursor: "zoom-out",
+          }}
+          onClick={() => setIsZoomed(false)}
+        >
+          <img
+            src={activeImage}
+            alt="Zoomed Pet"
+            className="rounded-3 shadow-lg"
+            style={{
+              width: "600px",
+              height: "600px",
+              maxWidth: "90vw",
+              maxHeight: "90vh",
+              objectFit: "contain",
+              backgroundColor: "white",
+              cursor: "default",
+              padding: "1rem",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
 
-              {/* Thumbnails */}
-              {thumbnails && thumbnails.length > 0 && (
-                <div className="pet-detail-thumbnails">
-                  {thumbnails.map((img, i) => {
-                    const url = img.imageUrl || img;
-                    return (
-                      <div
-                        key={i}
-                        className={`pet-detail-thumb ${activeImage === url ? 'active' : ''}`}
-                        onClick={() => setActiveImage(url)}
-                      >
-                        <img src={url} alt={`${pet.name} - ${i + 1}`} />
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+      <div className="row g-5">
+        {/* Left Column: Images + Description */}
+        <div className="col-lg-6">
+          <div className="card border-0 mb-3">
+            <img
+              src={activeImage}
+              alt={pet.name}
+              className="card-img-top rounded-4"
+              style={{
+                width: "100%",
+                height: "480px",
+                objectFit: "cover",
+                cursor: "zoom-in",
+              }}
+              onClick={() => setIsZoomed(true)}
+            />
+          </div>
 
-              {/* Description section */}
-              <div className="pet-detail-description">
-                <h3 className="pet-detail-description-title">
-                  📝 Mô tả chi tiết
-                </h3>
-                <div
-                  className={`pet-detail-description-gradient ${expanded ? 'expanded' : ''}`}
-                  style={{ maxHeight: expanded ? 'none' : '200px' }}
-                >
-                  <p ref={descRef} className="pet-detail-description-text">
-                    {pet.description || 'Đang cập nhật thông tin...'}
-                  </p>
-                </div>
-                {(pet.description || '').length > 300 && (
-                  <button
-                    className="pet-detail-btn-expand"
-                    onClick={() => setExpanded(!expanded)}
-                  >
-                    {expanded ? '↑ Thu gọn' : '↓ Xem thêm'}
-                  </button>
-                )}
-              </div>
+          {imageList.length > 0 && (
+            <div className="d-flex gap-2 overflow-auto pb-2 mb-4">
+              {imageList.map((img, index) => {
+                const url = img.imageUrl || img.url || img;
+                return (
+                    <div
+                    key={index}
+                    className={`rounded-3 overflow-hidden border ${
+                        activeImage === url
+                        ? "border-primary border-2"
+                        : "border-transparent"
+                    }`}
+                    style={{
+                        width: "80px",
+                        height: "80px",
+                        cursor: "pointer",
+                        flexShrink: 0,
+                    }}
+                    onClick={() => setActiveImage(url)}
+                    >
+                    <img
+                        src={url}
+                        alt={`Thumbnail ${index}`}
+                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    />
+                    </div>
+                );
+              })}
             </div>
+          )}
 
-            {/* Right column - Info */}
-            <div className="col-lg-6">
-              {/* Breadcrumb */}
-              <div className="pet-detail-breadcrumb">
-                <Link to="/adoption">Nhận nuôi</Link>
-                <span>›</span>
-                <span>{pet.animal}</span>
-              </div>
+          {/* Description Section */}
+          <div className="mt-4">
+            <h5 className="fw-bold text-uppercase mb-3">Mô tả/Câu chuyện</h5>
+            <div
+              className={`position-relative ${!isExpanded ? "overflow-hidden" : ""}`}
+              style={{ maxHeight: isExpanded ? "none" : "250px" }}
+            >
+              <p
+                ref={descriptionRef}
+                className="text-muted"
+                style={{ whiteSpace: "pre-line" }}
+              >
+                {pet.description || "Chưa có mô tả cho thú cưng này."}
+              </p>
+              {!isExpanded && showExpandButton && (
+                <div
+                  className="position-absolute bottom-0 start-0 w-100 h-50"
+                  style={{ background: "linear-gradient(transparent, white)" }}
+                ></div>
+              )}
+            </div>
+            {showExpandButton && (
+              <button
+                className="btn btn-outline-primary btn-sm mt-2 rounded-pill px-4"
+                onClick={() => setIsExpanded(!isExpanded)}
+              >
+                {isExpanded ? "Thu gọn" : "Xem thêm"}
+              </button>
+            )}
+          </div>
+        </div>
 
-              {/* Pet info card */}
-              <div className="pet-detail-info">
-                {/* Pet name */}
-                <h1 className="pet-detail-name">{pet.name}</h1>
+        {/* Right Column: Info + Similar Pets */}
+        <div className="col-lg-6">
+          <div className="text-primary fw-bold mb-2">
+            <Link to="/adoption" className="text-decoration-none text-primary">
+              Nhận nuôi
+            </Link>{" "}
+            &gt; {pet.animal || "Thú cưng"}
+          </div>
+          <h1 className="fw-bold mb-2 h2">{pet.name}</h1>
 
-                {/* Meta tags */}
-                <div className="pet-detail-meta">
-                  <span className="pet-detail-meta-item">
-                    🐾 {pet.animal}
-                  </span>
-                  <span className="pet-detail-meta-item">
-                    🏷️ {pet.breed}
-                  </span>
-                  <span className="pet-detail-meta-item">
-                    📅 {pet.age} tuổi
-                  </span>
-                  <span className="pet-detail-meta-item">
-                    📏 {pet.size}
-                  </span>
+          {/* Status badge */}
+          <div className="h3 fw-bold mb-3" style={{ color: "#fd7e14" }}>
+              {isAvailable ? "Tìm chủ nhân yêu thương" : "Đã có chủ"}
+          </div>
+
+           {/* Metrics / Status Badges */}
+           <div className="mb-4 d-flex align-items-center gap-2 flex-wrap">
+             {pet.vaccinated && (
+                <span className="badge bg-success bg-opacity-10 text-success border border-success rounded-pill px-3 py-2">
+                    <i className="fas fa-syringe me-2"></i>Đã tiêm phòng
+                </span>
+             )}
+             {pet.sterilized && (
+                <span className="badge bg-info bg-opacity-10 text-info border border-info rounded-pill px-3 py-2">
+                    <i className="fas fa-cut me-2"></i>Đã triệt sản
+                </span>
+             )}
+             
+             <div className="text-warning small ms-2">
+                <i className="fas fa-star"></i>
+                <i className="fas fa-star"></i>
+                <i className="fas fa-star"></i>
+                <i className="fas fa-star"></i>
+                <i className="fas fa-star"></i>
+                <span className="text-muted ms-1">(Yêu thích)</span>
+             </div>
+           </div>
+
+          <div className="mb-4">
+             {isAvailable ? (
+                <div className="fw-semibold mb-1 text-success">
+                    <i className="fas fa-check-circle me-1"></i>Trạng thái: Sẵn sàng
                 </div>
-
-                {/* Health status */}
-                <div className={`pet-detail-health ${isHealthGood ? 'good' : 'warning'}`}>
-                  {pet.healthStatus || 'Sức khỏe tốt'}
+             ) : (
+                <div className="fw-semibold mb-1 text-danger">
+                    <i className="fas fa-times-circle me-1"></i>Trạng thái: Không khả dụng
                 </div>
+             )}
+          </div>
 
-                {/* Quick info */}
-                <div className="pet-detail-quick-info">
-                  <h4 className="pet-detail-quick-info-title">
-                    Thông tin nhanh
-                  </h4>
-                  <div className="pet-detail-quick-info-list">
-                    <div className="pet-detail-quick-info-item">
-                      <span className="pet-detail-quick-info-label">Giới tính</span>
-                      <span className="pet-detail-quick-info-value">{pet.gender}</span>
-                    </div>
-                    <div className="pet-detail-quick-info-item">
-                      <span className="pet-detail-quick-info-label">Cân nặng</span>
-                      <span className="pet-detail-quick-info-value">{pet.weight} kg</span>
-                    </div>
-                    <div className="pet-detail-quick-info-item">
-                      <span className="pet-detail-quick-info-label">Nhóm tuổi</span>
-                      <span className="pet-detail-quick-info-value">{pet.ageGroup}</span>
-                    </div>
-                    <div className="pet-detail-quick-info-item">
-                      <span className="pet-detail-quick-info-label">Đã tiêm phòng</span>
-                      <span className={`pet-detail-quick-info-value ${(pet.vaccinated === '1' || pet.vaccinated === 1 || pet.vaccinated === true) ? 'yes' : 'no'}`}>
-                        {(pet.vaccinated === '1' || pet.vaccinated === 1 || pet.vaccinated === true) ? '✓ Có' : '✗ Không'}
-                      </span>
-                    </div>
-                    <div className="pet-detail-quick-info-item">
-                      <span className="pet-detail-quick-info-label">Đã triệt sản</span>
-                      <span className={`pet-detail-quick-info-value ${(pet.neutered === '1' || pet.neutered === 1 || pet.neutered === true) ? 'yes' : 'no'}`}>
-                        {(pet.neutered === '1' || pet.neutered === 1 || pet.neutered === true) ? '✓ Có' : '✗ Không'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Action buttons */}
-                <div className="pet-detail-actions">
-                  <button
-                    className="pet-detail-btn-adopt"
-                    onClick={handleAdoptClick}
-                  >
-                    🏠 Nhận nuôi ngay
-                  </button>
-                  <Link to="/adoption" className="pet-detail-btn-secondary">
-                    Xem thêm thú cưng
-                  </Link>
-                </div>
-
-                {/* Similar pets */}
-                {similar && similar.length > 0 && (
-                  <div className="pet-detail-similar">
-                    <h4 className="pet-detail-similar-title">
-                      🐕 Thú cưng tương tự
-                    </h4>
-                    <div className="pet-detail-similar-grid">
-                      {similar.map((p) => (
-                        <div
-                          key={p.id}
-                          className="pet-detail-similar-card"
-                          onClick={() => navigate(`/pets/${p.id}`)}
-                        >
-                          <img
-                            src={(p.images && p.images[0]?.imageUrl) || p.imageUrl || 'https://via.placeholder.com/160'}
-                            alt={p.name}
-                          />
-                          <div className="pet-detail-similar-card-info">
-                            <div className="pet-detail-similar-card-name">{p.name}</div>
-                            <div className="pet-detail-similar-card-type">{p.animal}</div>
-                          </div>
+          {/* Quick Info Grid */}
+          <div className="bg-light bg-opacity-50 p-4 rounded-4 mb-4 border">
+            <h6 className="fw-bold mb-3 text-uppercase text-secondary small ls-1">Thông tin nhanh</h6>
+            <div className="row g-3">
+                <div className="col-6">
+                    <div className="d-flex align-items-center bg-white p-3 rounded-3 shadow-sm h-100 border">
+                        <div className="bg-primary bg-opacity-10 p-2 rounded-circle me-3">
+                             <i className="fas fa-venus-mars text-primary"></i>
                         </div>
-                      ))}
+                        <div>
+                            <div className="small text-muted mb-1">Giới tính</div>
+                            <div className="fw-bold text-dark">{getGenderLabel(pet.gender)}</div>
+                        </div>
                     </div>
-                  </div>
-                )}
-              </div>
+                </div>
+                <div className="col-6">
+                    <div className="d-flex align-items-center bg-white p-3 rounded-3 shadow-sm h-100 border">
+                        <div className="bg-success bg-opacity-10 p-2 rounded-circle me-3">
+                            <i className="fas fa-weight-hanging text-success"></i>
+                        </div>
+                        <div>
+                            <div className="small text-muted mb-1">Cân nặng</div>
+                            <div className="fw-bold text-dark">{pet.weight ? `${pet.weight} kg` : "N/A"}</div>
+                        </div>
+                    </div>
+                </div>
+                <div className="col-6">
+                    <div className="d-flex align-items-center bg-white p-3 rounded-3 shadow-sm h-100 border">
+                        <div className="bg-warning bg-opacity-10 p-2 rounded-circle me-3">
+                            <i className="fas fa-birthday-cake text-warning"></i>
+                        </div>
+                        <div>
+                            <div className="small text-muted mb-1">Tuổi/Nhóm tuổi</div>
+                            <div className="fw-bold text-dark">{getAgeLabel(pet.age || pet.ageGroup)}</div>
+                        </div>
+                    </div>
+                </div>
+                <div className="col-6">
+                    <div className="d-flex align-items-center bg-white p-3 rounded-3 shadow-sm h-100 border">
+                        <div className="bg-info bg-opacity-10 p-2 rounded-circle me-3">
+                            <i className="fas fa-palette text-info"></i>
+                        </div>
+                        <div>
+                            <div className="small text-muted mb-1">Màu sắc</div>
+                            <div className="fw-bold text-dark">{pet.color || "N/A"}</div>
+                        </div>
+                    </div>
+                </div>
             </div>
           </div>
+
+          {/* Action Buttons */}
+          <div className="d-flex gap-3 mb-5">
+            <Button
+              className={`btn-lg px-4 text-white fw-bold w-100 shadow-sm ${!isAvailable ? "btn-secondary" : ""}`}
+              style={{
+                backgroundColor: isAvailable ? "#fd7e14" : undefined,
+                borderColor: isAvailable ? "#fd7e14" : undefined,
+                height: "56px"
+              }}
+              onClick={handleAdoptClick}
+              disabled={!isAvailable}
+            >
+              <i className="fas fa-paw me-2"></i>
+              {isAvailable ? "Gửi Yêu Cầu Nhận Nuôi" : "Đã Được Nhận Nuôi"}
+            </Button>
+            
+            <Link
+              to="/adoption"
+              className="btn btn-outline-secondary btn-lg px-4 d-flex align-items-center justify-content-center"
+              style={{height: "56px"}}
+            >
+              <i className="fas fa-arrow-left me-2"></i>
+              Quay lại
+            </Link>
+          </div>
+
+          {/* Similar Pets Section */}
+          {similar.length > 0 && (
+            <div className="mt-5 pt-4 border-top">
+              <h5 className="fw-bold text-uppercase mb-3 text-secondary">
+                Có thể bạn cũng thích
+              </h5>
+              <div className="d-flex flex-column gap-3">
+                {similar.map((p) => {
+                     const pImg = (p.petImage && p.petImage.length > 0) ? p.petImage[0].imageUrl : (p.imageUrl || p.image || "https://via.placeholder.com/80");
+                     return (
+                        <div
+                            key={p.id}
+                            className="d-flex gap-3 align-items-center p-2 rounded border hover-shadow transition-all bg-white"
+                            style={{ cursor: "pointer", transition: "0.2s" }}
+                            onClick={() => navigate(`/adoption/${p.id}`)}
+                        >
+                            <img
+                            src={pImg}
+                            alt={p.name}
+                            className="rounded-3 border"
+                            style={{
+                                width: "80px",
+                                height: "80px",
+                                objectFit: "cover",
+                            }}
+                            />
+                            <div>
+                            <div className="fw-bold text-dark mb-1">{p.name}</div>
+                            <div className="small text-muted">
+                                <span className="me-2"><i className="fas fa-venus-mars small me-1"></i>{getGenderLabel(p.gender)}</span>
+                                <span><i className="fas fa-clock small me-1"></i>{p.age} tuổi</span>
+                            </div>
+                            <div className="fw-bold mt-1 small" style={{color: "#fd7e14"}}>Miễn phí</div>
+                            </div>
+                        </div>
+                     );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Adoption Modal */}
+       {/* Adoption Application Modal */}
       <AdoptionApplicationModal
         pet={pet}
         isOpen={isApplicationOpen}
         onClose={() => setIsApplicationOpen(false)}
-        onSubmit={handleSubmit}
+        onSubmit={handleApplicationSubmit}
         submitting={isSubmitting}
         onShowAddressModal={() => {
-          try { localStorage.setItem('adoption_selected_pet', JSON.stringify(pet)); } catch (e) {}
+          try {
+            localStorage.setItem("adoption_selected_pet", JSON.stringify(pet));
+          } catch (e) {}
           setShowAddressModal(true);
         }}
       />
@@ -410,7 +562,8 @@ export default function PetDetail() {
           setShowAddressModal(false);
         }}
       />
-    </>
+    </div>
   );
-}
+};
 
+export default PetDetail;

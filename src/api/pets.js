@@ -12,10 +12,15 @@ export const petsApi = {
     if (params.ageGroup) queryParams.append("ageGroup", params.ageGroup);
     
     // Pagination
-    if (params.page !== undefined) {
-      queryParams.append("page", params.page);
+    if (params.pageNumber !== undefined) {
+      queryParams.append("pageNumber", params.pageNumber);
+    } else if (params.page !== undefined) {
+      queryParams.append("pageNumber", params.page);
     }
-    if (params.limit !== undefined) {
+
+    if (params.size !== undefined) {
+      queryParams.append("size", params.size);
+    } else if (params.limit !== undefined) {
       queryParams.append("size", params.limit);
     }
 
