@@ -4,7 +4,7 @@ const PaymentMethod = ({ value, onChange }) => {
       <div className="card-body">
         <h5>Phương thức thanh toán</h5>
 
-        {["cod", "vnpay", "bank"].map((method) => (
+        {["cod", "vnpay"].map((method) => (
           <div className="form-check mb-2" key={method}>
             <input
               className="form-check-input"
