@@ -88,9 +88,9 @@ const CartItem = ({ item, isSelected, onToggleSelect }) => {
         onConfirm={handleConfirmDelete}
         itemName={item.name}
       />
-      <div className="d-flex align-items-center justify-content-between border-bottom py-3">
+      <div className="d-flex align-items-center border-bottom py-3">
         {/* Checkbox */}
-        <div className="me-3">
+        <div style={{ width: 40, flexShrink: 0 }}>
           <input
             type="checkbox"
             disabled={false}
@@ -105,7 +105,7 @@ const CartItem = ({ item, isSelected, onToggleSelect }) => {
         </div>
 
         {/* Ảnh */}
-        <div className="me-3">
+        <div style={{ width: 80, height: 80, flexShrink: 0, marginRight: 16 }}>
           {item.image && (
             <img
               src={item.image}
@@ -117,8 +117,17 @@ const CartItem = ({ item, isSelected, onToggleSelect }) => {
         </div>
 
         {/* Tên + giá */}
-        <div className="flex-grow-1 me-3">
-          <div className="fw-semibold mb-2">{item.name}</div>
+        <div style={{ width: 180, flexShrink: 0, marginRight: 16 }}>
+          <div
+            className="fw-semibold mb-2"
+            style={{
+              wordWrap: "break-word",
+              overflowWrap: "break-word",
+              whiteSpace: "normal"
+            }}
+          >
+            {item.name}
+          </div>
           <div
             className="fw-bold"
             style={{ color: "var(--primary-orange)", fontSize: "1.1rem" }}
@@ -128,7 +137,7 @@ const CartItem = ({ item, isSelected, onToggleSelect }) => {
         </div>
 
         {/* Variant */}
-        <div className="me-3" style={{ minWidth: 150 }}>
+        <div style={{ width: 150, flexShrink: 0, marginRight: 16 }}>
           {item.variantName && (
             <div className="text-muted">
               <span className="fw-semibold">Phân loại:</span> {item.variantName}
@@ -140,7 +149,7 @@ const CartItem = ({ item, isSelected, onToggleSelect }) => {
         </div>
 
         {/* Quantity */}
-        <div className="d-flex align-items-center me-3">
+        <div className="d-flex align-items-center" style={{ flexShrink: 0, marginRight: 16 }}>
           <button
             className="btn btn-outline-secondary btn-sm"
             onClick={handleDecrease}
@@ -172,10 +181,10 @@ const CartItem = ({ item, isSelected, onToggleSelect }) => {
         </div>
 
         {/* Thành tiền + xoá */}
-        <div className="text-end" style={{ minWidth: 120 }}>
+        <div className="d-flex align-items-center" style={{ flexShrink: 0, gap: 16 }}>
           <div
-            className="fw-bold mb-2"
-            style={{ color: "var(--primary-orange)", fontSize: "1.1rem" }}
+            className="fw-bold"
+            style={{ color: "var(--primary-orange)", fontSize: "1.1rem", minWidth: 90, textAlign: "right" }}
           >
             {(item.price * item.quantity).toLocaleString("vi-VN")} ₫
           </div>
