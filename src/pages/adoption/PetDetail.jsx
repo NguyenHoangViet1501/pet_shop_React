@@ -317,8 +317,8 @@ export default function PetDetail() {
                       <span className="pet-detail-quick-info-value">{pet.gender}</span>
                     </div>
                     <div className="pet-detail-quick-info-item">
-                      <span className="pet-detail-quick-info-label">Kích thước</span>
-                      <span className="pet-detail-quick-info-value">{pet.size}</span>
+                      <span className="pet-detail-quick-info-label">Cân nặng</span>
+                      <span className="pet-detail-quick-info-value">{pet.weight} kg</span>
                     </div>
                     <div className="pet-detail-quick-info-item">
                       <span className="pet-detail-quick-info-label">Nhóm tuổi</span>

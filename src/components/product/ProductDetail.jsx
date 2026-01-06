@@ -30,6 +30,21 @@ const ProductDetail = () => {
         setLoading(true);
         const response = await productsApi.getProductById(id);
         const productData = response.result;
+
+        // Filter active variants
+        if (productData.productVariant) {
+          productData.productVariant = productData.productVariant.filter(
+            (v) => v.isDeleted === 0 || v.isDeleted === '0' || !v.isDeleted
+          );
+        }
+
+        // If no active variants, treat as not found/unavailable
+        if (!productData.productVariant || productData.productVariant.length === 0) {
+          setError('Sản phẩm này hiện không khả dụng.');
+          setLoading(false);
+          return;
+        }
+
         setProduct(productData);
         
         // Set default variant (first one)

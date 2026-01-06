@@ -84,7 +84,15 @@ const ProductsPage = () => {
 
   const categories = categoriesWithCount || [];
 
-  const products = productsData?.result?.content || [];
+  const rawProducts = productsData?.result?.content || [];
+  // Filter out products with no active variants
+  const products = rawProducts.filter((p) => {
+    if (!p.productVariant || p.productVariant.length === 0) return false;
+    return p.productVariant.some(
+      (v) => v.isDeleted === 0 || v.isDeleted === '0' || !v.isDeleted
+    );
+  });
+
   const totalPages = productsData?.result?.totalPages || 0;
   const totalElements = productsData?.result?.totalElements || 0;
   const loading = productsLoading || categoriesLoading;

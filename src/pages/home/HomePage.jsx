@@ -15,11 +15,19 @@ const HomePage = () => {
     isError: productsError,
   } = useFeaturedProductsQuery(8);
 
-  const featuredProducts = Array.isArray(featuredProductsData?.result?.content)
+  const rawFeaturedProducts = Array.isArray(featuredProductsData?.result?.content)
     ? featuredProductsData.result.content
     : Array.isArray(featuredProductsData?.result)
     ? featuredProductsData.result
     : [];
+
+  // Filter out products with no active variants
+  const featuredProducts = rawFeaturedProducts.filter((p) => {
+    if (!p.productVariant || p.productVariant.length === 0) return false;
+    return p.productVariant.some(
+      (v) => v.isDeleted === 0 || v.isDeleted === '0' || !v.isDeleted
+    );
+  });
 
   const [services, setServices] = useState([]);
   const [loadingServices, setLoadingServices] = useState(true);
