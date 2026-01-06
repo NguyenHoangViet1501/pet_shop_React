@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { servicesAPI } from '../../api';
@@ -22,6 +23,7 @@ const BookingModal = ({ isOpen, onClose, services, initialServiceId }) => {
   const [selectedSlotId, setSelectedSlotId] = useState(null);
   const { user, token } = useAuth();
   const { showToast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (isOpen) {
@@ -158,6 +160,8 @@ const BookingModal = ({ isOpen, onClose, services, initialServiceId }) => {
         notes: ''
       });
       onClose();
+      navigate('/appointments');
+      window.scrollTo(0, 0);
     } catch (error) {
       const msg = error?.message || 'Đặt lịch thất bại. Vui lòng thử lại.';
       showToast(msg, 'error');
@@ -185,7 +189,7 @@ const BookingModal = ({ isOpen, onClose, services, initialServiceId }) => {
           <div className="modal-body">
             <form onSubmit={handleSubmit} noValidate>
               <div className="mb-3">
-                <label className="form-label">Loại dịch vụ</label>
+                <label className="form-label">Loại dịch vụ <span style={{ color: 'red' }}>*</span></label>
                 <select
                   className={`form-select ${errors.serviceId ? 'is-invalid' : ''}`}
                   name="serviceId"
