@@ -374,7 +374,7 @@ const CheckoutPage = () => {
         shippingAmount: checkoutData?.shippingAmount || 30000,
         shippingAddress: formData.address,
         paymentMethod: formData.paymentMethod,
-        discountPercent: checkoutData?.discountPercent || 0.1,
+        discountPercent: 0.0,
         note: formData.notes || "",
         items: selectedItems.map((item) => ({
           productVariantId: item.productVariantId,
