@@ -19,14 +19,14 @@ const AddressModal = ({ show, addresses, loading, onClose, onSelect }) => {
 
   return (
     <>
-      {/* Backdrop with higher z-index */}
+      {/* Backdrop */}
       <div
         className="modal-backdrop fade show"
         style={{ zIndex: 1060 }}
         onClick={onClose}
       />
 
-      {/* Modal with higher z-index */}
+      {/* Modal */}
       <div
         className="modal fade show d-block"
         style={{ zIndex: 1065 }}
@@ -36,38 +36,39 @@ const AddressModal = ({ show, addresses, loading, onClose, onSelect }) => {
           className="modal-dialog modal-lg modal-dialog-centered"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="modal-content" style={{ borderRadius: 20, overflow: 'hidden' }}>
-            <div className="modal-header" style={{ background: 'linear-gradient(135deg, #3b82f6, #2563eb)', color: 'white', border: 'none' }}>
-              <h5 style={{ margin: 0, fontWeight: 700 }}>📍 Chọn địa chỉ</h5>
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title">
+                <i className="fas fa-map-marker-alt text-primary me-2"></i>
+                Chọn địa chỉ
+              </h5>
               <div className="d-flex align-items-center gap-2">
                 <button
                   type="button"
-                  className="btn btn-sm"
-                  style={{ background: 'rgba(255,255,255,0.2)', color: 'white', borderRadius: 20, padding: '6px 16px' }}
-                    onClick={() => {
+                  className="btn btn-sm btn-outline-primary"
+                  onClick={() => {
                     try { onClose && onClose(); } catch (e) { }
                     const loc = window.location.pathname + window.location.search;
                     const sep = loc.includes('?') ? '&' : '?';
                     const returnToRaw = loc.includes('openAdoption') ? loc : (loc + sep + 'openAdoption=1');
-                    // persist return info to localStorage so we can recover even if query params lost
                     try {
                       localStorage.setItem('adoption_return_pet', JSON.stringify({ returnTo: returnToRaw, timestamp: Date.now() }));
-                    } catch (e) { /* ignore */ }
+                    } catch (e) { }
                     const returnTo = encodeURIComponent(returnToRaw);
                     navigate(`/profile?tab=addresses&returnTo=${returnTo}`);
                   }}
                 >
-                  + Thêm địa chỉ
+                  <i className="fas fa-plus me-1"></i>Thêm địa chỉ
                 </button>
                 <button
-                  className="btn-close btn-close-white"
+                  type="button"
+                  className="btn-close"
                   onClick={onClose}
-                  style={{ opacity: 0.8 }}
                 />
               </div>
             </div>
 
-            <div className="modal-body" style={{ maxHeight: '60vh', overflowY: 'auto', padding: 24 }}>
+            <div className="modal-body" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
               {loading ? (
                 <div className="text-center py-4">
                   <div className="spinner-border text-primary" role="status">
@@ -79,41 +80,26 @@ const AddressModal = ({ show, addresses, loading, onClose, onSelect }) => {
                 <div className="d-flex flex-column gap-3">
                   {addresses.map((addr) => (
                     <div
-                      className="card p-3"
+                      className={`border rounded p-3 ${addr.isDefault ? 'border-primary bg-light' : ''}`}
                       key={addr.id}
-                      style={{
-                        borderRadius: 16,
-                        border: addr.isDefault ? '2px solid #3b82f6' : '1px solid #e2e8f0',
-                        background: addr.isDefault ? 'linear-gradient(135deg, #eff6ff, #dbeafe)' : 'white',
-                        transition: 'all 0.2s ease'
-                      }}
                     >
                       <div className="d-flex justify-content-between align-items-start">
                         <div className="flex-grow-1">
-                          <p className="fw-bold mb-1" style={{ color: '#1e293b', fontSize: 16 }}>
+                          <p className="fw-bold mb-1">
                             {getName(addr)}
                             {addr.isDefault && (
-                              <span
-                                className="badge ms-2"
-                                style={{ background: '#3b82f6', fontSize: 11, fontWeight: 600 }}
-                              >
-                                Mặc định
-                              </span>
+                              <span className="badge bg-primary ms-2">Mặc định</span>
                             )}
                           </p>
-                          <p className="mb-1" style={{ color: '#475569', fontSize: 14 }}>📞 {addr.phone}</p>
-                          <p className="text-muted mb-0" style={{ fontSize: 14 }}>🏠 {renderLine(addr)}</p>
+                          <p className="mb-1 text-muted small">
+                            <i className="fas fa-phone me-1"></i>{addr.phone}
+                          </p>
+                          <p className="text-muted small mb-0">
+                            <i className="fas fa-map-marker-alt me-1"></i>{renderLine(addr)}
+                          </p>
                         </div>
                         <button
-                          className="btn"
-                          style={{
-                            background: 'linear-gradient(135deg, #f59e0b, #d97706)',
-                            color: 'white',
-                            borderRadius: 12,
-                            padding: '10px 24px',
-                            fontWeight: 600,
-                            boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)'
-                          }}
+                          className="btn btn-primary btn-sm"
                           onClick={() => onSelect(addr)}
                         >
                           Chọn
@@ -124,17 +110,10 @@ const AddressModal = ({ show, addresses, loading, onClose, onSelect }) => {
                 </div>
               ) : (
                 <div className="text-center py-5">
-                  <div style={{ fontSize: 48, marginBottom: 16 }}>📭</div>
+                  <i className="fas fa-inbox fa-3x text-muted mb-3"></i>
                   <p className="text-muted mb-3">Bạn chưa có địa chỉ nào</p>
                   <button
-                    className="btn"
-                    style={{
-                      background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
-                      color: 'white',
-                      borderRadius: 12,
-                      padding: '12px 28px',
-                      fontWeight: 600
-                    }}
+                    className="btn btn-primary"
                     onClick={() => {
                       try { onClose && onClose(); } catch (e) { }
                       const loc = window.location.pathname + window.location.search;
@@ -142,12 +121,12 @@ const AddressModal = ({ show, addresses, loading, onClose, onSelect }) => {
                       const returnToRaw = loc.includes('openAdoption') ? loc : (loc + sep + 'openAdoption=1');
                       try {
                         localStorage.setItem('adoption_return_pet', JSON.stringify({ returnTo: returnToRaw, timestamp: Date.now() }));
-                      } catch (e) {}
+                      } catch (e) { }
                       const returnTo = encodeURIComponent(returnToRaw);
                       navigate(`/profile?tab=addresses&returnTo=${returnTo}`);
                     }}
                   >
-                    + Thêm địa chỉ mới
+                    <i className="fas fa-plus me-2"></i>Thêm địa chỉ mới
                   </button>
                 </div>
               )}
@@ -160,4 +139,3 @@ const AddressModal = ({ show, addresses, loading, onClose, onSelect }) => {
 };
 
 export default AddressModal;
-

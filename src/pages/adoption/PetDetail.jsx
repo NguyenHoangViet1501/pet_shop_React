@@ -7,7 +7,6 @@ import { adoptApi, addressAPI } from "../../api";
 import { AdoptionApplicationModal } from "../../components/adoption/AdoptionModal";
 import AddressModal from "../../components/checkout/AddressModal";
 import Button from "../../components/ui/button/Button";
-import "./PetDetail.css";
 
 const PetDetail = () => {
   const { id } = useParams();
@@ -20,15 +19,13 @@ const PetDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeImage, setActiveImage] = useState(null);
-  const [similar, setSimilar] = useState([]);
-  
-  // UI States
+  const [similarPets, setSimilarPets] = useState([]);
   const [isExpanded, setIsExpanded] = useState(false);
   const [showExpandButton, setShowExpandButton] = useState(false);
   const [isZoomed, setIsZoomed] = useState(false);
   const descriptionRef = useRef(null);
-  
-  // Adoption Logic
+
+  // Adoption states
   const [isApplicationOpen, setIsApplicationOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [addresses, setAddresses] = useState([]);
@@ -39,41 +36,50 @@ const PetDetail = () => {
     const fetchPet = async () => {
       try {
         setLoading(true);
-        const res = await petsApi.getPetById(id);
-        const data = res?.result ?? res?.data ?? null;
+        const response = await petsApi.getPetById(id);
+        const petData = response?.result ?? response?.data ?? null;
 
-        if (!data) {
-          setError('Không tìm thấy thú cưng.');
+        if (!petData) {
+          setError("Không tìm thấy thú cưng.");
           setLoading(false);
           return;
         }
 
-        setPet(data);
+        setPet(petData);
 
-        // Images logic
-        const imgs = data.petImage || (data.images ? data.images : []);
-        let firstImg = "https://via.placeholder.com/600x400?text=No+Image";
-        
-        if (imgs && imgs.length > 0) {
-           const primary = imgs.find(img => img.isPrimary === 1 || img.isPrimary === '1');
-           firstImg = primary ? (primary.imageUrl || primary.url) : (imgs[0].imageUrl || imgs[0].url || imgs[0]);
-        } else if (data.imageUrl) {
-            firstImg = data.imageUrl;
-        } else if (data.image) {
-            firstImg = data.image;
+        // Set default image
+        const images = petData.petImage || petData.images || [];
+        let defaultImage = "https://via.placeholder.com/500x500?text=No+Image";
+
+        if (images && images.length > 0) {
+          const primary = images.find((img) => img.isPrimary === 1 || img.isPrimary === '1');
+          defaultImage = primary
+            ? primary.imageUrl || primary.url
+            : images[0].imageUrl || images[0].url || images[0];
+        } else if (petData.imageUrl) {
+          defaultImage = petData.imageUrl;
+        } else if (petData.image) {
+          defaultImage = petData.image;
         }
-        setActiveImage(firstImg);
+        setActiveImage(defaultImage);
 
-        // Similar pets
-        if (data.animal) {
+        // Fetch similar pets
+        if (petData.animal) {
           try {
-            const sim = await petsApi.getPets({ animal: data.animal, isDeleted: "0", size: 6 });
-            const list = (sim?.result?.content ?? sim?.data ?? [])
-              .filter((p) => String(p.id) !== String(data.id))
-              .slice(0, 5);
-            setSimilar(list);
-          } catch (e) {
-            console.error("Error fetching similar pets:", e);
+            const similarRes = await petsApi.getPets({
+              animal: petData.animal,
+              isDeleted: "0",
+              size: 6,
+            });
+            if (similarRes?.result?.content) {
+              setSimilarPets(
+                similarRes.result.content
+                  .filter((p) => String(p.id) !== String(petData.id))
+                  .slice(0, 5)
+              );
+            }
+          } catch (err) {
+            console.error("Error fetching similar pets:", err);
           }
         }
       } catch (err) {
@@ -100,26 +106,26 @@ const PetDetail = () => {
     }
   }, [pet]);
 
-  // Handle auto-open adoption modal
+  // Auto-open adoption modal
   useEffect(() => {
     try {
       const params = new URLSearchParams(location.search);
-      if (params.get('openAdoption')) {
+      if (params.get("openAdoption")) {
         setIsApplicationOpen(true);
       } else {
-        const raw = localStorage.getItem('adoption_return_pet');
+        const raw = localStorage.getItem("adoption_return_pet");
         if (raw) {
-           const parsed = JSON.parse(raw);
-           if (parsed && parsed.returnTo && parsed.returnTo.includes(window.location.pathname)) {
-             setIsApplicationOpen(true);
-             localStorage.removeItem('adoption_return_pet');
-           }
+          const parsed = JSON.parse(raw);
+          if (parsed?.returnTo?.includes(window.location.pathname)) {
+            setIsApplicationOpen(true);
+            localStorage.removeItem("adoption_return_pet");
+          }
         }
       }
     } catch (e) { }
   }, [location.search]);
 
-  // Address logic
+  // Fetch addresses when modal opens
   useEffect(() => {
     const fetchAddresses = async () => {
       if (token) {
@@ -152,9 +158,10 @@ const PetDetail = () => {
   const handleAdoptClick = () => {
     if (!user) {
       showToast("Vui lòng đăng nhập để gửi yêu cầu nhận nuôi!", "warning");
-      localStorage.setItem("adoption_return_pet", JSON.stringify({
-         returnTo: location.pathname + "?openAdoption=1"
-      }));
+      localStorage.setItem(
+        "adoption_return_pet",
+        JSON.stringify({ returnTo: location.pathname + "?openAdoption=1" })
+      );
       navigate("/login");
       return;
     }
@@ -165,32 +172,30 @@ const PetDetail = () => {
     if (!pet || !user) return;
     setIsSubmitting(true);
     try {
+      const incomeMap = {
+        "under-10m": "Dưới 10 triệu",
+        "10-20m": "10-20 triệu",
+        "20-30m": "20-30 triệu",
+        "above-30m": "Trên 30 triệu",
+      };
+
       const payload = {
         userId: user?.id ? Number(user.id) : null,
         petId: pet?.id ? Number(pet.id) : null,
         addressId: formData.addressId ? Number(formData.addressId) : null,
         note: formData.reason || "",
         job: formData.job || "",
-        income: (function () {
-          const map = {
-            'under-10m': 'Dưới 10 triệu',
-            '10-20m': '10-20 triệu',
-            '20-30m': '20-30 triệu',
-            'above-30m': 'Trên 30 triệu'
-          };
-          return formData.income ? (map[formData.income] || formData.income) : "";
-        })(),
+        income: formData.income ? incomeMap[formData.income] || formData.income : "",
         liveCondition: formData.conditions || "",
-        isOwnPet: (function () {
-          if (typeof formData.isOwnPet !== 'undefined') return String(formData.isOwnPet);
-          if (typeof formData.is_own_pet !== 'undefined') return String(formData.is_own_pet);
-          if (typeof formData.experience !== 'undefined') return formData.experience === '1' ? '1' : '0';
-          return '0';
+        isOwnPet: (() => {
+          if (typeof formData.isOwnPet !== "undefined") return String(formData.isOwnPet);
+          if (typeof formData.is_own_pet !== "undefined") return String(formData.is_own_pet);
+          if (typeof formData.experience !== "undefined") return formData.experience === "1" ? "1" : "0";
+          return "0";
         })(),
       };
-      
-      const res = await adoptApi.createAdoptRequest(payload, token);
-      
+
+      await adoptApi.createAdoptRequest(payload, token);
       showToast("Gửi yêu cầu nhận nuôi thành công!", "success");
       setIsApplicationOpen(false);
     } catch (err) {
@@ -216,7 +221,10 @@ const PetDetail = () => {
       <div className="container page-content">
         <div className="alert alert-warning d-flex justify-content-between align-items-center">
           <div>{error || "Không tìm thấy thú cưng."}</div>
-          <button className="btn btn-primary btn-sm" onClick={() => navigate("/adoption")}>
+          <button
+            className="btn btn-primary btn-sm"
+            onClick={() => navigate("/adoption")}
+          >
             Quay lại danh sách
           </button>
         </div>
@@ -224,29 +232,31 @@ const PetDetail = () => {
     );
   }
 
-  // --- Helpers for Display ---
-  const getGenderLabel = (g) => {
-      const lower = String(g).toLowerCase();
-      if (lower.includes('male') || lower === 'đực') return 'Đực';
-      if (lower.includes('female') || lower === 'cái') return 'Cái';
-      return g;
+  // Helper functions
+  const getAnimalLabel = (animal) => {
+    const map = {
+      dog: "Chó",
+      cat: "Mèo",
+      bird: "Chim",
+      rabbit: "Thỏ",
+      other: "Khác",
+    };
+    return map[String(animal).toLowerCase()] || animal;
   };
 
-  const getAgeLabel = (a) => {
-      if (!a) return 'N/A';
-      if (!isNaN(a)) return `${a} tuổi`;
-      return a;
-  }
-  
-  const isAvailable = pet.status === 'AVAILABLE' || pet.status === 'PENDING_APPROVAL';
+  const getGenderLabel = (gender) => {
+    const g = String(gender).toLowerCase();
+    if (g.includes("male") || g === "đực") return "Đực";
+    if (g.includes("female") || g === "cái") return "Cái";
+    return gender;
+  };
 
-  // Extract images
-  const petImages = pet.petImage || (pet.images ? pet.images : []);
-  const imageList = petImages.length > 0 ? petImages : (pet.imageUrl ? [{ imageUrl: pet.imageUrl }] : []);
+  const isAvailable = pet.status === "AVAILABLE" || pet.status === "PENDING_APPROVAL";
+  const petImages = pet.petImage || pet.images || [];
+  const imageList = petImages.length > 0 ? petImages : pet.imageUrl ? [{ imageUrl: pet.imageUrl }] : [];
 
   return (
     <div className="container page-content py-4">
-      {/* Zoom Modal */}
       {isZoomed && (
         <div
           style={{
@@ -306,27 +316,30 @@ const PetDetail = () => {
               {imageList.map((img, index) => {
                 const url = img.imageUrl || img.url || img;
                 return (
-                    <div
+                  <div
                     key={index}
-                    className={`rounded-3 overflow-hidden border ${
-                        activeImage === url
-                        ? "border-primary border-2"
-                        : "border-transparent"
-                    }`}
+                    className={`rounded-3 overflow-hidden border ${activeImage === url
+                      ? "border-primary border-2"
+                      : "border-transparent"
+                      }`}
                     style={{
-                        width: "80px",
-                        height: "80px",
-                        cursor: "pointer",
-                        flexShrink: 0,
+                      width: "80px",
+                      height: "80px",
+                      cursor: "pointer",
+                      flexShrink: 0,
                     }}
                     onClick={() => setActiveImage(url)}
-                    >
+                  >
                     <img
-                        src={url}
-                        alt={`Thumbnail ${index}`}
-                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      src={url}
+                      alt={`Thumbnail ${index}`}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                      }}
                     />
-                    </div>
+                  </div>
                 );
               })}
             </div>
@@ -336,7 +349,8 @@ const PetDetail = () => {
           <div className="mt-4">
             <h5 className="fw-bold text-uppercase mb-3">Mô tả</h5>
             <div
-              className={`position-relative ${!isExpanded ? "overflow-hidden" : ""}`}
+              className={`position-relative ${!isExpanded ? "overflow-hidden" : ""
+                }`}
               style={{ maxHeight: isExpanded ? "none" : "250px" }}
             >
               <p
@@ -349,7 +363,9 @@ const PetDetail = () => {
               {!isExpanded && showExpandButton && (
                 <div
                   className="position-absolute bottom-0 start-0 w-100 h-50"
-                  style={{ background: "linear-gradient(transparent, white)" }}
+                  style={{
+                    background: "linear-gradient(transparent, white)",
+                  }}
                 ></div>
               )}
             </div>
@@ -366,177 +382,144 @@ const PetDetail = () => {
 
         {/* Right Column: Info + Similar Pets */}
         <div className="col-lg-6">
-          <div className="text-primary fw-bold mb-2">
-            <Link to="/adoption" className="text-decoration-none text-primary">
-              Nhận nuôi
-            </Link>{" "}
-            &gt; {pet.animal || "Thú cưng"}
+          {/* Breadcrumb with Back Button */}
+          <div className="d-flex justify-content-between align-items-center mb-2">
+            <div className="text-primary fw-bold">
+              <Link to="/adoption" className="text-decoration-none text-primary">
+                Nhận nuôi
+              </Link>{" "}
+              &gt; {getAnimalLabel(pet.animal)}
+            </div>
+            <Link
+              to="/adoption"
+              className="btn btn-outline-secondary btn-sm px-3"
+            >
+              <i className="fas fa-arrow-left me-2"></i>Quay lại
+            </Link>
           </div>
           <h1 className="fw-bold mb-2 h2">{pet.name}</h1>
 
-          {/* Status badge */}
-          <div className="h3 fw-bold mb-3" style={{ color: "#fd7e14" }}>
-              {isAvailable ? "Tìm chủ nhân yêu thương" : "Đã có chủ"}
+          <div
+            className="h3 fw-bold mb-2"
+            style={{ color: "#fd7e14" }}
+          >
+            Tìm chủ nhân yêu thương
           </div>
-
-           {/* Metrics / Status Badges */}
-           <div className="mb-4 d-flex align-items-center gap-2 flex-wrap">
-             {pet.vaccinated && (
-                <span className="badge bg-success bg-opacity-10 text-success border border-success rounded-pill px-3 py-2">
-                    <i className="fas fa-syringe me-2"></i>Đã tiêm phòng
-                </span>
-             )}
-             {pet.sterilized && (
-                <span className="badge bg-info bg-opacity-10 text-info border border-info rounded-pill px-3 py-2">
-                    <i className="fas fa-cut me-2"></i>Đã triệt sản
-                </span>
-             )}
-             
-             
-           </div>
 
           <div className="mb-4">
-             {isAvailable ? (
-                <div className="fw-semibold mb-1 text-success">
-                    <i className="fas fa-check-circle me-1"></i>Trạng thái: Sẵn sàng
-                </div>
-             ) : (
-                <div className="fw-semibold mb-1 text-danger">
-                    <i className="fas fa-times-circle me-1"></i>Trạng thái: Không khả dụng
-                </div>
-             )}
+            {isAvailable ? (
+              <div className="fw-semibold mb-1 text-success">
+                <i className="fas fa-check-circle me-1"></i>Đã tiêm phòng
+              </div>
+            ) : (
+              <div className="fw-semibold mb-1 text-danger">
+                <i className="fas fa-times-circle me-1"></i>Đã có chủ
+              </div>
+            )}
           </div>
 
-          {/* Quick Info Grid */}
-          <div className="bg-light bg-opacity-50 p-4 rounded-4 mb-4 border">
-            <h6 className="fw-bold mb-3 text-uppercase text-secondary small ls-1">Thông tin nhanh</h6>
+          {/* Info Grid - Similar to Product Variants */}
+          <div className="mb-4">
+            <div className="fw-bold mb-2">Thông tin nhanh</div>
             <div className="row g-3">
-                <div className="col-6">
-                    <div className="d-flex align-items-center bg-white p-3 rounded-3 shadow-sm h-100 border">
-                        <div className="bg-primary bg-opacity-10 p-2 rounded-circle me-3">
-                             <i className="fas fa-venus-mars text-primary"></i>
-                        </div>
-                        <div>
-                            <div className="small text-muted mb-1">Giới tính</div>
-                            <div className="fw-bold text-dark">{getGenderLabel(pet.gender)}</div>
-                        </div>
-                    </div>
+              <div className="col-6">
+                <div className="border rounded-3 p-3 h-100">
+                  <div className="small text-muted mb-1">
+                    <i className="fas fa-venus-mars me-2"></i>Giới tính
+                  </div>
+                  <div className="fw-bold">{getGenderLabel(pet.gender)}</div>
                 </div>
-                <div className="col-6">
-                    <div className="d-flex align-items-center bg-white p-3 rounded-3 shadow-sm h-100 border">
-                        <div className="bg-success bg-opacity-10 p-2 rounded-circle me-3">
-                            <i className="fas fa-weight-hanging text-success"></i>
-                        </div>
-                        <div>
-                            <div className="small text-muted mb-1">Cân nặng</div>
-                            <div className="fw-bold text-dark">{pet.weight ? `${pet.weight} kg` : "N/A"}</div>
-                        </div>
-                    </div>
+              </div>
+              <div className="col-6">
+                <div className="border rounded-3 p-3 h-100">
+                  <div className="small text-muted mb-1">
+                    <i className="fas fa-weight-hanging me-2"></i>Cân nặng
+                  </div>
+                  <div className="fw-bold">{pet.weight ? `${pet.weight} kg` : "12 kg"}</div>
                 </div>
-                <div className="col-6">
-                    <div className="d-flex align-items-center bg-white p-3 rounded-3 shadow-sm h-100 border">
-                        <div className="bg-warning bg-opacity-10 p-2 rounded-circle me-3">
-                            <i className="fas fa-birthday-cake text-warning"></i>
-                        </div>
-                        <div>
-                            <div className="small text-muted mb-1">Tuổi/Nhóm tuổi</div>
-                            <div className="fw-bold text-dark">{getAgeLabel(pet.age || pet.ageGroup)}</div>
-                        </div>
-                    </div>
+              </div>
+              <div className="col-6">
+                <div className="border rounded-3 p-3 h-100">
+                  <div className="small text-muted mb-1">
+                    <i className="fas fa-birthday-cake me-2"></i>Tuổi/Nhóm tuổi
+                  </div>
+                  <div className="fw-bold">{pet.age ? `${pet.age} tuổi` : pet.ageGroup || "2 tuổi"}</div>
                 </div>
-                <div className="col-6">
-                    <div className="d-flex align-items-center bg-white p-3 rounded-3 shadow-sm h-100 border">
-                        <div className="bg-info bg-opacity-10 p-2 rounded-circle me-3">
-                            <i className="fas fa-palette text-info"></i>
-                        </div>
-                        <div>
-                            <div className="small text-muted mb-1">Giống loài </div>
-                            <div className="fw-bold text-dark">{pet.breed || "N/A"}</div>
-                        </div>
-                    </div>
+              </div>
+              <div className="col-6">
+                <div className="border rounded-3 p-3 h-100">
+                  <div className="small text-muted mb-1">
+                    <i className="fas fa-paw me-2"></i>Giống loài
+                  </div>
+                  <div className="fw-bold">{pet.breed || "test"}</div>
                 </div>
+              </div>
             </div>
           </div>
 
-          {/* Action Buttons */}
           <div className="d-flex gap-3 mb-5">
             <Button
-              className={`btn-lg px-4 text-white fw-bold w-100 shadow-sm ${!isAvailable ? "btn-secondary" : ""}`}
+              className={`btn-lg px-4 text-white fw-bold ${isAvailable ? "" : "btn-secondary"
+                }`}
               style={{
                 backgroundColor: isAvailable ? "#fd7e14" : undefined,
                 borderColor: isAvailable ? "#fd7e14" : undefined,
-                height: "56px"
               }}
               onClick={handleAdoptClick}
               disabled={!isAvailable}
+              isLoading={isSubmitting}
             >
               <i className="fas fa-paw me-2"></i>
-              {isAvailable ? "Gửi Yêu Cầu Nhận Nuôi" : "Đã Được Nhận Nuôi"}
+              {isAvailable ? "Gửi yêu cầu nhận nuôi" : "Đã được nhận nuôi"}
             </Button>
-            
-            <Link
-              to="/adoption"
-              className="btn btn-outline-secondary btn-lg px-4 d-flex align-items-center justify-content-center"
-              style={{height: "56px"}}
-            >
-              <i className="fas fa-arrow-left me-2"></i>
-              Quay lại
-            </Link>
           </div>
 
           {/* Similar Pets Section */}
-          {similar.length > 0 && (
-            <div className="mt-5 pt-4 border-top">
+          {similarPets.length > 0 && (
+            <div className="mt-4 pt-4 border-top">
               <h5 className="fw-bold text-uppercase mb-3 text-secondary">
                 Có thể bạn cũng thích
               </h5>
               <div className="d-flex flex-column gap-3">
-                {similar.map((p) => {
-                     const pImg = (() => {
-                        if (p.images && p.images.length > 0) {
-                             const prime = p.images.find(i => i.isPrimary === 1 || i.isPrimary === true);
-                             return prime ? prime.imageUrl : p.images[0].imageUrl;
-                        }
-                        if (p.petImage && p.petImage.length > 0) {
-                            const prime = p.petImage.find(i => i.isPrimary === 1 || i.isPrimary === true);
-                            return prime ? prime.imageUrl : p.petImage[0].imageUrl;
-                        }
-                        return p.imageUrl || p.image || "https://via.placeholder.com/80?text=No+Image";
-                     })();
+                {similarPets.map((p) => {
+                  const pImg = (() => {
+                    if (p.images && p.images.length > 0) {
+                      const prime = p.images.find((i) => i.isPrimary === 1);
+                      return prime ? prime.imageUrl : p.images[0].imageUrl;
+                    }
+                    if (p.petImage && p.petImage.length > 0) {
+                      const prime = p.petImage.find((i) => i.isPrimary === 1);
+                      return prime ? prime.imageUrl : p.petImage[0].imageUrl;
+                    }
+                    return p.imageUrl || p.image || "https://via.placeholder.com/80";
+                  })();
 
-                     return (
-                        <div
-                            key={p.id}
-                            className="d-flex gap-3 align-items-center p-2 rounded border hover-shadow transition-all bg-white"
-                            style={{ cursor: "pointer", transition: "0.2s" }}
-                            onClick={() => {
-                                navigate(`/pets/${p.id}`);
-                                window.scrollTo(0, 0);
-                            }}
-                        >
-                            <img
-                            src={pImg}
-                            alt={p.name}
-                            className="rounded-3 border"
-                            style={{
-                                width: "80px",
-                                height: "80px",
-                                objectFit: "cover",
-                            }}
-                            onError={(e) => {
-                                e.target.onerror = null;
-                                e.target.src = "https://via.placeholder.com/80?text=No+Image";
-                            }}
-                            />
-                            <div>
-                            <div className="fw-bold text-dark mb-1">{p.name}</div>
-                            <div className="small text-muted">
-                                <span className="me-2"><i className="fas fa-venus-mars small me-1"></i>{getGenderLabel(p.gender)}</span>
-                                <span><i className="fas fa-clock small me-1"></i>{p.age} tuổi</span>
-                            </div>
-                            </div>
+                  return (
+                    <div
+                      key={p.id}
+                      className="d-flex gap-3 align-items-center p-2 rounded hover-bg-light"
+                      style={{ cursor: "pointer" }}
+                      onClick={() => navigate(`/pets/${p.id}`)}
+                    >
+                      <img
+                        src={pImg}
+                        alt={p.name}
+                        className="rounded-3 border"
+                        style={{
+                          width: "80px",
+                          height: "80px",
+                          objectFit: "cover",
+                        }}
+                      />
+                      <div>
+                        <div className="fw-bold text-dark mb-1">{p.name}</div>
+                        <div className="small" style={{ color: "#fd7e14" }}>
+                          <i className="fas fa-venus-mars me-1"></i>
+                          {getGenderLabel(p.gender)} • {p.age} tuổi
                         </div>
-                     );
+                      </div>
+                    </div>
+                  );
                 })}
               </div>
             </div>
@@ -544,7 +527,7 @@ const PetDetail = () => {
         </div>
       </div>
 
-       {/* Adoption Application Modal */}
+      {/* Adoption Application Modal */}
       <AdoptionApplicationModal
         pet={pet}
         isOpen={isApplicationOpen}
@@ -554,7 +537,7 @@ const PetDetail = () => {
         onShowAddressModal={() => {
           try {
             localStorage.setItem("adoption_selected_pet", JSON.stringify(pet));
-          } catch (e) {}
+          } catch (e) { }
           setShowAddressModal(true);
         }}
       />

@@ -10,7 +10,9 @@ import dog from "../../assets/svg/dog.svg";
 import cat from "../../assets/svg/cat.svg";
 import vetchan from "../../assets/svg/vetchan.svg";
 import { hover } from "@testing-library/user-event/dist/hover";
+import { useNavigate } from "react-router-dom";
 const HeroSection = () => {
+  const navigate = useNavigate();
   return (
     <section className="hero-section-new container py-5">
       <div className="row align-items-center position-relative">
@@ -34,7 +36,9 @@ const HeroSection = () => {
             đáng tin cậy cho bạn và thú cưng.
           </p>
 
-          <Button className="mt-4">Khám phá ngay</Button>
+          <Button className="mt-4"
+            onClick={() => navigate("/products")}
+          >Khám phá ngay</Button>
         </div>
 
         {/* ✅ BÊN PHẢI - HÌNH ẢNH */}
