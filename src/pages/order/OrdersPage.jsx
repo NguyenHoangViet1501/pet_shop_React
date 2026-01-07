@@ -12,6 +12,7 @@ const ORDER_STATUS_MAP = {
   PROCESSING: { label: "Đang xử lý", className: "bg-info" },
   SHIPPED: { label: "Đang giao", className: "bg-primary" },
   DELIVERED: { label: "Đã giao", className: "bg-success" },
+  COMPLETED: { label: "Đã nhận được hàng", className: "bg-success" },
   CANCELLED: { label: "Đã hủy", className: "bg-danger" },
   REFUNDED: { label: "Đã hoàn tiền", className: "bg-secondary" },
 };
@@ -22,6 +23,7 @@ const FILTER_TABS = [
   { value: "PROCESSING", label: "Đang xử lý" },
   { value: "SHIPPED", label: "Đang giao" },
   { value: "DELIVERED", label: "Đã giao" },
+  { value: "COMPLETED", label: "Đã nhận được hàng" },
   { value: "CANCELLED", label: "Đã hủy" },
 ];
 
@@ -43,6 +45,7 @@ const OrdersPage = () => {
   const [selectedOrderForPaymentChange, setSelectedOrderForPaymentChange] = useState(null);
   const [updatingPaymentOrderId, setUpdatingPaymentOrderId] = useState(null);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("COD");
+  const [completingOrderId, setCompletingOrderId] = useState(null);
 
   // 🔥 PAGE BẮT ĐẦU TỪ 1 (THEO API)
   const [pageNumber, setPageNumber] = useState(1);
@@ -159,6 +162,26 @@ const OrdersPage = () => {
       showToast("Lỗi khi đổi phương thức thanh toán", "error");
     } finally {
       setUpdatingPaymentOrderId(null);
+    }
+  };
+
+  const handleCompleteOrder = async (orderId, orderCode) => {
+    if (!orderId || !orderCode) return;
+
+    setCompletingOrderId(orderId);
+    try {
+      const res = await orderAPI.completeOrder(orderId, orderCode, token);
+      if (res?.success) {
+        showToast("Xác nhận đã nhận được hàng thành công", "success");
+        setRefreshKey((prev) => prev + 1);
+      } else {
+        showToast(res?.message || "Không thể hoàn thành đơn hàng", "error");
+      }
+    } catch (error) {
+      console.error(error);
+      showToast("Lỗi khi hoàn thành đơn hàng", "error");
+    } finally {
+      setCompletingOrderId(null);
     }
   };
 
@@ -294,6 +317,16 @@ const OrdersPage = () => {
                               Hủy
                             </Button>
                           )}
+                          {order.status === "DELIVERED" && (
+                            <Button
+                              variant="outline-success"
+                              className="btn-sm rounded-pill"
+                              onClick={() => handleCompleteOrder(order.id, order.orderCode)}
+                              isLoading={completingOrderId === order.id}
+                            >
+                              Đã nhận được hàng
+                            </Button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -323,9 +356,8 @@ const OrdersPage = () => {
                   return (
                     <li
                       key={p}
-                      className={`page-item ${
-                        pageNumber === p ? "active" : ""
-                      }`}
+                      className={`page-item ${pageNumber === p ? "active" : ""
+                        }`}
                     >
                       <button
                         className="page-link"
@@ -338,9 +370,8 @@ const OrdersPage = () => {
                 })}
 
                 <li
-                  className={`page-item ${
-                    pageNumber === totalPages ? "disabled" : ""
-                  }`}
+                  className={`page-item ${pageNumber === totalPages ? "disabled" : ""
+                    }`}
                 >
                   <button
                     className="page-link"

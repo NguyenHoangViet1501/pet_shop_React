@@ -59,4 +59,20 @@ export const orderAPI = {
       }
     );
   },
+
+  completeOrder: async (orderId, orderCode, token) => {
+    return apiFetch("/v1/orders/update-status", {
+      method: "PUT",
+      body: {
+        orderUpdateList: [
+          {
+            id: orderId,
+            orderCode: orderCode,
+            orderStatus: "COMPLETED",
+          },
+        ],
+      },
+      token,
+    });
+  },
 };

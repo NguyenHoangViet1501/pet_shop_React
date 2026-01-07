@@ -9,6 +9,7 @@ const ORDER_STATUS_MAP = {
   PROCESSING: { label: "Đang xử lý", className: "bg-info" },
   SHIPPED: { label: "Đang giao", className: "bg-primary" },
   DELIVERED: { label: "Đã giao", className: "bg-success" },
+  COMPLETED: { label: "Đã nhận được hàng", className: "bg-success" },
   CANCELLED: { label: "Đã hủy", className: "bg-danger" },
   REFUNDED: { label: "Đã hoàn tiền", className: "bg-secondary" },
 };
@@ -23,11 +24,20 @@ const OrderDetailPage = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!token) return;
+    console.log('OrderDetailPage - id:', id);
+    console.log('OrderDetailPage - token:', token ? 'exists' : 'missing');
+
+    if (!token) {
+      console.log('No token, skipping fetch');
+      return;
+    }
 
     const fetchOrder = async () => {
+      console.log('Fetching order detail for id:', id);
       try {
         const res = await orderAPI.getOrderDetail(id, token);
+        console.log('Order detail response:', res);
+
         if (res?.success) {
           setOrderDetails(res.result || []);
         } else {
@@ -35,7 +45,7 @@ const OrderDetailPage = () => {
           setOrderDetails([]);
         }
       } catch (err) {
-        console.error(err);
+        console.error('Error fetching order:', err);
         showToast("Lỗi khi tải chi tiết đơn hàng", "error");
       } finally {
         setLoading(false);
@@ -43,7 +53,7 @@ const OrderDetailPage = () => {
     };
 
     fetchOrder();
-  }, [id, token, showToast]);
+  }, [id, token]);
 
   if (loading) {
     return (
@@ -58,7 +68,7 @@ const OrderDetailPage = () => {
       <div className="container page-content">
         <div className="alert alert-warning d-flex justify-content-between align-items-center">
           <div>Không tìm thấy thông tin đơn hàng hoặc đơn hàng trống.</div>
-          <Link to="/orders" className="btn btn-primary btn-sm">
+          <Link to="/profile/orders" className="btn btn-primary btn-sm">
             Về danh sách
           </Link>
         </div>
@@ -89,7 +99,7 @@ const OrderDetailPage = () => {
             Ngày đặt: {formatDate(orderInfo.orderDate)}
           </div>
         </div>
-        <Link to="/orders" className="btn btn-outline-secondary">
+        <Link to="/profile/orders" className="btn btn-outline-secondary">
           <i className="bi bi-arrow-left me-2"></i>Quay lại danh sách
         </Link>
       </div>
@@ -171,7 +181,7 @@ const OrderDetailPage = () => {
               <h5 className="card-title mb-3">Thanh toán</h5>
               <div className="d-flex justify-content-between mb-2">
                 <span className="text-muted">Tạm tính:</span>
-                <span>{formatMoney(orderInfo.totalPrice)}</span> 
+                <span>{formatMoney(orderInfo.totalPrice)}</span>
                 {/* Lưu ý: JSON trả về totalAmount là tổng cuối cùng, nếu có phí ship hay giảm giá thì cần tính toán lại để hiển thị chi tiết hơn. 
                     Ở đây tạm dùng totalAmount cho tổng cộng. */}
               </div>
