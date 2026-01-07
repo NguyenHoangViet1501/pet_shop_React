@@ -55,5 +55,8 @@ export const productsApi = {
   },
   getBrands: async () => {
     return await apiFetch(`/v1/products/brands`);
-  }
+  },
+  getAnimal: async () => {
+    return await apiFetch(`/v1/products/animals`);
+  },
 };

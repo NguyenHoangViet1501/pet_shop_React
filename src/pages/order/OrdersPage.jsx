@@ -271,7 +271,7 @@ const OrdersPage = () => {
                           <button
                             className="btn btn-sm btn-outline-primary rounded-pill"
                             onClick={() =>
-                              navigate(`/profile/orders/${order.id}`)
+                              navigate(`/orders/${order.id}`)
                             }
                           >
                             Chi tiết

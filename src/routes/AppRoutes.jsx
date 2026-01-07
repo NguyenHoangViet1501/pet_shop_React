@@ -9,14 +9,14 @@ import ResetPasswordPage from '../pages/user/ResetPasswordPage';
 import CartPage from '../pages/CartPage';
 import CheckoutPage from '../pages/CheckoutPage';
 import ProfilePage from '../pages/ProfilePage';
-import OrdersPage from '../pages/OrdersPage';
+import OrdersPage from '../pages/order/OrdersPage';
 import AppointmentsPage from '../pages/AppointmentsPage';
 import ServicesPage from '../pages/ServicesPage';
 import AdoptionPage from '../pages/AdoptionPage';
 import AdoptionRequestsPage from '../pages/AdoptionRequestsPage';
 import PetDetail from '../pages/adoption/PetDetail';
 import ProductDetailPage from '../pages/ProductDetailPage';
-import OrderDetailPage from '../pages/OrderDetailPage';
+import OrderDetailPage from '../pages/order/OrderDetailPage';
 import AdoptionRequestDetailPage from '../pages/AdoptionRequestDetailPage';
 
 function AppRoutes() {

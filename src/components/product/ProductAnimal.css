@@ -1,10 +1,14 @@
 .animal-item {
   cursor: pointer;
+  flex: 0 0 18%; /* Hiển thị khoảng 5.5 item để người dùng biết có thể scroll */
+  min-width: 140px; /* Đảm bảo không quá nhỏ trên mobile */
+  user-select: none;
 }
 
 .animal-bg-container {
-  width: 140px;
-  height: 140px;
+  width: 120px; /* Giảm size một chút để vừa vặn hơn */
+  height: 120px;
+  margin: 0 auto;
 }
 
 .animal-bg-img {
@@ -34,3 +38,29 @@
 .animal-icon-filter {
   filter: invert(68%) sepia(61%) saturate(4410%) hue-rotate(360deg) brightness(101%) contrast(106%);
 }
+
+/* Scrollbar hiding styling and drag container */
+.animal-scroll-container {
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  gap: 3rem; /* Tách đều ra với khoảng cách rộng hơn */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+  padding-bottom: 0px; 
+  cursor: grab;
+  justify-content: flex-start; /* Để items bắt đầu từ trái và có thể scroll */
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+/* Khi số lượng item ít, căn giữa đều đẹp (tùy chọn, ở đây user muốn tách đều nên để flex-start ok hơn nếu nhiều item) */
+/* Nếu muốn "tách đều" kiểu space-between khi ít item, nhưng scroll khi nhiều, thì flex-start + gap an toàn hơn cho scroll */
+
+.animal-scroll-container::-webkit-scrollbar {
+  display: none; /* Chrome/Safari/Opera */
+}
+
+.animal-scroll-container:active {
+  cursor: grabbing;
+}
+
