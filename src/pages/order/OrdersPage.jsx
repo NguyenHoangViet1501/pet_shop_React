@@ -36,6 +36,8 @@ const OrdersPage = () => {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [orderToCancelCode, setOrderToCancelCode] = useState(null);
   const [selectedStatus, setSelectedStatus] = useState("");
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedOrderForPaymentChange, setSelectedOrderForPaymentChange] = useState(null);
@@ -46,6 +48,22 @@ const OrdersPage = () => {
   const [pageNumber, setPageNumber] = useState(1);
   const [size] = useState(5);
   const [totalPages, setTotalPages] = useState(1);
+
+  // Debounce search
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 500);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [search]);
+
+  // Reset page when filter or search changes
+  useEffect(() => {
+    setPageNumber(1);
+  }, [selectedStatus, debouncedSearch]);
 
   useEffect(() => {
     if (!token) return;
@@ -59,6 +77,9 @@ const OrdersPage = () => {
         };
         if (selectedStatus) {
           params.status = selectedStatus;
+        }
+        if (debouncedSearch) {
+          params.orderCode = debouncedSearch;
         }
 
         const res = await orderAPI.getMyOrders(token, params);
@@ -78,7 +99,7 @@ const OrdersPage = () => {
     };
 
     fetchOrders();
-  }, [token, pageNumber, size, selectedStatus, refreshKey]);
+  }, [token, pageNumber, size, selectedStatus, debouncedSearch, refreshKey]);
 
   // Opens confirm modal (user clicks Hủy)
   const handleCancelOrder = (orderCode) => {
@@ -148,34 +169,44 @@ const OrdersPage = () => {
 
   const formatMoney = (value) => Number(value).toLocaleString("vi-VN") + " đ";
 
-  if (loading) {
-    return <div className="container page-content">Đang tải đơn hàng...</div>;
-  }
-
   return (
     <div className="container page-content">
       <h1 className="mb-4">Đơn hàng của tôi</h1>
 
-      {/* Filter Tabs */}
-      <div className="mb-4 overflow-auto">
-        <div className="d-flex gap-2 pb-2" style={{ minWidth: "max-content" }}>
+      {/* FILTER & SEARCH */}
+      <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+        {/* Status Tabs */}
+        <div className="d-flex flex-wrap gap-2">
           {FILTER_TABS.map((tab) => (
             <Button
               key={tab.value}
               variant={
-                selectedStatus === tab.value
-                  ? "primary"
-                  : "outline-secondary"
+                selectedStatus === tab.value ? "primary" : "outline-secondary"
               }
-              className="rounded-pill px-3"
-              onClick={() => {
-                setSelectedStatus(tab.value);
-                setPageNumber(1); // Reset về trang 1 khi đổi filter
-              }}
+              className="rounded-pill px-3 btn-sm"
+              onClick={() => setSelectedStatus(tab.value)}
             >
               {tab.label}
             </Button>
           ))}
+        </div>
+
+        {/* Search */}
+        <div
+          className="flex-grow-1 flex-md-grow-0"
+          style={{ minWidth: "250px" }}
+        >
+          <div className="input-group input-group-sm">
+            <span className="input-group-text bg-white border-end-0 text-muted">
+              <i className="fas fa-search"></i>
+            </span>
+            <input
+              className="form-control border-start-0 ps-0"
+              placeholder="Tìm theo mã đơn..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
         </div>
       </div>
 
@@ -193,80 +224,82 @@ const OrdersPage = () => {
             </thead>
 
             <tbody>
-              {orders.length === 0 && (
+              {loading ? (
                 <tr>
-                  <td colSpan="5" className="text-center">
-                    Không có đơn hàng
+                  <td colSpan="5" className="text-center py-5">
+                    <div className="spinner-border text-primary" role="status">
+                      <span className="visually-hidden">Loading...</span>
+                    </div>
+                    <p className="mt-2 text-muted small">Đang tìm kiếm...</p>
                   </td>
                 </tr>
-              )}
+              ) : orders.length === 0 ? (
+                <tr>
+                  <td colSpan="5" className="text-center py-5">
+                    <img
+                      src="https://cdn-icons-png.flaticon.com/512/4076/4076432.png"
+                      alt="No orders"
+                      style={{
+                        width: "64px",
+                        opacity: 0.5,
+                        marginBottom: "1rem",
+                      }}
+                    />
+                    <p className="text-muted">Không tìm thấy đơn hàng nào</p>
+                  </td>
+                </tr>
+              ) : (
+                orders.map((order) => {
+                  const statusInfo =
+                    ORDER_STATUS_MAP[order.status] ||
+                    { label: order.status, className: "bg-secondary" };
 
-              {orders.map((order) => {
-                const statusInfo = ORDER_STATUS_MAP[order.status] || {};
-
-                return (
-                  <tr key={order.orderCode}>
-                    <td>#{order.orderCode}</td>
-                    <td>{formatDate(order.createdDate)}</td>
-                    <td>
-                      {order.status !== 'REFUNDED' ? (
-                        <span className={`badge ${statusInfo.className}`}>
-                          {statusInfo.label || order.status}
-                        </span>
-                      ) : null}
-                    </td>
-                    <td>{formatMoney(order.totalAmount)}</td>
-                    <td>
-                      <Button
-                        variant="outline-primary"
-                        className="btn-sm"
-                        onClick={() => navigate(`/orders/detail/${order.id}`)}
-                      >
-                        Xem
-                      </Button>
-
-                      {(order.status === "WAITING_PAYMENT" ||
-                        order.status === "PROCESSING") && (
-                        <Button
-                          variant="outline-danger"
-                          className="btn-sm ms-2"
-                          onClick={() => handleCancelOrder(order.orderCode)}
-                          isLoading={cancellingOrderId === order.orderCode}
+                  return (
+                    <tr key={order.orderCode}>
+                      <td>#{order.orderCode}</td>
+                      <td>{formatDate(order.createdDate)}</td>
+                      <td>
+                        <span
+                          className={`badge ${statusInfo.className} rounded-pill px-3`}
                         >
-                          Hủy
-                        </Button>
-                      )}
-
-                      {order.status === "WAITING_PAYMENT" && (
-                        <>
-                          <Button
-                            variant="outline-warning"
-                            className="btn-sm ms-2"
+                          {statusInfo.label}
+                        </span>
+                      </td>
+                      <td>{formatMoney(order.totalAmount)}</td>
+                      <td>
+                        <div className="d-flex gap-2">
+                          <button
+                            className="btn btn-sm btn-outline-primary rounded-pill"
                             onClick={() =>
-                              navigate("/checkout", {
-                                state: {
-                                  order, // gửi nguyên object order
-                                  from: "orders",
-                                },
-                              })
+                              navigate(`/profile/orders/${order.id}`)
                             }
                           >
-                            Thanh toán lại
-                          </Button>
-                          <Button
-                            variant="outline-info"
-                            className="btn-sm ms-2"
-                            onClick={() => handleChangePaymentMethod(order)}
-                            isLoading={updatingPaymentOrderId === order.id}
-                          >
-                            Thay đổi phương thức
-                          </Button>
-                        </>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
+                            Chi tiết
+                          </button>
+                          {order.status === "WAITING_PAYMENT" && (
+                            <button
+                              className="btn btn-sm btn-outline-success rounded-pill"
+                              onClick={() => handleChangePaymentMethod(order)}
+                            >
+                              Đổi thanh toán
+                            </button>
+                          )}
+                          {order.status === "WAITING_PAYMENT" && (
+                            <Button
+                              variant="outline-danger"
+                              className="btn-sm"
+                              onClick={() => handleCancelOrder(order.orderCode)}
+                              isLoading={cancellingOrderId === order.orderCode}
+                            >
+                              Hủy
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
 

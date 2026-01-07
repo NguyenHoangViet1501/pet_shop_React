@@ -15,15 +15,17 @@ const PetCard = ({ pet, onAdoptClick }) => {
 
   // Chuyển đổi animal type sang tiếng Việt
   const getAnimalType = (animal) => {
+    if (!animal) return "";
+    const lower = String(animal).toLowerCase();
     const animalMap = {
-      Dog: "Chó",
-      Cat: "Mèo",
-      Bird: "Chim",
-      Rabbit: "Thỏ",
-      Hamster: "Chuột Hamster",
-      Turtle: "Rùa",
+      dog: "Chó",
+      cat: "Mèo",
+      bird: "Chim",
+      rabbit: "Thỏ",
+      hamster: "Chuột Hamster",
+      turtle: "Rùa",
     };
-    return animalMap[animal] || animal;
+    return animalMap[lower] || animal;
   };
 
   // Chuyển đổi size sang tiếng Việt

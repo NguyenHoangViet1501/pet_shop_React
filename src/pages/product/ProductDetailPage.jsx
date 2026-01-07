@@ -353,18 +353,6 @@ const ProductDetailPage = () => {
             {formatPrice(selectedVariant?.price || 0)}
           </div>
 
-          {/* Rating Placeholder */}
-          <div className="mb-3 d-flex align-items-center gap-2">
-            <div className="text-warning small">
-              <i className="fas fa-star"></i>
-              <i className="fas fa-star"></i>
-              <i className="fas fa-star"></i>
-              <i className="fas fa-star"></i>
-              <i className="fas fa-star-half-alt"></i>
-            </div>
-            <span className="text-muted small">4.9 | 12 đánh giá</span>
-          </div>
-
           <div className="mb-4">
             {isOutOfStock ? (
               <div className="fw-semibold mb-1 text-danger">
@@ -540,12 +528,6 @@ const ProductDetailPage = () => {
             </div>
           )}
         </div>
-      </div>
-
-      <hr className="my-5" />
-      <h4 className="mb-3">Đánh giá khách hàng</h4>
-      <div className="text-muted">
-        Chưa có đánh giá nào. Hãy là người đầu tiên đánh giá sản phẩm này!
       </div>
     </div>
   );

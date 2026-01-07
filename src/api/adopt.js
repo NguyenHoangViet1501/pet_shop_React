@@ -29,10 +29,10 @@ export const adoptApi = {
 		token,
 	});
 	},
-	cancelAdopt: async (adoptId, token) => {
-	return apiFetch(`/v1/adopt/cancel/${adoptId}`, {
-		method: "PUT",
-		token,
-	});
-	}
+	cancelAdoptRequest: async (adoptId, token) => {
+		return apiFetch(`/v1/adopt/cancel/${adoptId}`, {
+			method: "PUT",
+			token,
+		});
+	},
 };

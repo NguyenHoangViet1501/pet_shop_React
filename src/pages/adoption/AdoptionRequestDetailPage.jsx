@@ -203,7 +203,7 @@ useEffect(() => {
             onConfirm={async () => {
               try {
                 setIsCancelling(true);
-                await adoptApi.cancelAdopt(id, token);
+                await adoptApi.cancelAdoptRequest(id, token);
                 showToast('Hủy đơn thành công', 'success');
                 setReq(prev => prev ? { ...prev, status: 'CANCELED' } : prev);
                 setShowCancelConfirm(false);

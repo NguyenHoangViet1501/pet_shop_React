@@ -3,13 +3,14 @@ import { useToast } from "../../context/ToastContext";
 import { useNavigate } from "react-router-dom";
 import { adoptApi, petsApi } from "../../api";
 import { useAuth } from "../../context/AuthContext";
+import Button from "../../components/ui/button/Button";
 
 const STATUS_OPTIONS = [
   { value: "all", label: "Tất cả" },
-  { value: "PENDING", label: "Đang xét duyệt" },
+  { value: "PENDING", label: "Chờ xét duyệt" },
   { value: "APPROVED", label: "Đã duyệt" },
   { value: "REJECTED", label: "Từ chối" },
-  { value: "COMPLETED", label: "Hoàn tất" },
+  { value: "COMPLETED", label: "Hoàn thành" },
   { value: "CANCELED", label: "Đã hủy" }
 ];
 
@@ -20,13 +21,13 @@ const statusToBadge = (status) => {
     case "CANCELED":
       return { className: "badge bg-secondary", text: "Đã hủy" };
     case "PENDING":
-      return { className: "badge bg-warning", text: "Đang xét duyệt" };
+      return { className: "badge bg-warning", text: "Chờ xét duyệt" };
     case "APPROVED":
       return { className: "badge bg-success", text: "Đã duyệt" };
     case "REJECTED":
       return { className: "badge bg-danger", text: "Từ chối" };
     case "COMPLETED":
-      return { className: "badge bg-primary", text: "Hoàn tất" };
+      return { className: "badge bg-primary", text: "Hoàn thành" };
     default:
       return { className: "badge bg-secondary", text: status };
   }
@@ -141,33 +142,35 @@ const AdoptionRequestsPage = () => {
       <h1 className="mb-4">Đơn xin nhận nuôi</h1>
 
       {/* FILTER */}
-      <div className="card mb-3">
-        <div className="card-body">
-          <div className="row g-3 align-items-end">
-            <div className="col-md-3">
-              <label className="form-label">Trạng thái</label>
-              <select
-                className="form-select"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-              >
-                {STATUS_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+      <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+        {/* Status Tabs */}
+        <div className="d-flex flex-wrap gap-2">
+          {STATUS_OPTIONS.map((o) => (
+            <Button
+              key={o.value}
+              variant={
+                statusFilter === o.value ? "primary" : "outline-secondary"
+              }
+              className="rounded-pill px-3 btn-sm"
+              onClick={() => setStatusFilter(o.value)}
+            >
+              {o.label}
+            </Button>
+          ))}
+        </div>
 
-            <div className="col-md-9">
-              <label className="form-label">Tìm kiếm</label>
-              <input
-                className="form-control"
-                placeholder="Tìm theo mã đơn..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
+        {/* Search */}
+        <div className="flex-grow-1 flex-md-grow-0" style={{ minWidth: "250px" }}>
+          <div className="input-group input-group-sm">
+            <span className="input-group-text bg-white border-end-0 text-muted">
+              <i className="fas fa-search"></i>
+            </span>
+            <input
+              className="form-control border-start-0 ps-0"
+              placeholder="Tìm theo mã đơn..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
           </div>
         </div>
       </div>
@@ -257,12 +260,40 @@ const AdoptionRequestsPage = () => {
                             Xem chi tiết
                           </button>
 
-                          {req.status?.toUpperCase() === "APPROVED" && (
+                          {(req.status?.toUpperCase() === "PENDING" || req.status?.toUpperCase() === "APPROVED") && (
                             <button
-                              className="btn btn-sm btn-outline-success"
-                              onClick={() => handleContact(req)}
+                              className="btn btn-sm btn-outline-danger"
+                              onClick={async () => {
+                                if (
+                                  window.confirm(
+                                    `Bạn có chắc chắn muốn hủy yêu cầu #${req.code}?`
+                                  )
+                                ) {
+                                  try {
+                                    setLoading(true);
+                                    await adoptApi.cancelAdoptRequest(
+                                      req.id,
+                                      token
+                                    );
+                                    showToast("Đã hủy yêu cầu thành công!", "success");
+                                    // Refresh list
+                                    setPage(0); 
+                                    const res = await adoptApi.getAdoptsByUser(user.id, { page: 0, size, status: statusFilter === "all" ? null : statusFilter, code: search || null, isDeleted: "0" }, token);
+                                    setRequests(res.result?.content || []);
+                                    setTotalPages(res.result?.totalPages || 0);
+
+                                  } catch (error) {
+                                    showToast(
+                                      error.message || "Không thể hủy yêu cầu",
+                                      "error"
+                                    );
+                                  } finally {
+                                    setLoading(false);
+                                  }
+                                }
+                              }}
                             >
-                              Liên hệ
+                              Hủy
                             </button>
                           )}
                         </div>

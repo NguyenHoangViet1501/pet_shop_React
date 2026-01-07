@@ -238,7 +238,7 @@ const PetDetail = () => {
       return a;
   }
   
-  const isAvailable = pet.status === 'AVAILABLE';
+  const isAvailable = pet.status === 'AVAILABLE' || pet.status === 'PENDING_APPROVAL';
 
   // Extract images
   const petImages = pet.petImage || (pet.images ? pet.images : []);
@@ -334,7 +334,7 @@ const PetDetail = () => {
 
           {/* Description Section */}
           <div className="mt-4">
-            <h5 className="fw-bold text-uppercase mb-3">Mô tả/Câu chuyện</h5>
+            <h5 className="fw-bold text-uppercase mb-3">Mô tả</h5>
             <div
               className={`position-relative ${!isExpanded ? "overflow-hidden" : ""}`}
               style={{ maxHeight: isExpanded ? "none" : "250px" }}
@@ -392,14 +392,7 @@ const PetDetail = () => {
                 </span>
              )}
              
-             <div className="text-warning small ms-2">
-                <i className="fas fa-star"></i>
-                <i className="fas fa-star"></i>
-                <i className="fas fa-star"></i>
-                <i className="fas fa-star"></i>
-                <i className="fas fa-star"></i>
-                <span className="text-muted ms-1">(Yêu thích)</span>
-             </div>
+             
            </div>
 
           <div className="mb-4">
@@ -457,8 +450,8 @@ const PetDetail = () => {
                             <i className="fas fa-palette text-info"></i>
                         </div>
                         <div>
-                            <div className="small text-muted mb-1">Màu sắc</div>
-                            <div className="fw-bold text-dark">{pet.color || "N/A"}</div>
+                            <div className="small text-muted mb-1">Giống loài </div>
+                            <div className="fw-bold text-dark">{pet.breed || "N/A"}</div>
                         </div>
                     </div>
                 </div>
@@ -499,13 +492,27 @@ const PetDetail = () => {
               </h5>
               <div className="d-flex flex-column gap-3">
                 {similar.map((p) => {
-                     const pImg = (p.petImage && p.petImage.length > 0) ? p.petImage[0].imageUrl : (p.imageUrl || p.image || "https://via.placeholder.com/80");
+                     const pImg = (() => {
+                        if (p.images && p.images.length > 0) {
+                             const prime = p.images.find(i => i.isPrimary === 1 || i.isPrimary === true);
+                             return prime ? prime.imageUrl : p.images[0].imageUrl;
+                        }
+                        if (p.petImage && p.petImage.length > 0) {
+                            const prime = p.petImage.find(i => i.isPrimary === 1 || i.isPrimary === true);
+                            return prime ? prime.imageUrl : p.petImage[0].imageUrl;
+                        }
+                        return p.imageUrl || p.image || "https://via.placeholder.com/80?text=No+Image";
+                     })();
+
                      return (
                         <div
                             key={p.id}
                             className="d-flex gap-3 align-items-center p-2 rounded border hover-shadow transition-all bg-white"
                             style={{ cursor: "pointer", transition: "0.2s" }}
-                            onClick={() => navigate(`/adoption/${p.id}`)}
+                            onClick={() => {
+                                navigate(`/pets/${p.id}`);
+                                window.scrollTo(0, 0);
+                            }}
                         >
                             <img
                             src={pImg}
@@ -516,6 +523,10 @@ const PetDetail = () => {
                                 height: "80px",
                                 objectFit: "cover",
                             }}
+                            onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = "https://via.placeholder.com/80?text=No+Image";
+                            }}
                             />
                             <div>
                             <div className="fw-bold text-dark mb-1">{p.name}</div>
@@ -523,7 +534,6 @@ const PetDetail = () => {
                                 <span className="me-2"><i className="fas fa-venus-mars small me-1"></i>{getGenderLabel(p.gender)}</span>
                                 <span><i className="fas fa-clock small me-1"></i>{p.age} tuổi</span>
                             </div>
-                            <div className="fw-bold mt-1 small" style={{color: "#fd7e14"}}>Miễn phí</div>
                             </div>
                         </div>
                      );

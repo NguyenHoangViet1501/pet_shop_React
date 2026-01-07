@@ -23,6 +23,9 @@ export const orderAPI = {
     if (params.status) {
       queryParams.append("status", params.status);
     }
+    if (params.orderCode) {
+      queryParams.append("orderCode", params.orderCode);
+    }
 
     return apiFetch(`/v1/orders?${queryParams.toString()}`, {
       method: "GET",
