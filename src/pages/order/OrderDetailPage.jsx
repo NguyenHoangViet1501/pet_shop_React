@@ -139,9 +139,9 @@ const OrderDetailPage = () => {
                             />
                             <div className="ms-3">
                               <h6 className="mb-0 text-truncate" style={{ maxWidth: "250px" }}>
-                                <Link to={`/product/${item.productId}`} className="text-decoration-none text-dark">
+                                <span to={`/product/${item.productId}`} className="text-decoration-none text-dark">
                                   {item.productName}
-                                </Link>
+                                </span>
                               </h6>
                               {/* Hiển thị biến thể nếu có (ví dụ màu, size) - Dựa vào JSON thì chưa thấy field color/size riêng biệt, 
                                   nhưng nếu có thể thêm vào sau. Tạm thời hiển thị variantId nếu cần debug hoặc ẩn đi */}
@@ -203,11 +203,33 @@ const OrderDetailPage = () => {
           <div className="card shadow-sm border-0">
             <div className="card-body">
               <h5 className="card-title mb-3">Thông tin giao hàng</h5>
-              <div className="mb-3">
-                <div className="text-muted small mb-1">Người nhận & Địa chỉ</div>
-                <p className="mb-0 fw-medium">{orderInfo.shippingAddress}</p>
-              </div>
-              {/* Nếu có số điện thoại riêng thì hiển thị, hiện tại nó nằm trong chuỗi address */}
+              {orderInfo.contactName ? (
+                // Display structured address from address relationship
+                <>
+                  <div className="mb-3">
+                    <div className="text-muted small mb-1">Người nhận</div>
+                    <p className="mb-0 fw-medium">{orderInfo.contactName}</p>
+                  </div>
+                  <div className="mb-3">
+                    <div className="text-muted small mb-1">Số điện thoại</div>
+                    <p className="mb-0 fw-medium">{orderInfo.phone}</p>
+                  </div>
+                  <div className="mb-3">
+                    <div className="text-muted small mb-1">Địa chỉ</div>
+                    <p className="mb-0">
+                      {orderInfo.detailAddress}<br />
+                      {orderInfo.ward}, {orderInfo.state}<br />
+                      {orderInfo.city}
+                    </p>
+                  </div>
+                </>
+              ) : (
+                // Fallback to shipping_address string for old orders
+                <div className="mb-3">
+                  <div className="text-muted small mb-1">Người nhận & Địa chỉ</div>
+                  <p className="mb-0 fw-medium">{orderInfo.shippingAddress}</p>
+                </div>
+              )}
             </div>
           </div>
         </div>

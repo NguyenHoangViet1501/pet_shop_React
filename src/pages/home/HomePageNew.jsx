@@ -17,8 +17,8 @@ const HomePageNew = () => {
     Array.isArray(featuredProductsData?.result?.content)
       ? featuredProductsData.result.content
       : Array.isArray(featuredProductsData?.result)
-      ? featuredProductsData.result
-      : []
+        ? featuredProductsData.result
+        : []
   ).filter((p) => p.isDeleted !== "1");
 
   const navigate = useNavigate();
@@ -28,7 +28,7 @@ const HomePageNew = () => {
       <ProductHome title="Sản phẩm nổi bật" products={featuredProducts} />
       <DisplayService />
       <DetailServiceHome />
-      <Adoption />
+      {/* <Adoption /> */}
       <BrandFeature />
       <Feedback />
       <About />

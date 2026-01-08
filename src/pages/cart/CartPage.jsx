@@ -13,7 +13,18 @@ const CartPage = () => {
   const navigate = useNavigate();
 
   const [address, setAddress] = useState([]);
-  const [selectedItems, setSelectedItems] = useState(new Set());
+  const [selectedItems, setSelectedItems] = useState(() => {
+    // Restore selected items from localStorage
+    const saved = localStorage.getItem('cart_selected_items');
+    if (saved) {
+      try {
+        return new Set(JSON.parse(saved));
+      } catch (e) {
+        return new Set();
+      }
+    }
+    return new Set();
+  });
   const { showToast } = useToast();
 
   const fetchAddresses = useCallback(async () => {
@@ -109,6 +120,8 @@ const CartPage = () => {
       } else {
         newSet.delete(itemId);
       }
+      // Save to localStorage whenever selection changes
+      localStorage.setItem('cart_selected_items', JSON.stringify(Array.from(newSet)));
       return newSet;
     });
   };
@@ -170,6 +183,8 @@ const CartPage = () => {
         showToast(message, "error");
         return;
       }
+      // Save selected items before navigating to checkout
+      localStorage.setItem('cart_selected_items', JSON.stringify(Array.from(selectedItems)));
       navigate("/checkout", { state: checkoutData });
     } catch (err) {
       console.error(err);

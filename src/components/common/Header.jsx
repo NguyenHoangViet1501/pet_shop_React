@@ -150,7 +150,7 @@ const Header = () => {
                     const imageUrl =
                       primaryImage?.imageUrl ||
                       product.productImage?.[0]?.imageUrl ||
-                      "https://via.placeholder.com/50";
+                      "/images/default.jpg";
                     const price = product.productVariant?.[0]?.price || 0;
 
                     return (

@@ -33,7 +33,7 @@ const ShippingForm = ({ formData, onChange, onOpenAddressModal }) => {
           <div className="d-flex">
             <input
               className="form-control me-2"
-              value={formData.address}
+              value={formData.addressDisplay || ""}
               readOnly
               required
             />

@@ -27,7 +27,7 @@ const ProductsPage = () => {
   });
 
   const [sortBy, setSortBy] = useState("");
-  const pageSize = 12;
+  const pageSize = 24;
 
   const { data: brandsData } = useBrandsQuery();
 
@@ -131,14 +131,14 @@ const ProductsPage = () => {
           </p>
         )}
         <div className="row">
-          <div className="col-lg-3 mb-4">
+          <div className="col-lg-2 mb-4">
             <ProductFilter2
               categories={categories}
               brands={brandsData || []}
               onFilterChange={handleFilterChange}
             />
           </div>
-          <div className="col-lg-9">
+          <div className="col-lg-10">
             <div className="d-flex justify-content-between align-items-center mb-4">
               <span className="text-muted">
                 {productsLoading
@@ -186,7 +186,7 @@ const ProductsPage = () => {
                 </div>
               ) : (
                 products.map((product) => (
-                  <div key={product.id} className="col-lg-4 col-md-6 mb-4">
+                  <div key={product.id} className="col-lg-3 col-md-6 mb-4">
                     <ProductCard product={product} />
                   </div>
                 ))

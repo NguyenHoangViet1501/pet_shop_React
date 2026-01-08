@@ -6,7 +6,7 @@ const ProductCard = ({ product }) => {
 
   // Lấy ảnh primary (isPrimary = 1) hoặc ảnh đầu tiên
   const primaryImage = product.productImage?.find(img => img.isPrimary === 1);
-  const imageUrl = primaryImage?.imageUrl || product.productImage?.[0]?.imageUrl || 'https://via.placeholder.com/300x200?text=No+Image';
+  const imageUrl = primaryImage?.imageUrl || product.productImage?.[0]?.imageUrl || '/images/default.jpg';
 
   // Lấy giá từ variant đầu tiên hoặc giá mặc định
   const price = product.productVariant?.[0]?.price || 0;
@@ -37,20 +37,24 @@ const ProductCard = ({ product }) => {
     >
       {product.isFeatured === "1" && <div className="featured-badge">Featured</div>}
       {isOutOfStock && (
-        <div className="position-absolute top-0 end-0 bg-danger text-white px-2 py-1 m-2 rounded small fw-bold" style={{zIndex: 10}}>
+        <div className="position-absolute top-0 end-0 bg-danger text-white px-2 py-1 m-2 rounded small fw-bold" style={{ zIndex: 10 }}>
           Hết hàng
         </div>
       )}
       <div className="text-center p-3">
-        <img 
-          src={imageUrl} 
-          className="card-img-top" 
-          alt={product.name} 
-          style={{ 
-            height: '180px', 
+        <img
+          src={imageUrl}
+          className="card-img-top"
+          alt={product.name}
+          style={{
+            height: '180px',
             objectFit: 'contain',
-            opacity: isOutOfStock ? 0.6 : 1 
-          }} 
+            opacity: isOutOfStock ? 0.6 : 1
+          }}
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = '/images/default.jpg';
+          }}
         />
       </div>
       <div className="card-body d-flex flex-column px-3 pb-3 pt-0">
@@ -58,7 +62,7 @@ const ProductCard = ({ product }) => {
           {product.categoryName}
         </div>
         <h6 className="card-title fw-bold mb-2">{product.name}</h6>
-        
+
         <div className="d-flex justify-content-between align-items-center mt-auto">
           <div className="fw-bold" style={{ color: 'var(--primary-orange)', fontSize: '1.1rem' }}>
             {formatPrice(price)}

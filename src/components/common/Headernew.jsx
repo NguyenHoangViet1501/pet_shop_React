@@ -238,7 +238,7 @@ const Headernew = () => {
 
                       const imageUrl =
                         primaryImage?.imageUrl ||
-                        "https://via.placeholder.com/50";
+                        "/images/default.jpg";
 
                       const price = product.productVariant?.[0]?.price || 0;
 

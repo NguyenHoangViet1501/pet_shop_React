@@ -143,7 +143,8 @@ const CheckoutPage = () => {
   const [formData, setFormData] = useState({
     fullName: user?.fullName || "",
     phone: user?.phone || "",
-    address: isFromOrders ? orderToRepay?.shippingAddress || "" : "",
+    selectedAddressId: null, // Store address ID instead of string
+    addressDisplay: isFromOrders ? orderToRepay?.shippingAddress || "" : "", // For display only
     notes: isFromOrders ? orderToRepay?.note || "" : "",
     paymentMethod: "",
   });
@@ -199,9 +200,10 @@ const CheckoutPage = () => {
           const formatted = `${defaultAddr.line}, ${defaultAddr.ward}, ${defaultAddr.district}, ${defaultAddr.city}`;
 
           setFormData((prev) =>
-            prev.address ? prev : {
+            prev.selectedAddressId ? prev : {
               ...prev,
-              address: formatted,
+              selectedAddressId: defaultAddr.id, // Store ID
+              addressDisplay: formatted, // For display
               fullName: defaultAddr.fullName,
               phone: defaultAddr.phone
             }
@@ -231,7 +233,8 @@ const CheckoutPage = () => {
 
     setFormData((prev) => ({
       ...prev,
-      address: formatted,
+      selectedAddressId: addr.id, // Store ID
+      addressDisplay: formatted, // For display
       fullName: addr.fullName,
       phone: addr.phone
     }));
@@ -277,7 +280,7 @@ const CheckoutPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.address) {
+    if (!formData.selectedAddressId) {
       showToast("Vui lòng chọn địa chỉ giao hàng", "error");
       return;
     }
@@ -372,7 +375,7 @@ const CheckoutPage = () => {
       // 📦 NẾU TỪ CART (ĐẶT HÀNG MỚI)
       const payload = {
         shippingAmount: checkoutData?.shippingAmount || 30000,
-        shippingAddress: formData.address,
+        addressId: formData.selectedAddressId, // Send address ID instead of string
         paymentMethod: formData.paymentMethod,
         discountPercent: 0.0,
         note: formData.notes || "",
@@ -404,6 +407,8 @@ const CheckoutPage = () => {
       if (formData.paymentMethod === "cod") {
         showToast("Đặt hàng thành công!", "success");
         queryClient.invalidateQueries({ queryKey: ["cart"] });
+        // Clear selected items from localStorage
+        localStorage.removeItem('cart_selected_items');
         setTimeout(() => {
           navigate("/payment-success", {
             state: { orderId, orderCode, from: "cart" },
@@ -457,7 +462,19 @@ const CheckoutPage = () => {
 
   return (
     <div className="container page-content">
-      <h1 className="mb-4">Thanh toán</h1>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h1 className="mb-0">Thanh toán</h1>
+        {!isFromOrders && (
+          <button
+            type="button"
+            className="btn btn-outline-secondary"
+            onClick={() => navigate('/cart')}
+          >
+            <i className="fas fa-arrow-left me-2"></i>
+            Quay lại giỏ hàng
+          </button>
+        )}
+      </div>
 
       <form onSubmit={handleSubmit} noValidate>
         <div className="row">
@@ -485,7 +502,7 @@ const CheckoutPage = () => {
             <Button
               type="submit"
               className="w-100 mt-3"
-              disabled={!formData.address || !formData.paymentMethod}
+              disabled={!formData.selectedAddressId || !formData.paymentMethod}
               isLoading={isSubmitting}
             >
               Đặt hàng

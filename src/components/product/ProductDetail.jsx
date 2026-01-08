@@ -46,7 +46,7 @@ const ProductDetail = () => {
         }
 
         setProduct(productData);
-        
+
         // Set default variant (first one)
         if (productData.productVariant && productData.productVariant.length > 0) {
           setSelectedVariant(productData.productVariant[0]);
@@ -57,7 +57,7 @@ const ProductDetail = () => {
           const primary = productData.productImage.find(img => img.isPrimary === 1);
           setActiveImage(primary ? primary.imageUrl : productData.productImage[0].imageUrl);
         } else {
-          setActiveImage('https://via.placeholder.com/500x500?text=No+Image');
+          setActiveImage('/images/default.jpg');
         }
       } catch (err) {
         setError('Không thể tải thông tin sản phẩm');
@@ -92,11 +92,11 @@ const ProductDetail = () => {
       </div>
     );
   }
-  
+
   // Giá hiển thị
   const currentPrice = selectedVariant ? selectedVariant.price : 0;
   const formatPrice = (price) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
-  
+
   // Check tồn kho theo Variant đang chọn
   const isOutOfStock = selectedVariant ? Number(selectedVariant.stockQuantity) === 0 : true;
 
@@ -105,7 +105,7 @@ const ProductDetail = () => {
       showToast('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng', 'warning');
       return;
     }
-    
+
     if (isOutOfStock) {
       showToast('Phiên bản này đã hết hàng', 'error');
       return;
@@ -121,7 +121,7 @@ const ProductDetail = () => {
     const currentCartQuantity = cartItem ? cartItem.quantity : 0;
 
     if (currentCartQuantity + quantity > selectedVariant.stockQuantity) {
-      const message = currentCartQuantity > 0 
+      const message = currentCartQuantity > 0
         ? `Giỏ hàng đã có ${currentCartQuantity} sản phẩm. Tổng số lượng vượt quá tồn kho (${selectedVariant.stockQuantity})`
         : `Số lượng bạn chọn vượt quá tồn kho (Còn: ${selectedVariant.stockQuantity})`;
       showToast(message, 'error');
@@ -130,10 +130,10 @@ const ProductDetail = () => {
 
     try {
       setIsAddingToCart(true);
-      await addItem({ 
-        ...product, 
+      await addItem({
+        ...product,
         variant: selectedVariant, // Lưu cả object variant
-        quantity, 
+        quantity,
         price: currentPrice,
         image: activeImage // Lưu ảnh để hiển thị trong giỏ
       });
@@ -152,26 +152,34 @@ const ProductDetail = () => {
         <div className="col-lg-6">
           <div className="card border-0 shadow-sm mb-3">
             <img
-              src={activeImage}
+              src={activeImage || '/images/default.jpg'}
               alt={product.name}
               className="card-img-top rounded-4"
               style={{ width: '100%', height: '480px', objectFit: 'cover' }}
+              onError={(e) => {
+                e.target.onerror = null; // Prevent infinite loop
+                e.target.src = '/images/default.jpg';
+              }}
             />
           </div>
 
           {product.productImage && product.productImage.length > 0 && (
             <div className="d-flex gap-2 overflow-auto pb-2">
               {product.productImage.map((img, index) => (
-                <div 
-                  key={index} 
+                <div
+                  key={index}
                   className={`rounded-3 overflow-hidden border ${activeImage === img.imageUrl ? 'border-primary border-2' : 'border-transparent'}`}
                   style={{ width: '80px', height: '80px', cursor: 'pointer', flexShrink: 0 }}
                   onClick={() => setActiveImage(img.imageUrl)}
                 >
-                  <img 
-                    src={img.imageUrl} 
+                  <img
+                    src={img.imageUrl}
                     alt={`Thumbnail ${index}`}
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = '/images/default.jpg';
+                    }}
                   />
                 </div>
               ))}
@@ -181,9 +189,9 @@ const ProductDetail = () => {
         <div className="col-lg-6">
           <div className="fw-semibold mb-2 text-primary">Danh mục: {product.categoryName}</div>
           <h2 className="mb-2 fw-bold">{product.name}</h2>
-          
+
           <div className="h3 text-danger mb-3 fw-bold">{formatPrice(selectedVariant?.price || 0)}</div>
-          
+
           <div className="mb-4">
             {isOutOfStock ? (
               <div className="fw-semibold mb-1 text-danger">
@@ -198,18 +206,18 @@ const ProductDetail = () => {
               </div>
             )}
           </div>
-          
+
           <div className="mb-4">
             <div className="fw-bold mb-2">Mô tả sản phẩm</div>
-            <p className="text-muted mb-0" style={{lineHeight: '1.6'}}>{product.description}</p>
+            <p className="text-muted mb-0" style={{ lineHeight: '1.6' }}>{product.description}</p>
           </div>
 
           {product.productVariant && product.productVariant.length > 0 && (
             <div className="mb-4">
               <div className="fw-bold mb-2">Chọn phiên bản</div>
-              <select 
-                className="form-select" 
-                value={selectedVariant?.id || ''} 
+              <select
+                className="form-select"
+                value={selectedVariant?.id || ''}
                 onChange={(e) => {
                   const v = product.productVariant.find(pv => String(pv.id) === e.target.value);
                   setSelectedVariant(v);
@@ -232,9 +240,9 @@ const ProductDetail = () => {
               <div className="me-3 fw-bold">Số lượng:</div>
               <div className="input-group" style={{ width: 140 }}>
                 <button className="btn btn-outline-secondary" onClick={() => setQuantity((q) => Math.max(1, q - 1))}>−</button>
-                <input 
-                  className="form-control text-center fw-bold" 
-                  value={quantity} 
+                <input
+                  className="form-control text-center fw-bold"
+                  value={quantity}
                   onChange={(e) => {
                     const val = e.target.value;
                     if (val === "") {
@@ -254,8 +262,8 @@ const ProductDetail = () => {
           )}
 
           <div className="d-flex gap-3 mb-4">
-            <Button 
-              className={`btn-lg px-4 ${isOutOfStock ? 'btn-secondary' : 'btn-primary'}`} 
+            <Button
+              className={`btn-lg px-4 ${isOutOfStock ? 'btn-secondary' : 'btn-primary'}`}
               onClick={handleAddToCart}
               disabled={isOutOfStock}
               isLoading={isAddingToCart}

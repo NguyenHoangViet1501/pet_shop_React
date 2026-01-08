@@ -304,7 +304,7 @@ const OrdersPage = () => {
                               className="btn btn-sm btn-outline-success rounded-pill"
                               onClick={() => handleChangePaymentMethod(order)}
                             >
-                              Đổi thanh toán
+                              Đổi phương thức
                             </button>
                           )}
                           {order.status === "WAITING_PAYMENT" && (
