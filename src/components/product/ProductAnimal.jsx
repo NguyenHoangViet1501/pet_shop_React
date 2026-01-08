@@ -23,6 +23,16 @@ const ProductAnimal = ({ selectedAnimal, onSelectAnimal }) => {
         if (lowerName === 'cat' || lowerName === 'mèo' || lowerName === 'cats') {
             return { id: animalName, name: 'Mèo', img: '/images/product/animal/cat.png', type: 'image' };
         }
+        if (lowerName === 'squirrel' || lowerName === 'sóc' || lowerName === 'squirrels') {
+            return { id: animalName, name: 'Sóc', img: '/images/product/animal/squirrel.png', type: 'image' };
+        }
+        if (lowerName === 'parrot' || lowerName === 'vẹt' || lowerName === 'parrots') {
+            return { id: animalName, name: 'Vẹt', img: '/images/product/animal/parrot.png', type: 'image' };
+        }
+        if (lowerName === 'rabbit' || lowerName === 'thỏ' || lowerName === 'rabbits') {
+            return { id: animalName, name: 'Thỏ', img: '/images/product/animal/rabbit.png', type: 'image' };
+        }
+        
         
         // Default for others
         return { id: animalName, name: animalName, icon: 'fas fa-paw', type: 'font' };
