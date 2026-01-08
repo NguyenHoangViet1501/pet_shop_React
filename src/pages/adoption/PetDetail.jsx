@@ -441,9 +441,9 @@ const PetDetail = () => {
               <div className="col-6">
                 <div className="border rounded-3 p-3 h-100">
                   <div className="small text-muted mb-1">
-                    <i className="fas fa-birthday-cake me-2"></i>Tuổi/Nhóm tuổi
+                    <i className="fas fa-birthday-cake me-2"></i>Tuổi
                   </div>
-                  <div className="fw-bold">{pet.age ? `${pet.age} tuổi` : pet.ageGroup || "2 tuổi"}</div>
+                  <div className="fw-bold">{ `${pet.age} tuổi`}</div>
                 </div>
               </div>
               <div className="col-6">

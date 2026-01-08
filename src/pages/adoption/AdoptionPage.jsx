@@ -17,6 +17,7 @@ const AdoptionPage = () => {
   const [loadingAddresses, setLoadingAddresses] = useState(false);
   const [filters, setFilters] = useState({
     type: "",
+    breed: "",
     age: "",
     minWeight: "",
     maxWeight: "",
@@ -26,6 +27,7 @@ const AdoptionPage = () => {
   const [pets, setPets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [animals, setAnimals] = useState([]);
+  const [breeds, setBreeds] = useState([]);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -70,18 +72,22 @@ const AdoptionPage = () => {
     fetchAddresses();
   }, [user]);
 
-  // Load animals for filter
+  // Load animals and breeds for filter
   useEffect(() => {
-    const loadAnimals = async () => {
+    const loadFilterData = async () => {
       try {
-        const res = await petsApi.getAnimals();
-        const data = res?.result || res?.data || [];
-        setAnimals(data);
+        const resAnimals = await petsApi.getAnimals();
+        const dataAnimals = resAnimals?.result || resAnimals?.data || [];
+        setAnimals(dataAnimals);
+
+        const resBreeds = await petsApi.getBreeds();
+        const dataBreeds = resBreeds?.result || resBreeds?.data || [];
+        setBreeds(dataBreeds);
       } catch (error) {
-        console.error("Failed to load animals:", error);
+        console.error("Failed to load filter data:", error);
       }
     };
-    loadAnimals();
+    loadFilterData();
   }, []);
 
   // Load pets from API
@@ -102,15 +108,8 @@ const AdoptionPage = () => {
           params.animal = filters.type;
         }
 
-        if (filters.age) {
-          // Map age filter: "puppy" -> "Young", "young" -> "Child", etc.
-          const ageGroupMap = {
-            puppy: "Young",
-            young: "Child",
-            adult: "Adult",
-            senior: "Senior",
-          };
-          params.ageGroup = ageGroupMap[filters.age] || filters.age;
+        if (filters.breed) {
+          params.breed = filters.breed;
         }
 
         if (filters.minWeight) {
@@ -318,17 +317,18 @@ const AdoptionPage = () => {
               </div>
 
               <div className="mb-3">
-                <label className="form-label">Tuổi</label>
+                <label className="form-label">Giống loài</label>
                 <select
                   className="form-select"
-                  value={filters.age}
-                  onChange={(e) => handleFilterChange("age", e.target.value)}
+                  value={filters.breed}
+                  onChange={(e) => handleFilterChange("breed", e.target.value)}
                 >
                   <option value="">Tất cả</option>
-                  <option value="puppy">&lt; 1 tuổi</option>
-                  <option value="young">1-3 tuổi</option>
-                  <option value="adult">3-7 tuổi</option>
-                  <option value="senior">&gt; 7 tuổi</option>
+                  {breeds.map((b, index) => (
+                    <option key={index} value={b}>
+                      {b}
+                    </option>
+                  ))}
                 </select>
               </div>
 

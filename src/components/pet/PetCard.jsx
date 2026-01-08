@@ -121,17 +121,7 @@ const PetCard = ({ pet, onAdoptClick }) => {
 
           {/* Pet Details */}
           <p className="text-muted mb-1 small" style={{ fontSize: "0.85rem" }}>
-            {getAnimalType(pet.animal)} {pet.breed} • {pet.age} tuổi •{" "}
-            {getAgeGroupText(pet.ageGroup)}
-          </p>
-
-          {/* Description */}
-          <p
-            className="card-text flex-grow-1"
-            style={{ fontSize: "0.85rem", lineHeight: "1.4", marginBottom: "0" }}
-          >
-            {pet.description ||
-              "Thú cưng đáng yêu đang tìm một mái ấm yêu thương."}
+            Loại : {getAnimalType(pet.animal)} Loài : {pet.breed} • {pet.age} tuổi 
           </p>
 
           {/* Attributes */}

@@ -10,6 +10,7 @@ export const petsApi = {
     if (params.minWeight) queryParams.append("minWeight", params.minWeight);
     if (params.maxWeight) queryParams.append("maxWeight", params.maxWeight);
     if (params.ageGroup) queryParams.append("ageGroup", params.ageGroup);
+    if (params.breed) queryParams.append("breed", params.breed);
     
     // Pagination
     if (params.pageNumber !== undefined) {
@@ -43,6 +44,11 @@ export const petsApi = {
   // Lấy chi tiết 1 pet
   getPetById: async (id) => {
     return await apiFetch(`/v1/pets/${id}`);
+  },
+
+  // Lấy danh sách breed (giống loài)
+  getBreeds: async () => {
+    return await apiFetch(`/v1/pets/breeds`);
   },
 };
 
