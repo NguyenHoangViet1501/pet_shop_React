@@ -21,6 +21,28 @@
     list-style: none;
     padding: 0;
     margin: 0;
+    max-height: 300px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+/* Custom Scrollbar Styling */
+.filter-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.filter-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.filter-list::-webkit-scrollbar-thumb {
+    background: #ffc107;
+    border-radius: 3px;
+}
+
+.filter-list::-webkit-scrollbar-thumb:hover {
+    background: #ff9800;
 }
 
 .filter-item {

@@ -27,7 +27,7 @@ const ProductsPage = () => {
   });
 
   const [sortBy, setSortBy] = useState("");
-  const pageSize = 6;
+  const pageSize = 12;
 
   const { data: brandsData } = useBrandsQuery();
 
@@ -38,26 +38,26 @@ const ProductsPage = () => {
 
   const handleFilterChange = (filters) => {
     if (filters.categories && filters.categories.length > 0) {
-        setSelectedCategory(filters.categories[filters.categories.length - 1]); 
+      setSelectedCategory(filters.categories[filters.categories.length - 1]);
     } else {
-        setSelectedCategory(null);
+      setSelectedCategory(null);
     }
 
     // Brands
     if (filters.brands && filters.brands.length > 0) {
-        setSelectedBrand(filters.brands[filters.brands.length - 1]);
+      setSelectedBrand(filters.brands[filters.brands.length - 1]);
     } else {
-        setSelectedBrand(null);
+      setSelectedBrand(null);
     }
 
     // Price
     if (filters.price) {
-        setAppliedPriceRange({
-            min: filters.price.min,
-            max: filters.price.max
-        });
+      setAppliedPriceRange({
+        min: filters.price.min,
+        max: filters.price.max
+      });
     }
-    
+
     setCurrentPage(1);
   };
   const {
@@ -132,10 +132,10 @@ const ProductsPage = () => {
         )}
         <div className="row">
           <div className="col-lg-3 mb-4">
-            <ProductFilter2 
-                categories={categories}
-                brands={brandsData || []}
-                onFilterChange={handleFilterChange}
+            <ProductFilter2
+              categories={categories}
+              brands={brandsData || []}
+              onFilterChange={handleFilterChange}
             />
           </div>
           <div className="col-lg-9">
@@ -144,9 +144,8 @@ const ProductsPage = () => {
                 {productsLoading
                   ? "Đang tải..."
                   : productsError
-                  ? "Lỗi tải sản phẩm"
-                  : `Hiển thị ${
-                      products.length > 0 ? (currentPage - 1) * pageSize + 1 : 0
+                    ? "Lỗi tải sản phẩm"
+                    : `Hiển thị ${products.length > 0 ? (currentPage - 1) * pageSize + 1 : 0
                     }-${Math.min(
                       currentPage * pageSize,
                       totalElements
