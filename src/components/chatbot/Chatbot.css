@@ -257,6 +257,29 @@
   text-align: right;
 }
 
+/* Clickable Links in Messages */
+.chatbot-link {
+  color: #ff8c42;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid transparent;
+}
+
+.chatbot-link:hover {
+  color: #e67935;
+  border-bottom-color: #e67935;
+}
+
+.chatbot-message.user .chatbot-link {
+  color: white;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.5);
+}
+
+.chatbot-message.user .chatbot-link:hover {
+  border-bottom-color: white;
+}
+
 /* Welcome Message */
 .chatbot-welcome {
   text-align: center;

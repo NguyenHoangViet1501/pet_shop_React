@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useChatbot } from '../../hooks/useChatbot';
 import './Chatbot.css';
 
@@ -64,6 +65,7 @@ const Chatbot = () => {
     const [inputValue, setInputValue] = useState('');
     const messagesEndRef = useRef(null);
     const inputRef = useRef(null);
+    const navigate = useNavigate();
 
     const { messages, isLoading, error, sendMessage, clearChat } = useChatbot();
 
@@ -101,6 +103,50 @@ const Chatbot = () => {
             hour: '2-digit',
             minute: '2-digit'
         });
+    };
+
+    /**
+     * Parse message text và convert markdown links [text](url) thành clickable links
+     */
+    const parseMessageWithLinks = (text) => {
+        // Regex để match markdown links: [text](/path)
+        const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+        const parts = [];
+        let lastIndex = 0;
+        let match;
+
+        while ((match = linkRegex.exec(text)) !== null) {
+            // Add text trước link
+            if (match.index > lastIndex) {
+                parts.push(text.substring(lastIndex, match.index));
+            }
+
+            // Add link element
+            const linkText = match[1];
+            const linkUrl = match[2];
+            parts.push(
+                <a
+                    key={match.index}
+                    href={linkUrl}
+                    className="chatbot-link"
+                    onClick={(e) => {
+                        e.preventDefault();
+                        navigate(linkUrl);
+                    }}
+                >
+                    {linkText}
+                </a>
+            );
+
+            lastIndex = match.index + match[0].length;
+        }
+
+        // Add phần text còn lại
+        if (lastIndex < text.length) {
+            parts.push(text.substring(lastIndex));
+        }
+
+        return parts.length > 0 ? parts : text;
     };
 
     return (
@@ -158,7 +204,7 @@ const Chatbot = () => {
                                 {msg.role === 'assistant' ? <BotIcon /> : <UserIcon />}
                             </div>
                             <div className="message-content">
-                                <div className="message-bubble">{msg.content}</div>
+                                <div className="message-bubble">{parseMessageWithLinks(msg.content)}</div>
                                 <div className="message-time">{formatTime(msg.timestamp)}</div>
                             </div>
                         </div>
