@@ -29,10 +29,10 @@ const PaymentSuccessPage = () => {
               style={{ fontSize: 64 }}
             ></i>{" "}
           </div>{" "}
-          <h3 className="text-success mb-2">Thanh toán thành công!</h3>{" "}
+          <h3 className="text-success mb-2">Đặt hàng thành công!</h3>{" "}
           <p className="text-muted mb-4">
             {" "}
-            Đơn hàng của bạn đã được thanh toán thành công. <br /> Bạn sẽ được
+            Đơn hàng của bạn đã được đặt thành công. <br /> Bạn sẽ được
             chuyển về danh sách đơn hàng sau <strong>
               {countdown}
             </strong> giây.{" "}

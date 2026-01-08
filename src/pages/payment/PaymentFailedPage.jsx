@@ -16,7 +16,7 @@ const PaymentFailedPage = () => {
             ></i>
           </div>
 
-          <h3 className="text-danger mb-2">Thanh toán thất bại!</h3>
+          <h3 className="text-danger mb-2">Đặt hàng thất bại!</h3>
 
           <p className="text-muted mb-4">
             Giao dịch không thể hoàn tất hoặc đã bị hủy.
