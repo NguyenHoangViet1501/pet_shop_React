@@ -112,7 +112,7 @@ const ProductDetailPage = () => {
   }, [id]);
 
   useEffect(() => {
-    if (descriptionRef.current) {
+    if (!loading && descriptionRef.current) {
       // Check if height exceeds ~10 lines (approx 250px)
       if (descriptionRef.current.scrollHeight > 250) {
         setShowExpandButton(true);
@@ -120,7 +120,7 @@ const ProductDetailPage = () => {
         setShowExpandButton(false);
       }
     }
-  }, [product]);
+  }, [product, loading]);
 
   if (loading) {
     return (
