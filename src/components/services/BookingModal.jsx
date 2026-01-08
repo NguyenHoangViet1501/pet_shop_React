@@ -32,8 +32,20 @@ const BookingModal = ({ isOpen, onClose, services, initialServiceId }) => {
       setTimeout(() => setHasAnimatedIn(true), 10); // Small delay to start animation
     } else {
       setIsVisible(false);
+      // Reset form and errors when modal closes
+      setFormData({
+        serviceId: initialServiceId || '',
+        petType: '',
+        appointmentDate: '',
+        appointmentTime: '',
+        petName: '',
+        notes: ''
+      });
+      setErrors({});
+      setAvailableSlots([]);
+      setSelectedSlotId(null);
     }
-  }, [isOpen]);
+  }, [isOpen, initialServiceId]);
 
   useEffect(() => {
     if (isVisible) {
